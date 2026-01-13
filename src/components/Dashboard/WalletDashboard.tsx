@@ -10,65 +10,25 @@ import DepositModal from "@/components/Transaction Modal/DepositModal";
 import ReceiveModal from "@/components/Transaction Modal/ReceiveModal";
 import SendModal from "@/components/Transaction Modal/SendModal";
 import WithdrawModal from "@/components/Transaction Modal/WithdrawModal";
-import { useMemo, useState } from "react";
+import { apiRequest } from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import Spinner from "@/components/ui/Spinner";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-const wallets = [
-  {
-    id: "wallet-1",
-    name: "Wallet 1",
-    date: "01/07/2025",
-    balance: "$88,281.74",
-    available: "$75,200.00",
-    freeze: "$13,081.74",
-    transactions: [
-      {
-        id: "01",
-        order: "CND1937186987687043072",
-        amount: "+$200.00",
-        date: "2025-06-23 22:32:23",
-        status: "Complete",
-      },
-      {
-        id: "02",
-        order: "CND1937186987687043072",
-        amount: "-$100.00",
-        date: "2025-06-24 11:15:00",
-        status: "Pending",
-      },
-      {
-        id: "03",
-        order: "CND1937186987687043072",
-        amount: "+$120.00",
-        date: "2025-06-25 09:45:12",
-        status: "In Progress",
-      },
-    ],
-  },
-  {
-    id: "wallet-2",
-    name: "Wallet 2",
-    date: "01/07/2025",
-    balance: "$24,190.10",
-    available: "$20,000.00",
-    freeze: "$4,190.10",
-    transactions: [
-      {
-        id: "01",
-        order: "CND1937186987687043072",
-        amount: "+$320.00",
-        date: "2025-06-20 18:12:10",
-        status: "Complete",
-      },
-      {
-        id: "02",
-        order: "CND1937186987687043072",
-        amount: "-$80.00",
-        date: "2025-06-22 10:30:00",
-        status: "Pending",
-      },
-    ],
-  },
-];
+type Wallet = {
+  id: number;
+  merchantId?: number;
+  amount: string;
+  frozenAmount: string;
+  currency: string;
+  url?: string;
+};
+
+type WalletListResponse = {
+  code?: number | string;
+  msg?: string;
+  data?: Wallet[];
+};
 
 const actions = [
   { key: "deposit", label: "Deposit", icon: depositSvg },
@@ -77,54 +37,215 @@ const actions = [
   { key: "receive", label: "Receive", icon: receiveSvg },
 ];
 
+const getStoredToken = () => {
+  if (typeof window === "undefined") {
+    return { token: "" };
+  }
+  return {
+    token: localStorage.getItem("vtron_access_token") ?? "",
+  };
+};
+
+const formatAmount = (value: string, currency: string) => {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return value;
+  }
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+  }).format(numeric);
+};
+
+const maskOrder = (order: string) => {
+  if (order.length <= 8) {
+    return order;
+  }
+  return `${order.slice(0, 4)}....${order.slice(-4)}`;
+};
+
 export default function WalletDashboard() {
-  const [selectedId, setSelectedId] = useState(wallets[0]?.id ?? "");
+  const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [depositOpen, setDepositOpen] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
   const [receiveOpen, setReceiveOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [transactions, setTransactions] = useState<
+    {
+      id: string;
+      order: string;
+      amount: string;
+      date: string;
+      status: string;
+    }[]
+  >([]);
+  const [transactionPage, setTransactionPage] = useState(1);
+  const [transactionPages, setTransactionPages] = useState(1);
+  const [transactionLoading, setTransactionLoading] = useState(true);
+  const [transactionError, setTransactionError] = useState("");
   const selectedWallet = useMemo(
-    () => wallets.find((wallet) => wallet.id === selectedId) ?? wallets[0],
-    [selectedId]
+    () =>
+      wallets.find((wallet) => wallet.id === selectedId) ?? wallets[0] ?? null,
+    [selectedId, wallets]
   );
 
+  const loadWallets = useCallback(async () => {
+    setLoading(true);
+    setErrorMessage("");
+    try {
+      const { token } = getStoredToken();
+      if (!token) {
+        setWallets([]);
+        setErrorMessage("Please login to view your wallets.");
+        return;
+      }
+      const response = await apiRequest<WalletListResponse>({
+        path: API_ENDPOINTS.walletList,
+        method: "POST",
+        body: JSON.stringify({}),
+      });
+      if (Number(response.code) !== 200 || !response.data) {
+        setWallets([]);
+        setErrorMessage(response.msg || "Unable to load wallets.");
+        return;
+      }
+      const list = response.data ?? [];
+      setWallets(list);
+      setSelectedId(list[0]?.id ?? null);
+    } catch (error) {
+      setWallets([]);
+      setErrorMessage(
+        error instanceof Error ? error.message : "Unable to load wallets."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadWallets();
+  }, [loadWallets]);
+
+  useEffect(() => {
+    const loadTransactions = async () => {
+      setTransactionLoading(true);
+      setTransactionError("");
+      try {
+        const response = await apiRequest<{
+          code?: number | string;
+          msg?: string;
+          data?: {
+            pages?: number;
+            records?: {
+              orderId?: string;
+              tradeId?: string;
+              type?: string;
+              typeString?: string | null;
+              currency?: string;
+              createTime?: string;
+              amount?: string;
+            }[];
+          };
+        }>({
+          path: API_ENDPOINTS.merchantTransactions,
+          method: "POST",
+          body: JSON.stringify({
+            pageIndex: transactionPage,
+            pageSize: 10,
+          }),
+        });
+
+        if (Number(response.code) !== 200 || !response.data) {
+          setTransactions([]);
+          setTransactionPages(1);
+          setTransactionError(response.msg || "Unable to load transactions.");
+          return;
+        }
+
+        const records = response.data.records ?? [];
+        const mapped = records.map((record, index) => ({
+          id: String((transactionPage - 1) * 10 + index + 1),
+          order: record.orderId ?? record.tradeId ?? "--",
+          amount: record.amount
+            ? `${record.amount} ${record.currency ?? "USD"}`
+            : "--",
+          date: record.createTime ?? "--",
+          status: record.typeString ?? record.type ?? "--",
+        }));
+        setTransactions(mapped);
+        setTransactionPages(response.data.pages ?? 1);
+      } catch (error) {
+        setTransactions([]);
+        setTransactionPages(1);
+        setTransactionError(
+          error instanceof Error
+            ? error.message
+            : "Unable to load transactions."
+        );
+      } finally {
+        setTransactionLoading(false);
+      }
+    };
+
+    void loadTransactions();
+  }, [transactionPage]);
+
   if (!selectedWallet) {
-    return null;
+    return (
+      <div className="rounded-2xl border border-(--stroke) bg-(--basic-cta) p-6 text-sm text-(--paragraph)">
+        {loading ? (
+          <span className="inline-flex items-center gap-2">
+            <Spinner size={16} />
+            Loading wallet details...
+          </span>
+        ) : (
+          errorMessage || "No wallets found."
+        )}
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-2xl border border-(--stroke) bg-(--basic-cta) p-6">
-          <div className="flex items-center gap-3 text-sm text-(--paragraph)">
+    <div className="space-y-4 sm:space-y-6">
+      <section className="grid gap-4 sm:gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <div className="rounded-2xl border border-(--stroke) bg-(--basic-cta) p-4 sm:p-6">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-(--paragraph) sm:text-sm">
             <span className="h-2 w-2 rounded-full bg-(--brand)" />
             <label className="flex items-center gap-2">
               <span>Wallet</span>
               <select
-                value={selectedId}
-                onChange={(event) => setSelectedId(event.target.value)}
-                className="rounded-lg border border-(--stroke) bg-(--background) px-2 py-1 text-sm text-(--foreground) focus:outline-none"
+                value={selectedId ?? ""}
+                onChange={(event) => setSelectedId(Number(event.target.value))}
+                className="rounded-lg border border-(--stroke) bg-(--background) px-2 py-1 text-xs text-(--foreground) focus:outline-none sm:text-sm"
               >
                 {wallets.map((wallet) => (
                   <option key={wallet.id} value={wallet.id}>
-                    {wallet.name}
+                    {wallet.currency} Wallet
                   </option>
                 ))}
               </select>
             </label>
-            <span className="text-(--placeholder)">{selectedWallet.date}</span>
+            <span className="text-(--placeholder)">
+              {selectedWallet.currency}
+            </span>
           </div>
-          <div className="mt-4 text-3xl font-semibold text-(--brand)">
-            {selectedWallet.balance}
+          <div className="mt-4 text-2xl font-semibold text-(--brand) sm:text-3xl">
+            {formatAmount(selectedWallet.amount, selectedWallet.currency)}
           </div>
           <div className="mt-2 text-xs text-(--paragraph)">
-            Available: {selectedWallet.available} · Freeze:{" "}
-            {selectedWallet.freeze}
+            Available:{" "}
+            {formatAmount(selectedWallet.amount, selectedWallet.currency)} ·
+            Freeze:{" "}
+            {formatAmount(selectedWallet.frozenAmount, selectedWallet.currency)}
           </div>
         </div>
 
-        <div className="rounded-2xl border border-(--stroke) bg-(--basic-cta) p-6">
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="rounded-2xl border border-(--stroke) bg-(--basic-cta) p-4 sm:p-6">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
             {actions.map((action) => (
               <button
                 key={action.key}
@@ -145,9 +266,9 @@ export default function WalletDashboard() {
                     setReceiveOpen(true);
                   }
                 }}
-                className="flex flex-col items-center gap-3 text-sm text-(--paragraph) transition hover:text-(--foreground)"
+                className="flex flex-col items-center gap-2 text-xs text-(--paragraph) transition hover:text-(--foreground) sm:gap-3 sm:text-sm"
               >
-                <span className="grid h-11 w-11 place-items-center">
+                <span className="grid h-10 w-10 place-items-center sm:h-11 sm:w-11">
                   {action.icon}
                 </span>
                 {action.label}
@@ -157,7 +278,7 @@ export default function WalletDashboard() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-(--stroke) bg-(--basic-cta) p-6">
+      <section className="rounded-2xl border border-(--stroke) bg-(--basic-cta) p-4 sm:p-6">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold text-(--foreground)">
             Transaction History
@@ -170,33 +291,97 @@ export default function WalletDashboard() {
           </button>
         </div>
 
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full text-left text-sm">
+        <div className="mt-4">
+          <table className="w-full text-left text-xs sm:text-sm">
             <thead className="text-(--paragraph)">
               <tr className="border-b border-(--stroke)">
-                <th className="px-4 py-3">No</th>
-                <th className="px-4 py-3">Order No</th>
-                <th className="px-4 py-3">Amount</th>
-                <th className="px-4 py-3">Date and Time</th>
-                <th className="px-4 py-3">Status</th>
+                <th className="px-3 py-3 sm:px-4">No</th>
+                <th className="px-3 py-3 sm:px-4">Order No</th>
+                <th className="hidden px-3 py-3 sm:table-cell sm:px-4">
+                  Amount
+                </th>
+                <th className="px-3 py-3 sm:px-4">Date</th>
+                <th className="px-3 py-3 sm:px-4">Status</th>
               </tr>
             </thead>
             <tbody className="text-(--double-foreground)">
-              {selectedWallet.transactions.map((row) => (
-                <tr key={row.id} className="border-b border-(--stroke)">
-                  <td className="px-4 py-4 text-(--paragraph)">{row.id}</td>
-                  <td className="px-4 py-4">{row.order}</td>
-                  <td className="px-4 py-4">{row.amount}</td>
-                  <td className="px-4 py-4">{row.date}</td>
-                  <td className="px-4 py-4">
-                    <span className="inline-flex items-center rounded-full bg-(--brand-10) px-3 py-1 text-xs text-(--brand)">
-                      {row.status}
-                    </span>
+              {transactions.length === 0 ? (
+                <tr className="border-b border-(--stroke)">
+                  <td
+                    colSpan={5}
+                    className="px-3 py-6 text-center text-(--paragraph) sm:px-4"
+                  >
+                    {transactionLoading ? (
+                      <span className="inline-flex items-center justify-center gap-2">
+                        <Spinner size={16} />
+                        Loading transactions...
+                      </span>
+                    ) : (
+                      transactionError || "No transactions available."
+                    )}
                   </td>
                 </tr>
-              ))}
+              ) : (
+                transactions.map((row) => (
+                  <tr key={row.id} className="border-b border-(--stroke)">
+                    <td className="px-3 py-4 text-(--paragraph) sm:px-4">
+                      {row.id}
+                    </td>
+                    <td className="px-3 py-4 sm:px-4">
+                      <span
+                        className="block max-w-[140px] truncate sm:max-w-none"
+                        title={row.order}
+                      >
+                        {maskOrder(row.order)}
+                      </span>
+                    </td>
+                    <td className="hidden px-3 py-4 sm:table-cell sm:px-4">
+                      {row.amount}
+                    </td>
+                    <td className="px-3 py-4 sm:px-4">
+                      {row.date.split(" ")[0]}
+                    </td>
+                    <td className="px-3 py-4 sm:px-4">
+                      <span className="inline-flex items-center rounded-full bg-(--brand-10) px-3 py-1 text-[10px] text-(--brand) sm:text-xs">
+                        {row.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
+        </div>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-(--paragraph)">
+          <span>
+            Page {transactionPage} of {transactionPages}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="rounded-full border border-(--stroke) bg-(--basic-cta) px-3 py-1 text-(--double-foreground)"
+              onClick={() =>
+                setTransactionPage((prev) => Math.max(prev - 1, 1))
+              }
+              disabled={transactionPage <= 1 || transactionLoading}
+            >
+              Prev
+            </button>
+            <button
+              type="button"
+              className="rounded-full border border-(--stroke) bg-(--basic-cta) px-3 py-1 text-(--double-foreground)"
+              onClick={() =>
+                setTransactionPage((prev) =>
+                  Math.min(prev + 1, transactionPages)
+                )
+              }
+              disabled={
+                transactionPage >= transactionPages || transactionLoading
+              }
+            >
+              Next
+            </button>
+          </div>
         </div>
       </section>
       <DepositModal
@@ -207,6 +392,7 @@ export default function WalletDashboard() {
       <SendModal
         open={sendOpen}
         walletName={selectedWallet.name}
+        onSuccess={loadWallets}
         onClose={() => setSendOpen(false)}
       />
       <ReceiveModal
@@ -217,6 +403,7 @@ export default function WalletDashboard() {
       <WithdrawModal
         open={withdrawOpen}
         walletName={selectedWallet.name}
+        onSuccess={loadWallets}
         onClose={() => setWithdrawOpen(false)}
       />
     </div>

@@ -1,0 +1,253 @@
+"use client";
+
+import { apiRequest } from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import { useEffect, useMemo, useState } from "react";
+
+type MerchantInfoResponse = {
+  code?: number | string;
+  msg?: string;
+  data?: {
+    isPayPassword?: string | number | null;
+    googleStatus?: string | number | null;
+    email?: string | null;
+  };
+};
+
+type VerifyCodeResponse = {
+  code?: number | string;
+  msg?: string;
+};
+
+type UpdatePasswordResponse = {
+  code?: number | string;
+  msg?: string;
+};
+
+export default function TransactionPasswordPage() {
+  const [payPassword, setPayPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [emailCode, setEmailCode] = useState("");
+  const [googleCode, setGoogleCode] = useState("");
+  const [cooldown, setCooldown] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [infoMessage, setInfoMessage] = useState("");
+  const [isPayPasswordSet, setIsPayPasswordSet] = useState(false);
+  const [needsGoogle, setNeedsGoogle] = useState(false);
+
+  const payPasswordType = useMemo(
+    () => (isPayPasswordSet ? "updatePayPassword" : "createPayPassword"),
+    [isPayPasswordSet]
+  );
+
+  useEffect(() => {
+    const loadInfo = async () => {
+      setLoading(true);
+      try {
+        const response = await apiRequest<MerchantInfoResponse>({
+          path: API_ENDPOINTS.merchantInfo,
+          method: "POST",
+          body: JSON.stringify({}),
+        });
+        if (Number(response.code) === 200 && response.data) {
+          setIsPayPasswordSet(Number(response.data.isPayPassword) === 1);
+          setNeedsGoogle(Number(response.data.googleStatus) === 1);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void loadInfo();
+  }, []);
+
+  useEffect(() => {
+    if (cooldown <= 0) {
+      return;
+    }
+    const timer = setInterval(() => {
+      setCooldown((prev) => Math.max(prev - 1, 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
+  const validate = () => {
+    if (!/^\d{6}$/.test(payPassword)) {
+      setErrorMessage("Transaction password must be 6 digits.");
+      return false;
+    }
+    if (payPassword !== confirmPassword) {
+      setErrorMessage("Passwords do not match.");
+      return false;
+    }
+    if (!emailCode) {
+      setErrorMessage("Email code is required.");
+      return false;
+    }
+    if (needsGoogle && !googleCode) {
+      setErrorMessage("Google code is required.");
+      return false;
+    }
+    return true;
+  };
+
+  const handleSendCode = async () => {
+    setErrorMessage("");
+    setInfoMessage("");
+    if (cooldown > 0) {
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await apiRequest<VerifyCodeResponse>({
+        path: `${API_ENDPOINTS.sendVerifyCode}?type=${payPasswordType}`,
+        method: "GET",
+      });
+      if (Number(response.code) !== 200) {
+        setErrorMessage(response.msg || "Failed to send code.");
+        return;
+      }
+      setCooldown(60);
+      setInfoMessage("Code sent to your email.");
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Failed to send code."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    setErrorMessage("");
+    setInfoMessage("");
+    if (!validate()) {
+      return;
+    }
+    setLoading(true);
+    try {
+      const payload: Record<string, string> = {
+        type: payPasswordType,
+        code: emailCode,
+        payPassword,
+      };
+      if (needsGoogle) {
+        payload.googleCode = googleCode;
+      }
+      const response = await apiRequest<UpdatePasswordResponse>({
+        path: API_ENDPOINTS.merchantUpdate,
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      if (Number(response.code) !== 200) {
+        setErrorMessage(response.msg || "Unable to update password.");
+        return;
+      }
+      setInfoMessage(
+        isPayPasswordSet
+          ? "Transaction password updated."
+          : "Transaction password created."
+      );
+      setPayPassword("");
+      setConfirmPassword("");
+      setEmailCode("");
+      setGoogleCode("");
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Unable to update password."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <header className="space-y-2">
+        <p className="text-sm font-medium uppercase tracking-[0.2em] text-(--paragraph)">
+          Settings
+        </p>
+        <h1 className="text-3xl font-semibold text-(--foreground)">
+          {isPayPasswordSet ? "Update Transaction Password" : "Set Transaction Password"}
+        </h1>
+      </header>
+
+      <section className="rounded-3xl border border-(--stroke) bg-(--basic-cta) p-6">
+        <div className="space-y-4">
+          <label className="space-y-2 text-sm font-medium text-(--paragraph)">
+            Transaction password (6 digits)
+            <input
+              type="password"
+              inputMode="numeric"
+              pattern="\d*"
+              maxLength={6}
+              className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
+              value={payPassword}
+              onChange={(event) => setPayPassword(event.target.value)}
+            />
+          </label>
+
+          <label className="space-y-2 text-sm font-medium text-(--paragraph)">
+            Confirm password
+            <input
+              type="password"
+              inputMode="numeric"
+              pattern="\d*"
+              maxLength={6}
+              className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+            />
+          </label>
+
+          <label className="space-y-2 text-sm font-medium text-(--paragraph)">
+            Email code
+            <div className="flex items-center gap-3">
+              <input
+                className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
+                value={emailCode}
+                onChange={(event) => setEmailCode(event.target.value)}
+              />
+              <button
+                type="button"
+                onClick={handleSendCode}
+                disabled={cooldown > 0 || loading}
+                className="h-12 min-w-[120px] rounded-2xl border border-(--stroke) bg-(--background) px-4 text-xs font-semibold text-(--foreground)"
+              >
+                {cooldown > 0 ? `${cooldown}s` : "Send code"}
+              </button>
+            </div>
+          </label>
+
+          {needsGoogle ? (
+            <label className="space-y-2 text-sm font-medium text-(--paragraph)">
+              Google code
+              <input
+                className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
+                value={googleCode}
+                onChange={(event) => setGoogleCode(event.target.value)}
+              />
+            </label>
+          ) : null}
+        </div>
+
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={loading}
+          className="mt-6 h-12 w-full rounded-2xl bg-(--brand) text-sm font-semibold text-(--background)"
+        >
+          {loading ? "Saving..." : "Save"}
+        </button>
+
+        {errorMessage ? (
+          <p className="mt-3 text-xs text-(--paragraph)">{errorMessage}</p>
+        ) : null}
+        {infoMessage ? (
+          <p className="mt-2 text-xs text-(--paragraph)">{infoMessage}</p>
+        ) : null}
+      </section>
+    </div>
+  );
+}

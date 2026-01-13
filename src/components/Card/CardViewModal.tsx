@@ -1,19 +1,188 @@
+import { apiRequest } from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import Spinner from "@/components/ui/Spinner";
+import { useEffect, useMemo, useState } from "react";
+
 type CardViewModalProps = {
   open: boolean;
+  cardId: string;
   cardLabel: string;
-  last4: string;
+  maskedNumber: string;
   onClose: () => void;
+};
+
+type CardDetailResponse = {
+  code?: number | string;
+  msg?: string;
+  data?: {
+    cardNumber?: string;
+    expireDate?: string;
+    cvv?: string;
+    cardType?: string;
+  };
+};
+
+type MerchantInfoResponse = {
+  code?: number | string;
+  msg?: string;
+  data?: { emailCheck?: boolean };
+};
+
+const splitCardNumber = (cardNumber: string) => {
+  const sanitized = cardNumber.replace(/\s+/g, "");
+  if (sanitized.length < 16) {
+    return [cardNumber];
+  }
+  return [
+    sanitized.slice(0, 4),
+    sanitized.slice(4, 8),
+    sanitized.slice(8, 12),
+    sanitized.slice(12, 16),
+  ];
 };
 
 export default function CardViewModal({
   open,
+  cardId,
   cardLabel,
-  last4,
+  maskedNumber,
   onClose,
 }: CardViewModalProps) {
+  const [payPassword, setPayPassword] = useState("");
+  const [verifyType, setVerifyType] = useState<"email" | "google">("email");
+  const [verifyCode, setVerifyCode] = useState("");
+  const [googleCode, setGoogleCode] = useState("");
+  const [cooldown, setCooldown] = useState(0);
+  const [emailCheck, setEmailCheck] = useState(true);
+  const [detail, setDetail] = useState<CardDetailResponse["data"] | null>(
+    null
+  );
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [infoMessage, setInfoMessage] = useState("");
+
+  const canSubmit = useMemo(() => {
+    if (!payPassword) {
+      return false;
+    }
+    if (!emailCheck) {
+      return true;
+    }
+    if (verifyType === "email") {
+      return Boolean(verifyCode);
+    }
+    return Boolean(googleCode);
+  }, [payPassword, emailCheck, verifyType, verifyCode, googleCode]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    setDetail(null);
+    setPayPassword("");
+    setVerifyCode("");
+    setGoogleCode("");
+    setInfoMessage("");
+    setErrorMessage("");
+    const loadMerchantInfo = async () => {
+      try {
+        const response = await apiRequest<MerchantInfoResponse>({
+          path: API_ENDPOINTS.merchantInfo,
+          method: "POST",
+          body: JSON.stringify({}),
+        });
+        if (Number(response.code) === 200) {
+          setEmailCheck(response.data?.emailCheck ?? true);
+        }
+      } catch {
+        setEmailCheck(true);
+      }
+    };
+    void loadMerchantInfo();
+  }, [open]);
+
+  useEffect(() => {
+    if (cooldown <= 0) {
+      return;
+    }
+    const timer = setInterval(() => {
+      setCooldown((prev) => Math.max(prev - 1, 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
+  const handleSendCode = async () => {
+    if (cooldown > 0 || !emailCheck) {
+      return;
+    }
+    setLoading(true);
+    setErrorMessage("");
+    setInfoMessage("");
+    try {
+      const response = await apiRequest<CardDetailResponse>({
+        path: `${API_ENDPOINTS.sendVerifyCode}?type=cardDetail`,
+        method: "GET",
+      });
+      if (Number(response.code) !== 200) {
+        setErrorMessage(response.msg || "Failed to send code.");
+        return;
+      }
+      setCooldown(60);
+      setInfoMessage("Code sent to your email.");
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Failed to send code."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReveal = async () => {
+    if (!canSubmit) {
+      setErrorMessage("Please complete the verification.");
+      return;
+    }
+    setLoading(true);
+    setErrorMessage("");
+    setInfoMessage("");
+    try {
+      const payload: Record<string, string> = {
+        cardId,
+        payPassword,
+      };
+      if (emailCheck) {
+        if (verifyType === "email") {
+          payload.code = verifyCode;
+        } else {
+          payload.googleCode = googleCode;
+        }
+      }
+      const response = await apiRequest<CardDetailResponse>({
+        path: API_ENDPOINTS.cardDetail,
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      if (Number(response.code) !== 200) {
+        setErrorMessage(response.msg || "Unable to load card details.");
+        return;
+      }
+      setDetail(response.data ?? null);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Unable to load card details."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!open) {
     return null;
   }
+
+  const cardNumber = detail?.cardNumber ?? maskedNumber;
+  const cardParts = splitCardNumber(cardNumber);
 
   return (
     <div
@@ -43,19 +212,129 @@ export default function CardViewModal({
           <div className="text-sm uppercase tracking-[0.3em] text-(--paragraph)">
             Vtron
           </div>
-          <div className="mt-10 text-xl font-semibold text-(--foreground)">
-            •••• {last4}
+          <div className="mt-8 grid grid-cols-4 gap-2 text-lg font-semibold text-(--foreground)">
+            {cardParts.map((part, index) => (
+              <span key={`card-part-${index}`}>{part}</span>
+            ))}
           </div>
-          <div className="mt-4 text-xs text-(--paragraph)">CARD HOLDER</div>
-          <div className="text-sm text-(--double-foreground)">Esha A.</div>
-          <div className="mt-6 flex items-center justify-between text-xs text-(--paragraph)">
-            <span>VALID THRU</span>
-            <span className="text-(--double-foreground)">08/29</span>
+          <div className="mt-4 text-xs text-(--paragraph)">VALID THRU</div>
+          <div className="text-sm text-(--double-foreground)">
+            {detail?.expireDate ?? "--/--"}
+          </div>
+          <div className="mt-4 text-xs text-(--paragraph)">CVV</div>
+          <div className="text-sm text-(--double-foreground)">
+            {detail?.cvv ?? "•••"}
           </div>
           <div className="mt-6 text-right text-sm font-semibold text-(--double-foreground)">
-            VISA
+            {(detail?.cardType ?? "VISA").toUpperCase()}
           </div>
         </div>
+
+        <div className="mt-6 space-y-3">
+          <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+            Payment password
+            <input
+              type="password"
+              className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
+              placeholder="Enter payment password"
+              value={payPassword}
+              onChange={(event) => setPayPassword(event.target.value)}
+            />
+          </label>
+
+          {emailCheck ? (
+            <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+              Verification method
+              <div className="flex items-center gap-3 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={verifyType === "email"}
+                    onChange={() => setVerifyType("email")}
+                  />
+                  Email
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={verifyType === "google"}
+                    onChange={() => setVerifyType("google")}
+                  />
+                  Google
+                </label>
+              </div>
+            </label>
+          ) : null}
+
+          {emailCheck && verifyType === "email" ? (
+            <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+              Email code
+              <div className="flex items-center gap-3">
+                <input
+                  className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
+                  placeholder="Enter code"
+                  value={verifyCode}
+                  onChange={(event) => setVerifyCode(event.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={handleSendCode}
+                  className="h-12 min-w-[120px] rounded-2xl border border-(--stroke) bg-(--background) px-4 text-xs font-semibold text-(--foreground)"
+                  disabled={cooldown > 0 || loading}
+                >
+                  {loading && cooldown === 0 ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Spinner size={14} />
+                      Sending...
+                    </span>
+                  ) : cooldown > 0 ? (
+                    `${cooldown}s`
+                  ) : (
+                    "Send code"
+                  )}
+                </button>
+              </div>
+            </label>
+          ) : null}
+
+          {emailCheck && verifyType === "google" ? (
+            <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+              Google code
+              <input
+                className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
+                placeholder="Enter Google code"
+                value={googleCode}
+                onChange={(event) => setGoogleCode(event.target.value)}
+              />
+            </label>
+          ) : null}
+        </div>
+
+        <button
+          type="button"
+          onClick={handleReveal}
+          className={`mt-6 h-12 w-full rounded-2xl text-sm font-semibold ${
+            canSubmit
+              ? "bg-(--brand) text-(--background)"
+              : "bg-(--stroke) text-(--placeholder)"
+          }`}
+          disabled={!canSubmit || loading}
+        >
+          {loading ? (
+            <span className="inline-flex items-center justify-center gap-2">
+              <Spinner size={16} className="border-(--background)" />
+              Loading...
+            </span>
+          ) : (
+            "Reveal card"
+          )}
+        </button>
+        {errorMessage ? (
+          <p className="mt-3 text-xs text-(--paragraph)">{errorMessage}</p>
+        ) : null}
+        {infoMessage ? (
+          <p className="mt-2 text-xs text-(--paragraph)">{infoMessage}</p>
+        ) : null}
       </div>
     </div>
   );

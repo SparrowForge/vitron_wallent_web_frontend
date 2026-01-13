@@ -1,11 +1,64 @@
+"use client";
+
+import { clearAuthTokens } from "@/lib/auth";
+import { apiRequest } from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
 export default function SettingsPage() {
+  const router = useRouter();
+  const [loggingOut, setLoggingOut] = useState(false);
   const securityItems = [
-    { title: "Modify email", action: "Edit" },
-    { title: "Google authentication", action: "Open", accent: true },
-    { title: "Transaction password", action: "Edit" },
-    { title: "Login password", action: "Edit" },
-    { title: "Network diagnostics", action: "Run" },
+    {
+      title: "Modify email",
+      action: "Edit",
+      href: "/settings/modify-email",
+    },
+    { title: "Passkey", action: "Manage", href: "/settings/passkey", hidden: true },
+    {
+      title: "Google authentication",
+      action: "Open",
+      accent: true,
+      href: "/settings/google-auth",
+    },
+    {
+      title: "Transaction password",
+      action: "Edit",
+      href: "/settings/transaction-password",
+    },
+    {
+      title: "Login password",
+      action: "Edit",
+      href: "/settings/login-password",
+    },
+    {
+      title: "Network diagnostics",
+      action: "Run",
+      href: "/settings/network-diagnostics",
+    },
   ];
+
+  const handleLogout = async () => {
+    if (loggingOut) {
+      return;
+    }
+    setLoggingOut(true);
+    try {
+      await apiRequest({
+        path: API_ENDPOINTS.logout,
+        method: "POST",
+        body: JSON.stringify({}),
+      });
+    } catch {
+      // Ignore logout API failure; we'll clear local state below.
+    } finally {
+      clearAuthTokens();
+      router.replace("/auth");
+      setLoggingOut(false);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -20,34 +73,65 @@ export default function SettingsPage() {
 
       <section className="rounded-3xl border border-(--stroke) bg-(--basic-cta) p-6">
         <div className="space-y-4">
-          {securityItems.map((item) => (
-            <button
-              key={item.title}
-              type="button"
-              className="flex w-full items-center justify-between rounded-2xl border border-(--stroke) bg-(--background) px-4 py-4 text-left transition hover:border-(--stroke-high)"
-            >
-              <div>
-                <div className="text-sm font-semibold text-(--double-foreground)">
-                  {item.title}
+          {securityItems
+            .filter((item) => !item.hidden)
+            .map((item) => {
+            const content = (
+              <>
+                <div>
+                  <div className="text-sm font-semibold text-(--double-foreground)">
+                    {item.title}
+                  </div>
+                  <div className="mt-1 text-xs text-(--paragraph)">
+                    Tap to manage
+                  </div>
                 </div>
-                <div className="mt-1 text-xs text-(--paragraph)">
-                  Tap to manage
+                <div className="flex items-center gap-2 text-xs">
+                  <span
+                    className={
+                      item.accent ? "text-(--brand)" : "text-(--paragraph)"
+                    }
+                  >
+                    {item.action}
+                  </span>
+                  <span className="text-(--paragraph)">›</span>
                 </div>
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                <span
-                  className={
-                    item.accent ? "text-(--brand)" : "text-(--paragraph)"
-                  }
+              </>
+            );
+
+            if (item.href) {
+              return (
+                <Link
+                  key={item.title}
+                  href={item.href}
+                  className="flex w-full items-center justify-between rounded-2xl border border-(--stroke) bg-(--background) px-4 py-4 text-left transition hover:border-(--stroke-high)"
                 >
-                  {item.action}
-                </span>
-                <span className="text-(--paragraph)">›</span>
-              </div>
-            </button>
-          ))}
+                  {content}
+                </Link>
+              );
+            }
+
+            return (
+              <button
+                key={item.title}
+                type="button"
+                className="flex w-full items-center justify-between rounded-2xl border border-(--stroke) bg-(--background) px-4 py-4 text-left transition hover:border-(--stroke-high)"
+              >
+                {content}
+              </button>
+            );
+          })}
         </div>
       </section>
+
+      <button
+        type="button"
+        onClick={handleLogout}
+        className="w-full rounded-2xl bg-(--foreground) py-3 text-sm font-semibold text-(--background)"
+        disabled={loggingOut}
+      >
+        {loggingOut ? "Logging out..." : "Logout"}
+      </button>
     </div>
   );
 }

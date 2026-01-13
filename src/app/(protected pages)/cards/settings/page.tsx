@@ -1,9 +1,77 @@
+"use client";
+
+import CardActivateModal from "@/components/Card/CardActivateModal";
+import CardLogisticsModal from "@/components/Card/CardLogisticsModal";
+import CardPinModal from "@/components/Card/CardPinModal";
+import { apiRequest } from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import Spinner from "@/components/ui/Spinner";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+
+type CardItem = {
+  cardId: string;
+  cardNo?: string;
+  cardType?: string;
+  type?: number | string;
+  status?: string;
+  isShip?: number;
+};
+
+type CardListResponse = {
+  code?: number | string;
+  msg?: string;
+  data?: CardItem[];
+};
+
 export default function CardSettingsPage() {
-  const sections = [
-    { title: "Set PIN", description: "Create or update your card PIN." },
-    { title: "Active card", description: "Activated" },
-    { title: "Logistics", description: "Shipping and delivery status." },
-  ];
+  const searchParams = useSearchParams();
+  const cardId = searchParams.get("card") ?? "";
+  const [cards, setCards] = useState<CardItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [activeModal, setActiveModal] = useState<
+    "pin" | "activate" | "logistics" | null
+  >(null);
+
+  const selectedCard = useMemo(() => {
+    if (!cardId) {
+      return cards[0];
+    }
+    return cards.find((card) => card.cardId === cardId) ?? cards[0];
+  }, [cards, cardId]);
+
+  useEffect(() => {
+    const loadCards = async () => {
+      setLoading(true);
+      setErrorMessage("");
+      try {
+        const response = await apiRequest<CardListResponse>({
+          path: API_ENDPOINTS.cardList,
+          method: "POST",
+          body: JSON.stringify({}),
+        });
+        if (Number(response.code) !== 200) {
+          setErrorMessage(response.msg || "Unable to load card list.");
+          setCards([]);
+          return;
+        }
+        setCards(response.data ?? []);
+      } catch (error) {
+        setCards([]);
+        setErrorMessage(
+          error instanceof Error ? error.message : "Unable to load card list."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+    void loadCards();
+  }, []);
+
+  const maskedNumber = selectedCard?.cardNo ?? "•••• •••• ••••";
+  const cardLabel = selectedCard?.cardType ?? "Card";
+  const isPhysical = Number(selectedCard?.type) === 2;
 
   return (
     <div className="space-y-6">
@@ -19,36 +87,115 @@ export default function CardSettingsPage() {
       <section className="rounded-2xl border border-(--stroke) bg-(--basic-cta) p-6">
         <div className="flex items-center gap-4">
           <div className="grid h-12 w-12 place-items-center rounded-2xl bg-(--background) text-(--foreground)">
-            VC
+            {cardLabel.slice(0, 2).toUpperCase()}
           </div>
           <div>
             <div className="text-sm font-semibold text-(--foreground)">
-              Vtron Visa
+              {cardLabel}
             </div>
-            <div className="text-xs text-(--paragraph)">•••• 3909</div>
+            <div className="text-xs text-(--paragraph)">{maskedNumber}</div>
+            {selectedCard?.status ? (
+              <div className="mt-1 text-[11px] text-(--paragraph)">
+                Status: {selectedCard.status}
+              </div>
+            ) : null}
           </div>
         </div>
+        {loading ? (
+          <p className="mt-4 text-xs text-(--paragraph)">
+            <span className="inline-flex items-center gap-2">
+              <Spinner size={14} />
+              Loading card details...
+            </span>
+          </p>
+        ) : null}
+        {errorMessage ? (
+          <p className="mt-4 text-xs text-(--paragraph)">{errorMessage}</p>
+        ) : null}
+        {selectedCard && !isPhysical ? (
+          <p className="mt-4 text-xs text-(--paragraph)">
+            Card settings are available only for physical cards.
+          </p>
+        ) : null}
       </section>
 
       <section className="space-y-3">
-        {sections.map((section) => (
-          <button
-            key={section.title}
-            type="button"
-            className="flex w-full items-center justify-between rounded-2xl border border-(--stroke) bg-(--basic-cta) px-5 py-4 text-left"
-          >
-            <div>
-              <div className="text-sm font-semibold text-(--double-foreground)">
-                {section.title}
-              </div>
-              <div className="mt-1 text-xs text-(--paragraph)">
-                {section.description}
-              </div>
+        <button
+          type="button"
+          onClick={() => setActiveModal("pin")}
+          className="flex w-full items-center justify-between rounded-2xl border border-(--stroke) bg-(--basic-cta) px-5 py-4 text-left"
+          disabled={!selectedCard || !isPhysical}
+        >
+          <div>
+            <div className="text-sm font-semibold text-(--double-foreground)">
+              Set PIN
             </div>
-            <span className="text-(--paragraph)">›</span>
-          </button>
-        ))}
+            <div className="mt-1 text-xs text-(--paragraph)">
+              Create or update your card PIN.
+            </div>
+          </div>
+          <span className="text-(--paragraph)">›</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveModal("activate")}
+          className="flex w-full items-center justify-between rounded-2xl border border-(--stroke) bg-(--basic-cta) px-5 py-4 text-left"
+          disabled={!selectedCard || !isPhysical}
+        >
+          <div>
+            <div className="text-sm font-semibold text-(--double-foreground)">
+              Activate card
+            </div>
+            <div className="mt-1 text-xs text-(--paragraph)">
+              Enter activation code to enable the physical card.
+            </div>
+          </div>
+          <span className="text-(--paragraph)">›</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveModal("logistics")}
+          className="flex w-full items-center justify-between rounded-2xl border border-(--stroke) bg-(--basic-cta) px-5 py-4 text-left"
+          disabled={!selectedCard || !isPhysical}
+        >
+          <div>
+            <div className="text-sm font-semibold text-(--double-foreground)">
+              Logistics
+            </div>
+            <div className="mt-1 text-xs text-(--paragraph)">
+              Shipping and delivery status.
+            </div>
+          </div>
+          <span className="text-(--paragraph)">›</span>
+        </button>
       </section>
+
+      {selectedCard && isPhysical ? (
+        <>
+          <CardPinModal
+            open={activeModal === "pin"}
+            cardId={selectedCard.cardId}
+            maskedNumber={maskedNumber}
+            onClose={() => setActiveModal(null)}
+            onSuccess={() => setActiveModal(null)}
+          />
+          <CardActivateModal
+            open={activeModal === "activate"}
+            cardId={selectedCard.cardId}
+            maskedNumber={maskedNumber}
+            onClose={() => setActiveModal(null)}
+            onSuccess={() => setActiveModal(null)}
+          />
+          <CardLogisticsModal
+            open={activeModal === "logistics"}
+            cardId={selectedCard.cardId}
+            maskedNumber={maskedNumber}
+            onClose={() => setActiveModal(null)}
+          />
+        </>
+      ) : null}
     </div>
   );
 }
