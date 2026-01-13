@@ -210,7 +210,10 @@ export default function PasskeyPage() {
 
       const publicKey: PublicKeyCredentialCreationOptions = {
         challenge: base64UrlToBuffer(options.challenge),
-        rp: options.rp,
+        rp: {
+          name: options.rp?.name ?? "",
+          id: options.rp?.id,
+        },
         user: {
           id: base64UrlToBuffer(options.user.id),
           name: options.user.name ?? "",
@@ -218,15 +221,27 @@ export default function PasskeyPage() {
         },
         pubKeyCredParams:
           options.pubKeyCredParams?.map((param) => ({
-            type: param.type,
+            type: "public-key",
             alg: param.alg,
           })) ?? [{ type: "public-key", alg: -7 }],
         timeout: options.timeout,
         excludeCredentials: options.excludeCredentials?.map((credential) => ({
-          type: credential.type,
+          type: "public-key",
           id: base64UrlToBuffer(credential.id),
         })),
-        authenticatorSelection: options.authenticatorSelection,
+        authenticatorSelection: options.authenticatorSelection
+          ? {
+              authenticatorAttachment: options.authenticatorSelection.authenticatorAttachment as
+                | AuthenticatorAttachment
+                | undefined,
+              residentKey: options.authenticatorSelection.residentKey as
+                | ResidentKeyRequirement
+                | undefined,
+              userVerification: options.authenticatorSelection.userVerification as
+                | UserVerificationRequirement
+                | undefined,
+            }
+          : undefined,
         attestation: options.attestation as AttestationConveyancePreference | undefined,
       };
 

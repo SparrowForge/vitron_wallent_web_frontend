@@ -1,12 +1,12 @@
-"use client";
-
 import CardHolderForm from "@/components/Card/CardHolderForm";
-import { useSearchParams } from "next/navigation";
 
-export default function CardHolderPage() {
-  const searchParams = useSearchParams();
-  const cardBin = searchParams.get("bin") ?? "";
-  const holderStatus = searchParams.get("status") ?? "";
+type Props = {
+  searchParams?: { bin?: string; status?: string };
+};
+
+export default function CardHolderPage({ searchParams }: Props) {
+  const cardBin = searchParams?.bin ?? "";
+  const holderStatus = searchParams?.status ?? "";
 
   return (
     <div className="space-y-6">
