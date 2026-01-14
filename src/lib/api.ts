@@ -35,34 +35,6 @@ export async function apiRequest<T>({ path, ...init }: ApiOptions): Promise<T> {
     }),
   });
 
-  const data = (await response.json()) as {
-    code?: string;
-    msg?: string;
-    data?: unknown;
-  };
-
-  if (
-    data.code !== undefined &&
-    data.code !== null &&
-    Number(data.code) !== 200 &&
-    !path.startsWith(API_ENDPOINTS.refreshToken)
-  ) {
-    const refreshed = await refreshToken();
-    if (refreshed) {
-      return apiRequest<T>({ path, ...init });
-    }
-  }
-
-  if (!response.ok) {
-    const message = await response.text();
-    if (response.status === 401 && typeof window !== "undefined") {
-      if (window.location.pathname !== "/auth") {
-        window.location.assign("/auth");
-      }
-    }
-    throw new Error(message || `Request failed with ${response.status}`);
-  }
-
   const payload = (await response.json()) as {
     code?: number | string;
     msg?: string;
@@ -71,12 +43,17 @@ export async function apiRequest<T>({ path, ...init }: ApiOptions): Promise<T> {
 
   if (payload && typeof payload === "object" && "code" in payload) {
     const codeValue = Number(payload.code);
+    const isAuthError =
+      !Number.isNaN(codeValue) &&
+      (codeValue === 401 || codeValue === 20008 || codeValue === 20009);
+    if (
+      isAuthError &&
+      !path.startsWith(API_ENDPOINTS.refreshToken) &&
+      (await refreshToken())
+    ) {
+      return apiRequest<T>({ path, ...init });
+    }
     if (!Number.isNaN(codeValue) && codeValue !== 200) {
-      if (codeValue === 401 && typeof window !== "undefined") {
-        if (window.location.pathname !== "/auth") {
-          window.location.assign("/auth");
-        }
-      }
       const error = new Error(
         payload.msg || `Request failed with code ${payload.code}`
       ) as Error & { code?: number | string; data?: unknown };
