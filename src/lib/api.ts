@@ -35,7 +35,16 @@ export async function apiRequest<T>({ path, ...init }: ApiOptions): Promise<T> {
     }),
   });
 
-  if (response.status === 401 && !path.startsWith(API_ENDPOINTS.refreshToken)) {
+  const data = (await response.json()) as {
+    code?: string;
+    msg?: string;
+    data?: unknown;
+  };
+
+  if (
+    (response.status === 401 || data.code == "2009") &&
+    !path.startsWith(API_ENDPOINTS.refreshToken)
+  ) {
     const refreshed = await refreshToken();
     if (refreshed) {
       return apiRequest<T>({ path, ...init });
