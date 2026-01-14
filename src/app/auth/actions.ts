@@ -42,11 +42,27 @@ async function requestJson<T>(path: string, init: RequestInit) {
     } = {
       url,
       method: init.method ?? "GET",
-      headers: {
-        "Content-Type": "application/json",
-        ...(init.headers ?? {}),
-      },
+      headers: { "Content-Type": "application/json" },
     };
+    // Normalize init.headers (HeadersInit) into a plain Record<string, string>
+    if (init.headers) {
+      const target = proxyBody.headers;
+      const h = init.headers as HeadersInit;
+      if (h instanceof Headers) {
+        h.forEach((value, key) => {
+          target[key] = value;
+        });
+      } else if (Array.isArray(h)) {
+        h.forEach(([key, value]) => {
+          target[key] = String(value);
+        });
+      } else {
+        const obj = h as Record<string, string>;
+        Object.keys(obj).forEach((key) => {
+          target[key] = obj[key];
+        });
+      }
+    }
     if (init.body) {
       try {
         proxyBody.data = JSON.parse(init.body as string);

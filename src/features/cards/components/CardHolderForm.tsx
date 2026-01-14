@@ -225,7 +225,7 @@ export default function CardHolderForm({
             body: JSON.stringify({ bin: cardBin }),
           });
           if (Number(detail.code) === 200 && detail.data) {
-            const data = detail.data as Record<string, string>;
+            const data = detail.data as any;
             if (!mounted) {
               return;
             }

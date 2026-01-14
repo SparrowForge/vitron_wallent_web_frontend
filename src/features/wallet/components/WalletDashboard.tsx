@@ -18,6 +18,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Wallet = {
   id: number;
+  name?: string;
   merchantId?: number;
   amount: string;
   frozenAmount: string;
@@ -389,23 +390,23 @@ export default function WalletDashboard() {
       </section>
       <DepositModal
         open={depositOpen}
-        walletName={selectedWallet.name}
+        walletName={selectedWallet.name ?? `${selectedWallet.currency} Wallet`}
         onClose={() => setDepositOpen(false)}
       />
       <SendModal
         open={sendOpen}
-        walletName={selectedWallet.name}
+        walletName={selectedWallet.name ?? `${selectedWallet.currency} Wallet`}
         onSuccess={loadWallets}
         onClose={() => setSendOpen(false)}
       />
       <ReceiveModal
         open={receiveOpen}
-        walletName={selectedWallet.name}
+        walletName={selectedWallet.name ?? `${selectedWallet.currency} Wallet`}
         onClose={() => setReceiveOpen(false)}
       />
       <WithdrawModal
         open={withdrawOpen}
-        walletName={selectedWallet.name}
+        walletName={selectedWallet.name ?? `${selectedWallet.currency} Wallet`}
         onSuccess={loadWallets}
         onClose={() => setWithdrawOpen(false)}
       />

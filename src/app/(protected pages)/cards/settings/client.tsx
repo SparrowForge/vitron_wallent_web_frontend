@@ -1,3 +1,13 @@
+"use client";
+
+import CardActivateModal from "@/components/Card/CardActivateModal";
+import CardLogisticsModal from "@/components/Card/CardLogisticsModal";
+import CardPinModal from "@/components/Card/CardPinModal";
+import { apiRequest } from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import Spinner from "@/components/ui/Spinner";
+import { useEffect, useMemo, useState } from "react";
+
 type CardItem = {
   cardId: string;
   cardNo?: string;
@@ -13,9 +23,7 @@ type CardListResponse = {
   data?: CardItem[];
 };
 
-export default function CardSettingsPage() {
-  const searchParams = useSearchParams();
-  const cardId = searchParams.get("card") ?? "";
+export default function CardSettingsClient({ cardId }: { cardId?: string }) {
   const [cards, setCards] = useState<CardItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -79,14 +87,10 @@ export default function CardSettingsPage() {
             {cardLabel.slice(0, 2).toUpperCase()}
           </div>
           <div>
-            <div className="text-sm font-semibold text-(--foreground)">
-              {cardLabel}
-            </div>
+            <div className="text-sm font-semibold text-(--foreground)">{cardLabel}</div>
             <div className="text-xs text-(--paragraph)">{maskedNumber}</div>
             {selectedCard?.status ? (
-              <div className="mt-1 text-[11px] text-(--paragraph)">
-                Status: {selectedCard.status}
-              </div>
+              <div className="mt-1 text-[11px] text-(--paragraph)">Status: {selectedCard.status}</div>
             ) : null}
           </div>
         </div>
@@ -98,13 +102,9 @@ export default function CardSettingsPage() {
             </span>
           </p>
         ) : null}
-        {errorMessage ? (
-          <p className="mt-4 text-xs text-(--paragraph)">{errorMessage}</p>
-        ) : null}
+        {errorMessage ? <p className="mt-4 text-xs text-(--paragraph)">{errorMessage}</p> : null}
         {selectedCard && !isPhysical ? (
-          <p className="mt-4 text-xs text-(--paragraph)">
-            Card settings are available only for physical cards.
-          </p>
+          <p className="mt-4 text-xs text-(--paragraph)">Card settings are available only for physical cards.</p>
         ) : null}
       </section>
 
@@ -116,12 +116,8 @@ export default function CardSettingsPage() {
           disabled={!selectedCard || !isPhysical}
         >
           <div>
-            <div className="text-sm font-semibold text-(--double-foreground)">
-              Set PIN
-            </div>
-            <div className="mt-1 text-xs text-(--paragraph)">
-              Create or update your card PIN.
-            </div>
+            <div className="text-sm font-semibold text-(--double-foreground)">Set PIN</div>
+            <div className="mt-1 text-xs text-(--paragraph)">Create or update your card PIN.</div>
           </div>
           <span className="text-(--paragraph)">›</span>
         </button>
@@ -133,12 +129,8 @@ export default function CardSettingsPage() {
           disabled={!selectedCard || !isPhysical}
         >
           <div>
-            <div className="text-sm font-semibold text-(--double-foreground)">
-              Activate card
-            </div>
-            <div className="mt-1 text-xs text-(--paragraph)">
-              Enter activation code to enable the physical card.
-            </div>
+            <div className="text-sm font-semibold text-(--double-foreground)">Activate card</div>
+            <div className="mt-1 text-xs text-(--paragraph)">Enter activation code to enable the physical card.</div>
           </div>
           <span className="text-(--paragraph)">›</span>
         </button>
@@ -150,12 +142,8 @@ export default function CardSettingsPage() {
           disabled={!selectedCard || !isPhysical}
         >
           <div>
-            <div className="text-sm font-semibold text-(--double-foreground)">
-              Logistics
-            </div>
-            <div className="mt-1 text-xs text-(--paragraph)">
-              Shipping and delivery status.
-            </div>
+            <div className="text-sm font-semibold text-(--double-foreground)">Logistics</div>
+            <div className="mt-1 text-xs text-(--paragraph)">Shipping and delivery status.</div>
           </div>
           <span className="text-(--paragraph)">›</span>
         </button>
