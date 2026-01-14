@@ -1,5 +1,5 @@
-import DashboardShell from "@/components/Dashboard/DashboardShell";
-import AuthGuard from "@/components/Auth/AuthGuard";
+import DashboardShell from "@/features/dashboard/components/DashboardShell";
+import AuthGuard from "@/features/auth/components/AuthGuard";
 
 export default function ProtectedLayout({
   children,

@@ -1,6 +1,6 @@
 "use client";
 
-import LandingHeader from "@/components/Navigation/LandingHeader";
+import LandingHeader from "@/features/navigation/components/LandingHeader";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";

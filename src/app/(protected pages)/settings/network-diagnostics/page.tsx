@@ -72,14 +72,11 @@ export default function NetworkDiagnosticsPage() {
 
     try {
       const latency = await runTimed(async () => {
-        const response = await apiRequest<ApiResponse>({
+        await apiRequest<ApiResponse>({
           path: API_ENDPOINTS.merchantInfo,
           method: "POST",
           body: JSON.stringify({}),
         });
-        if (Number(response.code) !== 200) {
-          throw new Error(response.msg || "Request failed.");
-        }
       });
       updateItem("merchant", {
         status: "ok",
@@ -95,14 +92,11 @@ export default function NetworkDiagnosticsPage() {
 
     try {
       const latency = await runTimed(async () => {
-        const response = await apiRequest<ApiResponse>({
+        await apiRequest<ApiResponse>({
           path: API_ENDPOINTS.walletList,
           method: "POST",
           body: JSON.stringify({}),
         });
-        if (Number(response.code) !== 200) {
-          throw new Error(response.msg || "Request failed.");
-        }
       });
       updateItem("wallet", {
         status: "ok",

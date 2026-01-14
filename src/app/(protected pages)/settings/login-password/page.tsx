@@ -2,7 +2,8 @@
 
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
-import { passwordSchema } from "@/lib/validation";
+import { loginPasswordSchema } from "@/lib/validationSchemas";
+import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
 
 type MerchantInfoResponse = {
@@ -29,6 +30,8 @@ export default function LoginPasswordPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
 
+  useToastMessages({ errorMessage, infoMessage });
+
   const canSubmit = useMemo(() => {
     if (!password || !confirmPassword || !emailCode) {
       return false;
@@ -47,7 +50,7 @@ export default function LoginPasswordPage() {
           method: "POST",
           body: JSON.stringify({}),
         });
-        if (Number(response.code) === 200 && response.data) {
+        if (response.data) {
           setNeedsGoogle(Number(response.data.googleStatus) === 1);
         }
       } catch {
@@ -80,10 +83,6 @@ export default function LoginPasswordPage() {
         path: `${API_ENDPOINTS.sendVerifyCode}?type=updatePassword`,
         method: "GET",
       });
-      if (Number(response.code) !== 200) {
-        setErrorMessage(response.msg || "Failed to send code.");
-        return;
-      }
       setCooldown(60);
       setInfoMessage("Code sent to your email.");
     } catch (error) {
@@ -98,13 +97,15 @@ export default function LoginPasswordPage() {
   const handleSubmit = async () => {
     setErrorMessage("");
     setInfoMessage("");
-    const passwordCheck = passwordSchema.safeParse(password);
-    if (!passwordCheck.success) {
-      setErrorMessage(passwordCheck.error.message);
-      return;
-    }
-    if (password !== confirmPassword) {
-      setErrorMessage("Passwords do not match.");
+    const validation = loginPasswordSchema.safeParse({
+      password,
+      confirmPassword,
+      emailCode,
+      googleCode: needsGoogle ? googleCode : "",
+    });
+    if (!validation.success) {
+      const issue = validation.error.issues[0];
+      setErrorMessage(issue?.message ?? "Please complete the required fields.");
       return;
     }
     if (!canSubmit) {
@@ -126,10 +127,6 @@ export default function LoginPasswordPage() {
         method: "POST",
         body: JSON.stringify(payload),
       });
-      if (Number(response.code) !== 200) {
-        setErrorMessage(response.msg || "Unable to update password.");
-        return;
-      }
       setInfoMessage("Login password updated.");
       setPassword("");
       setConfirmPassword("");
@@ -227,12 +224,7 @@ export default function LoginPasswordPage() {
         >
           {loading ? "Updating..." : "Update password"}
         </button>
-        {errorMessage ? (
-          <p className="mt-3 text-xs text-(--paragraph)">{errorMessage}</p>
-        ) : null}
-        {infoMessage ? (
-          <p className="mt-2 text-xs text-(--paragraph)">{infoMessage}</p>
-        ) : null}
+        {null}
       </section>
     </div>
   );

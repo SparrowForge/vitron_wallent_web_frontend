@@ -2,6 +2,8 @@
 
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import { transactionPasswordSchema } from "@/lib/validationSchemas";
+import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
 
 type MerchantInfoResponse = {
@@ -33,6 +35,8 @@ export default function TransactionPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
+
+  useToastMessages({ errorMessage, infoMessage });
   const [isPayPasswordSet, setIsPayPasswordSet] = useState(false);
   const [needsGoogle, setNeedsGoogle] = useState(false);
 
@@ -50,7 +54,7 @@ export default function TransactionPasswordPage() {
           method: "POST",
           body: JSON.stringify({}),
         });
-        if (Number(response.code) === 200 && response.data) {
+        if (response.data) {
           setIsPayPasswordSet(Number(response.data.isPayPassword) === 1);
           setNeedsGoogle(Number(response.data.googleStatus) === 1);
         }
@@ -73,20 +77,15 @@ export default function TransactionPasswordPage() {
   }, [cooldown]);
 
   const validate = () => {
-    if (!/^\d{6}$/.test(payPassword)) {
-      setErrorMessage("Transaction password must be 6 digits.");
-      return false;
-    }
-    if (payPassword !== confirmPassword) {
-      setErrorMessage("Passwords do not match.");
-      return false;
-    }
-    if (!emailCode) {
-      setErrorMessage("Email code is required.");
-      return false;
-    }
-    if (needsGoogle && !googleCode) {
-      setErrorMessage("Google code is required.");
+    const validation = transactionPasswordSchema.safeParse({
+      payPassword,
+      confirmPassword,
+      emailCode,
+      googleCode: needsGoogle ? googleCode : "",
+    });
+    if (!validation.success) {
+      const issue = validation.error.issues[0];
+      setErrorMessage(issue?.message ?? "Please complete the required fields.");
       return false;
     }
     return true;
@@ -104,10 +103,6 @@ export default function TransactionPasswordPage() {
         path: `${API_ENDPOINTS.sendVerifyCode}?type=${payPasswordType}`,
         method: "GET",
       });
-      if (Number(response.code) !== 200) {
-        setErrorMessage(response.msg || "Failed to send code.");
-        return;
-      }
       setCooldown(60);
       setInfoMessage("Code sent to your email.");
     } catch (error) {
@@ -140,10 +135,6 @@ export default function TransactionPasswordPage() {
         method: "POST",
         body: JSON.stringify(payload),
       });
-      if (Number(response.code) !== 200) {
-        setErrorMessage(response.msg || "Unable to update password.");
-        return;
-      }
       setInfoMessage(
         isPayPasswordSet
           ? "Transaction password updated."
@@ -241,12 +232,7 @@ export default function TransactionPasswordPage() {
           {loading ? "Saving..." : "Save"}
         </button>
 
-        {errorMessage ? (
-          <p className="mt-3 text-xs text-(--paragraph)">{errorMessage}</p>
-        ) : null}
-        {infoMessage ? (
-          <p className="mt-2 text-xs text-(--paragraph)">{infoMessage}</p>
-        ) : null}
+        {null}
       </section>
     </div>
   );

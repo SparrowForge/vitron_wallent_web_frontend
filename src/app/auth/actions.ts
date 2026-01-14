@@ -31,8 +31,7 @@ async function requestJson<T>(path: string, init: RequestInit) {
   const headerList = await headers();
   const host = headerList.get("x-forwarded-host") ?? headerList.get("host");
   const proto = headerList.get("x-forwarded-proto") ?? "http";
-  const baseUrl =
-    host ? `${proto}://${host}` : "http://localhost:3000";
+  const baseUrl = host ? `${proto}://${host}` : "http://localhost:3000";
   let response: Response;
   try {
     const proxyBody: {
@@ -92,24 +91,34 @@ async function requestJson<T>(path: string, init: RequestInit) {
         body: isHtml ? "<html response>" : text.slice(0, 2000),
       });
     }
-    return { msg: message, code: response.status } as unknown as T;
+    const error = new Error(message || `Request failed with ${response.status}`) as Error & {
+      code?: number | string;
+      data?: unknown;
+    };
+    error.code = response.status;
+    throw error;
   }
 
-  return (await response.json()) as T;
-}
-
-function assertOk(response: LoginResponse) {
+  const payload = (await response.json()) as {
+    code?: number | string;
+    msg?: string;
+    data?: unknown;
+  };
   if (process.env.NODE_ENV !== "production") {
-    console.log("API Response:", response);
+    console.log("API Response:", payload);
   }
-  if (
-    response.code !== undefined &&
-    response.code !== null &&
-    Number(response.code) !== 200 &&
-    response.code !== "200"
-  ) {
-    throw new Error(response.msg || "Request failed.");
+  if (payload && typeof payload === "object" && "code" in payload) {
+    const codeValue = Number(payload.code);
+    if (!Number.isNaN(codeValue) && codeValue !== 200) {
+      const error = new Error(
+        payload.msg || `Request failed with code ${payload.code}`
+      ) as Error & { code?: number | string; data?: unknown };
+      error.code = payload.code;
+      error.data = payload.data;
+      throw error;
+    }
   }
+  return payload as T;
 }
 
 function sanitizeHeaders(headers: Headers) {
@@ -133,7 +142,6 @@ export async function sendLoginCodeAction(email: string, type = "login") {
       method: "GET",
     }
   );
-  assertOk(response);
   return response;
 }
 
@@ -147,7 +155,6 @@ export async function loginWithPasswordAndCodeAction(
       authType: "password",
     }),
   });
-  assertOk(response);
   return response;
 }
 
@@ -160,7 +167,6 @@ export async function sendRegisterCodeAction(email: string) {
       method: "GET",
     }
   );
-  assertOk(response);
   return response;
 }
 
@@ -172,6 +178,5 @@ export async function registerWithPasswordAction(params: RegisterParams) {
       registerType: "app",
     }),
   });
-  assertOk(response);
   return response;
 }

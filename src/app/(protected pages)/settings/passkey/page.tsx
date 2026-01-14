@@ -2,6 +2,7 @@
 
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
 
 type PasskeyListResponse = {
@@ -87,6 +88,8 @@ export default function PasskeyPage() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
+
+  useToastMessages({ errorMessage, infoMessage });
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -107,10 +110,6 @@ export default function PasskeyPage() {
         method: "POST",
         body: JSON.stringify({}),
       });
-      if (Number(response.code) !== 200) {
-        setErrorMessage(response.msg || "Unable to load passkey.");
-        return;
-      }
       setPasskey(response.data ?? null);
     } catch (error) {
       setErrorMessage(
@@ -129,7 +128,7 @@ export default function PasskeyPage() {
           method: "POST",
           body: JSON.stringify({}),
         });
-        if (Number(response.code) === 200 && response.data) {
+        if (response.data) {
           setNeedsGoogle(Number(response.data.googleStatus) === 1);
         }
       } catch {
@@ -162,10 +161,6 @@ export default function PasskeyPage() {
         path: `${API_ENDPOINTS.sendVerifyCode}?type=${type}`,
         method: "GET",
       });
-      if (Number(response.code) !== 200) {
-        setErrorMessage(response.msg || "Failed to send code.");
-        return;
-      }
       setCooldown(60);
       setInfoMessage("Code sent to your email.");
     } catch (error) {
@@ -197,7 +192,7 @@ export default function PasskeyPage() {
         method: "POST",
         body: JSON.stringify(payload),
       });
-      if (Number(startResponse.code) !== 200 || !startResponse.data) {
+      if (!startResponse.data) {
         setErrorMessage(startResponse.msg || "Unable to start passkey registration.");
         return;
       }
@@ -258,10 +253,6 @@ export default function PasskeyPage() {
         method: "POST",
         body: JSON.stringify(finishPayload),
       });
-      if (Number(finishResponse.code) !== 200) {
-        setErrorMessage(finishResponse.msg || "Unable to finish registration.");
-        return;
-      }
       setInfoMessage("Passkey added.");
       setEmailCode("");
       setGoogleCode("");
@@ -289,10 +280,6 @@ export default function PasskeyPage() {
         method: "POST",
         body: JSON.stringify({ displayName: renameValue }),
       });
-      if (Number(response.code) !== 200) {
-        setErrorMessage(response.msg || "Rename failed.");
-        return;
-      }
       setInfoMessage("Passkey renamed.");
       setRenameOpen(false);
       setRenameValue("");
@@ -326,10 +313,6 @@ export default function PasskeyPage() {
         method: "POST",
         body: JSON.stringify(payload),
       });
-      if (Number(response.code) !== 200) {
-        setErrorMessage(response.msg || "Delete failed.");
-        return;
-      }
       setInfoMessage("Passkey deleted.");
       setDeleteOpen(false);
       setEmailCode("");
@@ -502,12 +485,7 @@ export default function PasskeyPage() {
           </div>
         ) : null}
 
-        {errorMessage ? (
-          <p className="mt-4 text-xs text-(--paragraph)">{errorMessage}</p>
-        ) : null}
-        {infoMessage ? (
-          <p className="mt-2 text-xs text-(--paragraph)">{infoMessage}</p>
-        ) : null}
+        {null}
       </section>
     </div>
   );

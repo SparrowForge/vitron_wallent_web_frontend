@@ -2,7 +2,8 @@
 
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
-import Spinner from "@/components/ui/Spinner";
+import Spinner from "@/shared/components/ui/Spinner";
+import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { Copy, SlidersHorizontal } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -54,6 +55,8 @@ export default function NoticePage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
 
+  useToastMessages({ errorMessage, infoMessage });
+
   const hasMore = useMemo(() => {
     return items.length < total;
   }, [items.length, total]);
@@ -71,10 +74,6 @@ export default function NoticePage() {
           type: filterType || undefined,
         }),
       });
-      if (Number(response.code) !== 200) {
-        setErrorMessage(response.msg || "Unable to load notices.");
-        return;
-      }
       const records = response.data?.records ?? [];
       setTotal(response.data?.total ?? 0);
       setItems((prev) => (replace ? records : [...prev, ...records]));
@@ -256,12 +255,7 @@ export default function NoticePage() {
             </button>
           ) : null}
         </div>
-        {errorMessage ? (
-          <p className="mt-4 text-xs text-(--paragraph)">{errorMessage}</p>
-        ) : null}
-        {infoMessage ? (
-          <p className="mt-2 text-xs text-(--paragraph)">{infoMessage}</p>
-        ) : null}
+        {null}
       </section>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
-import DataTable, { type DataTableColumn } from "@/components/DataTable";
-import Spinner from "@/components/ui/Spinner";
+import DataTable, { type DataTableColumn } from "@/shared/components/DataTable";
+import Spinner from "@/shared/components/ui/Spinner";
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { useEffect, useMemo, useState } from "react";
@@ -84,11 +84,7 @@ export default function DashboardPage() {
           method: "POST",
           body: JSON.stringify({}),
         });
-        if (Number(response.code) === 200 && response.data) {
-          setWallets(response.data);
-        } else {
-          setWallets([]);
-        }
+        setWallets(response.data ?? []);
       } catch {
         setWallets([]);
       } finally {
@@ -112,7 +108,7 @@ export default function DashboardPage() {
             pageSize: 10,
           }),
         });
-        if (Number(response.code) !== 200 || !response.data) {
+        if (!response.data) {
           setTransactions([]);
           setTransactionPages(1);
           setTransactionError(response.msg || "Unable to load transactions.");

@@ -47,7 +47,25 @@ export async function apiRequest<T>({ path, ...init }: ApiOptions): Promise<T> {
     throw new Error(message || `Request failed with ${response.status}`);
   }
 
-  return (await response.json()) as T;
+  const payload = (await response.json()) as {
+    code?: number | string;
+    msg?: string;
+    data?: unknown;
+  };
+
+  if (payload && typeof payload === "object" && "code" in payload) {
+    const codeValue = Number(payload.code);
+    if (!Number.isNaN(codeValue) && codeValue !== 200) {
+      const error = new Error(
+        payload.msg || `Request failed with code ${payload.code}`
+      ) as Error & { code?: number | string; data?: unknown };
+      error.code = payload.code;
+      error.data = payload.data;
+      throw error;
+    }
+  }
+
+  return payload as T;
 }
 
 export function apiGet<T>(path: string, init?: RequestInit) {

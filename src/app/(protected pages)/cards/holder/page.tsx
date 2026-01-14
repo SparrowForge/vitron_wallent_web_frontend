@@ -1,6 +1,6 @@
 "use client";
 
-import CardHolderForm from "@/components/Card/CardHolderForm";
+import CardHolderForm from "@/features/cards/components/CardHolderForm";
 import { useSearchParams } from "next/navigation";
 
 export default function CardHolderPage() {

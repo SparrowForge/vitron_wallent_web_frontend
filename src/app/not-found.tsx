@@ -1,4 +1,4 @@
-import ComingSoonBanner from "@/components/ComingSoonBanner";
+import ComingSoonBanner from "@/shared/components/ComingSoonBanner";
 
 export default function NotFound() {
   return (

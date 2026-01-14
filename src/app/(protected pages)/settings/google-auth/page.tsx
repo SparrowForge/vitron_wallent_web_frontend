@@ -2,6 +2,8 @@
 
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import { googleAuthSchema } from "@/lib/validationSchemas";
+import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
 
 type MerchantInfoResponse = {
@@ -41,6 +43,8 @@ export default function GoogleAuthPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
 
+  useToastMessages({ errorMessage, infoMessage });
+
   const needsQr = mode === "bind" || mode === "reset";
   const sendType = useMemo(() => {
     if (mode === "bind") return "bindGoogle";
@@ -57,7 +61,7 @@ export default function GoogleAuthPage() {
           method: "POST",
           body: JSON.stringify({}),
         });
-        if (Number(response.code) === 200 && response.data) {
+        if (response.data) {
           const statusValue = Number(response.data.googleStatus ?? 2);
           setGoogleStatus(statusValue);
           setEmail(response.data.email ?? "");
@@ -91,7 +95,7 @@ export default function GoogleAuthPage() {
         path: API_ENDPOINTS.googleQrCode,
         method: "GET",
       });
-        if (Number(response.code) !== 200 || !response.data) {
+        if (!response.data) {
           setErrorMessage(response.msg || "Unable to load QR code.");
           return;
         }
@@ -131,10 +135,6 @@ export default function GoogleAuthPage() {
         path: `${API_ENDPOINTS.sendVerifyCode}?type=${sendType}`,
         method: "GET",
       });
-      if (Number(response.code) !== 200) {
-        setErrorMessage(response.msg || "Failed to send code.");
-        return;
-      }
       setCooldown(60);
       setInfoMessage(`Code sent to ${email || "your email"}.`);
     } catch (error) {
@@ -149,8 +149,14 @@ export default function GoogleAuthPage() {
   const handleSubmit = async () => {
     setErrorMessage("");
     setInfoMessage("");
-    if (!emailCode || !googleCode) {
-      setErrorMessage("Email and Google codes are required.");
+    const validation = googleAuthSchema.safeParse({
+      emailCode,
+      googleCode,
+      secret,
+    });
+    if (!validation.success) {
+      const issue = validation.error.issues[0];
+      setErrorMessage(issue?.message ?? "Please complete the required fields.");
       return;
     }
     if (needsQr && !secret) {
@@ -180,10 +186,6 @@ export default function GoogleAuthPage() {
         method: "POST",
         body: JSON.stringify(payload),
       });
-      if (Number(response.code) !== 200) {
-        setErrorMessage(response.msg || "Unable to update Google Auth.");
-        return;
-      }
       setInfoMessage("Google Authenticator updated.");
       const nextStatus =
         mode === "close" ? 0 : 1;
@@ -347,12 +349,7 @@ export default function GoogleAuthPage() {
         >
           {loading ? "Saving..." : "Submit"}
         </button>
-        {errorMessage ? (
-          <p className="mt-3 text-xs text-(--paragraph)">{errorMessage}</p>
-        ) : null}
-        {infoMessage ? (
-          <p className="mt-2 text-xs text-(--paragraph)">{infoMessage}</p>
-        ) : null}
+        {null}
       </section>
     </div>
   );

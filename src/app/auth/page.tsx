@@ -6,16 +6,17 @@ import {
   sendLoginCodeAction,
   sendRegisterCodeAction,
 } from "@/app/auth/actions";
-import LandingHeader from "@/components/Navigation/LandingHeader";
-import Spinner from "@/components/ui/Spinner";
+import LandingHeader from "@/features/navigation/components/LandingHeader";
+import Spinner from "@/shared/components/ui/Spinner";
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { persistTokens } from "@/lib/auth";
+import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import {
   loginCredentialsSchema,
   loginVerifySchema,
   registerSchema,
-} from "@/lib/validation";
+} from "@/lib/validationSchemas";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -31,6 +32,8 @@ export default function AuthPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
   const [cooldown, setCooldown] = useState(0);
+
+  useToastMessages({ errorMessage, infoMessage });
 
   const base64UrlToBuffer = (value: string) => {
     const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
@@ -426,16 +429,7 @@ export default function AuthPage() {
             </button>
           ) : null}
 
-          {status === "error" ? (
-            <div className="mt-4 rounded-lg border border-(--stroke) bg-(--background) px-3 py-2 text-xs text-(--paragraph)">
-              {errorMessage}
-            </div>
-          ) : null}
-          {infoMessage ? (
-            <div className="mt-3 rounded-lg border border-(--stroke) bg-(--background) px-3 py-2 text-xs text-(--paragraph)">
-              {infoMessage}
-            </div>
-          ) : null}
+          {null}
 
           <div className="mt-6 text-center text-sm text-(--paragraph)">
             <span>

@@ -3,7 +3,9 @@
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { clearAuthTokens } from "@/lib/auth";
-import { emailSchema, passwordSchema } from "@/lib/validation";
+import { emailSchema } from "@/lib/validationSchemas";
+import { modifyEmailSchema } from "@/lib/validationSchemas";
+import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -34,6 +36,8 @@ export default function ModifyEmailPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
 
+  useToastMessages({ errorMessage, infoMessage });
+
   const canSubmit = useMemo(() => {
     if (!newEmail || !password || !emailCode) {
       return false;
@@ -52,7 +56,7 @@ export default function ModifyEmailPage() {
           method: "POST",
           body: JSON.stringify({}),
         });
-        if (Number(response.code) === 200 && response.data) {
+        if (response.data) {
           setCurrentEmail(response.data.email ?? "");
           setNeedsGoogle(Number(response.data.googleStatus) === 1);
         }
@@ -94,10 +98,6 @@ export default function ModifyEmailPage() {
         method: "POST",
         body: JSON.stringify({ email: newEmail, type: "changeEmail" }),
       });
-      if (Number(response.code) !== 200) {
-        setErrorMessage(response.msg || "Failed to send code.");
-        return;
-      }
       setCooldown(60);
       setInfoMessage("Code sent to your new email.");
     } catch (error) {
@@ -112,14 +112,20 @@ export default function ModifyEmailPage() {
   const handleSubmit = async () => {
     setErrorMessage("");
     setInfoMessage("");
+    const validation = modifyEmailSchema.safeParse({
+      newEmail,
+      password,
+      emailCode,
+      googleCode: needsGoogle ? googleCode : "",
+    });
+    if (!validation.success) {
+      const issue = validation.error.issues[0];
+      setErrorMessage(issue?.message ?? "Please complete the required fields.");
+      return;
+    }
     const emailCheck = emailSchema.safeParse(newEmail);
     if (!emailCheck.success) {
       setErrorMessage(emailCheck.error.message);
-      return;
-    }
-    const passwordCheck = passwordSchema.safeParse(password);
-    if (!passwordCheck.success) {
-      setErrorMessage(passwordCheck.error.message);
       return;
     }
     if (!canSubmit) {
@@ -142,10 +148,6 @@ export default function ModifyEmailPage() {
         method: "POST",
         body: JSON.stringify(payload),
       });
-      if (Number(response.code) !== 200) {
-        setErrorMessage(response.msg || "Unable to update email.");
-        return;
-      }
       setInfoMessage("Email updated. Please log in again.");
       clearAuthTokens();
       router.replace("/auth");
@@ -240,12 +242,7 @@ export default function ModifyEmailPage() {
         >
           {loading ? "Updating..." : "Update email"}
         </button>
-        {errorMessage ? (
-          <p className="mt-3 text-xs text-(--paragraph)">{errorMessage}</p>
-        ) : null}
-        {infoMessage ? (
-          <p className="mt-2 text-xs text-(--paragraph)">{infoMessage}</p>
-        ) : null}
+        {null}
       </section>
     </div>
   );

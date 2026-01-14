@@ -1,4 +1,4 @@
-import DataTable, { type DataTableColumn } from "@/components/DataTable";
+import DataTable, { type DataTableColumn } from "@/shared/components/DataTable";
 
 type TransactionRow = {
   name: string;

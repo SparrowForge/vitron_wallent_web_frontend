@@ -1,11 +1,12 @@
 "use client";
 
-import CardActivateModal from "@/components/Card/CardActivateModal";
-import CardLogisticsModal from "@/components/Card/CardLogisticsModal";
-import CardPinModal from "@/components/Card/CardPinModal";
+import CardActivateModal from "@/features/cards/components/CardActivateModal";
+import CardLogisticsModal from "@/features/cards/components/CardLogisticsModal";
+import CardPinModal from "@/features/cards/components/CardPinModal";
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
-import Spinner from "@/components/ui/Spinner";
+import Spinner from "@/shared/components/ui/Spinner";
+import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -34,6 +35,8 @@ export default function CardSettingsPage() {
     "pin" | "activate" | "logistics" | null
   >(null);
 
+  useToastMessages({ errorMessage });
+
   const selectedCard = useMemo(() => {
     if (!cardId) {
       return cards[0];
@@ -51,11 +54,6 @@ export default function CardSettingsPage() {
           method: "POST",
           body: JSON.stringify({}),
         });
-        if (Number(response.code) !== 200) {
-          setErrorMessage(response.msg || "Unable to load card list.");
-          setCards([]);
-          return;
-        }
         setCards(response.data ?? []);
       } catch (error) {
         setCards([]);
@@ -109,9 +107,7 @@ export default function CardSettingsPage() {
             </span>
           </p>
         ) : null}
-        {errorMessage ? (
-          <p className="mt-4 text-xs text-(--paragraph)">{errorMessage}</p>
-        ) : null}
+        {null}
         {selectedCard && !isPhysical ? (
           <p className="mt-4 text-xs text-(--paragraph)">
             Card settings are available only for physical cards.

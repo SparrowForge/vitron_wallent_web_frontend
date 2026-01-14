@@ -1,4 +1,4 @@
-import AuthenticationForm from "@/components/Authentication/AuthenticationForm";
+import AuthenticationForm from "@/features/kyc/components/AuthenticationForm";
 
 export default function AuthenticationPage() {
   return (
