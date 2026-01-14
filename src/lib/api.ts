@@ -42,7 +42,9 @@ export async function apiRequest<T>({ path, ...init }: ApiOptions): Promise<T> {
   };
 
   if (
-    (response.status === 401 || data.code == "2009") &&
+    data.code !== undefined &&
+    data.code !== null &&
+    Number(data.code) !== 200 &&
     !path.startsWith(API_ENDPOINTS.refreshToken)
   ) {
     const refreshed = await refreshToken();
