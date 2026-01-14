@@ -1,14 +1,12 @@
-"use client";
-
 import CardHolderForm from "@/features/cards/components/CardHolderForm";
 
 type Props = {
   searchParams?: { bin?: string; status?: string };
 };
 
-export default function CardHolderPage({ searchParams }: Props) {
-  const cardBin = searchParams?.bin ?? "";
-  const holderStatus = searchParams?.status ?? "";
+export default async function CardHolderPage({ searchParams }: Props) {
+  const cardBin = (await searchParams)?.bin ?? "";
+  const holderStatus = (await searchParams)?.status ?? "";
 
   return (
     <div className="space-y-6">

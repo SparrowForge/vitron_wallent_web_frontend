@@ -1,3 +1,15 @@
+"use client";
+
+import CardActivateModal from "@/features/cards/components/CardActivateModal";
+import CardLogisticsModal from "@/features/cards/components/CardLogisticsModal";
+import CardPinModal from "@/features/cards/components/CardPinModal";
+import { apiRequest } from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import Spinner from "@/shared/components/ui/Spinner";
+import { useToastMessages } from "@/shared/hooks/useToastMessages";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
+
 type CardItem = {
   cardId: string;
   cardNo?: string;
@@ -13,15 +25,17 @@ type CardListResponse = {
   data?: CardItem[];
 };
 
-export default function CardSettingsPage() {
-  const searchParams = useSearchParams();
-  const cardId = searchParams.get("card") ?? "";
+export function CardSettingsPage() {
+  const searchParamsHook = useSearchParams();
+  const cardId = searchParamsHook.get("card") || "";
   const [cards, setCards] = useState<CardItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [activeModal, setActiveModal] = useState<
     "pin" | "activate" | "logistics" | null
   >(null);
+
+  useToastMessages({ errorMessage });
 
   const selectedCard = useMemo(() => {
     if (!cardId) {
@@ -40,11 +54,6 @@ export default function CardSettingsPage() {
           method: "POST",
           body: JSON.stringify({}),
         });
-        if (Number(response.code) !== 200) {
-          setErrorMessage(response.msg || "Unable to load card list.");
-          setCards([]);
-          return;
-        }
         setCards(response.data ?? []);
       } catch (error) {
         setCards([]);
@@ -98,9 +107,7 @@ export default function CardSettingsPage() {
             </span>
           </p>
         ) : null}
-        {errorMessage ? (
-          <p className="mt-4 text-xs text-(--paragraph)">{errorMessage}</p>
-        ) : null}
+        {null}
         {selectedCard && !isPhysical ? (
           <p className="mt-4 text-xs text-(--paragraph)">
             Card settings are available only for physical cards.
@@ -186,5 +193,13 @@ export default function CardSettingsPage() {
         </>
       ) : null}
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<Spinner />}>
+      <CardSettingsPage />
+    </Suspense>
   );
 }

@@ -130,7 +130,9 @@ export default function Sidebar({
             <span className="grid h-8 w-8 place-items-center rounded-lg border border-(--stroke) bg-(--basic-cta) text-(--icon-color)">
               <Settings className="h-4 w-4" />
             </span>
-            <span className={isCollapsed ? "lg:hidden" : ""}>Settings</span>
+            <span className={isCollapsed ? "lg:hidden" : ""}>
+              Settings v1.0.2
+            </span>
           </Link>
           <button
             type="button"
