@@ -18,25 +18,25 @@ export function useToastMessages({
 }: ToastMessagesOptions) {
   useEffect(() => {
     if (errorMessage) {
-      toast.error(errorMessage);
+      toast.error(errorMessage, { toastId: "toast-error" });
     }
   }, [errorMessage]);
 
   useEffect(() => {
     if (warningMessage) {
-      toast.warning(warningMessage);
+      toast.warning(warningMessage, { toastId: "toast-warning" });
     }
   }, [warningMessage]);
 
   useEffect(() => {
     if (successMessage) {
-      toast.success(successMessage);
+      toast.success(successMessage, { toastId: "toast-success" });
     }
   }, [successMessage]);
 
   useEffect(() => {
     if (infoMessage) {
-      toast.success(infoMessage);
+      toast.success(infoMessage, { toastId: "toast-info" });
     }
   }, [infoMessage]);
 }

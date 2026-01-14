@@ -44,6 +44,11 @@ export async function apiRequest<T>({ path, ...init }: ApiOptions): Promise<T> {
 
   if (!response.ok) {
     const message = await response.text();
+    if (response.status === 401 && typeof window !== "undefined") {
+      if (window.location.pathname !== "/auth") {
+        window.location.assign("/auth");
+      }
+    }
     throw new Error(message || `Request failed with ${response.status}`);
   }
 
@@ -56,6 +61,11 @@ export async function apiRequest<T>({ path, ...init }: ApiOptions): Promise<T> {
   if (payload && typeof payload === "object" && "code" in payload) {
     const codeValue = Number(payload.code);
     if (!Number.isNaN(codeValue) && codeValue !== 200) {
+      if (codeValue === 401 && typeof window !== "undefined") {
+        if (window.location.pathname !== "/auth") {
+          window.location.assign("/auth");
+        }
+      }
       const error = new Error(
         payload.msg || `Request failed with code ${payload.code}`
       ) as Error & { code?: number | string; data?: unknown };
