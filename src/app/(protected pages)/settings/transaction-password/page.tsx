@@ -31,6 +31,7 @@ export default function TransactionPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [emailCode, setEmailCode] = useState("");
   const [googleCode, setGoogleCode] = useState("");
+  const [verifyType, setVerifyType] = useState<"email" | "google">("email");
   const [cooldown, setCooldown] = useState(0);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -57,6 +58,9 @@ export default function TransactionPasswordPage() {
         if (response.data) {
           setIsPayPasswordSet(Number(response.data.isPayPassword) === 1);
           setNeedsGoogle(Number(response.data.googleStatus) === 1);
+          if (Number(response.data.googleStatus) !== 1) {
+            setVerifyType("email");
+          }
         }
       } finally {
         setLoading(false);
@@ -80,8 +84,8 @@ export default function TransactionPasswordPage() {
     const validation = transactionPasswordSchema.safeParse({
       payPassword,
       confirmPassword,
-      emailCode,
-      googleCode: needsGoogle ? googleCode : "",
+      emailCode: verifyType === "email" ? emailCode : "",
+      googleCode: verifyType === "google" ? googleCode : "",
     });
     if (!validation.success) {
       const issue = validation.error.issues[0];
@@ -124,10 +128,11 @@ export default function TransactionPasswordPage() {
     try {
       const payload: Record<string, string> = {
         type: payPasswordType,
-        code: emailCode,
         payPassword,
       };
-      if (needsGoogle) {
+      if (verifyType === "email") {
+        payload.code = emailCode;
+      } else {
         payload.googleCode = googleCode;
       }
       const response = await apiRequest<UpdatePasswordResponse>({
@@ -193,25 +198,50 @@ export default function TransactionPasswordPage() {
           </label>
 
           <label className="space-y-2 text-sm font-medium text-(--paragraph)">
-            Email code
-            <div className="flex items-center gap-3">
+            Verification method
+            <div className="flex items-center gap-4 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--foreground)">
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  checked={verifyType === "email"}
+                  onChange={() => setVerifyType("email")}
+                />
+                Email code
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  checked={verifyType === "google"}
+                  onChange={() => setVerifyType("google")}
+                  disabled={!needsGoogle}
+                />
+                Google code
+              </label>
+            </div>
+          </label>
+
+          {verifyType === "email" ? (
+            <label className="space-y-2 text-sm font-medium text-(--paragraph)">
+              <span className="flex items-center justify-between">
+                Email code
+                <button
+                  type="button"
+                  onClick={handleSendCode}
+                  disabled={cooldown > 0 || loading}
+                  className="text-xs font-semibold text-(--foreground)"
+                >
+                  {cooldown > 0 ? `${cooldown}s` : "Send code"}
+                </button>
+              </span>
               <input
                 className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
                 value={emailCode}
                 onChange={(event) => setEmailCode(event.target.value)}
               />
-              <button
-                type="button"
-                onClick={handleSendCode}
-                disabled={cooldown > 0 || loading}
-                className="h-12 min-w-[120px] rounded-2xl border border-(--stroke) bg-(--background) px-4 text-xs font-semibold text-(--foreground)"
-              >
-                {cooldown > 0 ? `${cooldown}s` : "Send code"}
-              </button>
-            </div>
-          </label>
+            </label>
+          ) : null}
 
-          {needsGoogle ? (
+          {verifyType === "google" ? (
             <label className="space-y-2 text-sm font-medium text-(--paragraph)">
               Google code
               <input

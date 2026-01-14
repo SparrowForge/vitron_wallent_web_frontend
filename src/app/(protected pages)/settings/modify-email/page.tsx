@@ -30,6 +30,7 @@ export default function ModifyEmailPage() {
   const [password, setPassword] = useState("");
   const [emailCode, setEmailCode] = useState("");
   const [googleCode, setGoogleCode] = useState("");
+  const [verifyType, setVerifyType] = useState<"email" | "google">("email");
   const [needsGoogle, setNeedsGoogle] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -39,14 +40,17 @@ export default function ModifyEmailPage() {
   useToastMessages({ errorMessage, infoMessage });
 
   const canSubmit = useMemo(() => {
-    if (!newEmail || !password || !emailCode) {
+    if (!newEmail || !password) {
       return false;
     }
-    if (needsGoogle && !googleCode) {
+    if (verifyType === "email" && !emailCode) {
+      return false;
+    }
+    if (verifyType === "google" && !googleCode) {
       return false;
     }
     return true;
-  }, [newEmail, password, emailCode, needsGoogle, googleCode]);
+  }, [newEmail, password, emailCode, googleCode, verifyType]);
 
   useEffect(() => {
     const loadInfo = async () => {
@@ -59,6 +63,9 @@ export default function ModifyEmailPage() {
         if (response.data) {
           setCurrentEmail(response.data.email ?? "");
           setNeedsGoogle(Number(response.data.googleStatus) === 1);
+          if (Number(response.data.googleStatus) !== 1) {
+            setVerifyType("email");
+          }
         }
       } catch {
         return;
@@ -115,8 +122,8 @@ export default function ModifyEmailPage() {
     const validation = modifyEmailSchema.safeParse({
       newEmail,
       password,
-      emailCode,
-      googleCode: needsGoogle ? googleCode : "",
+      emailCode: verifyType === "email" ? emailCode : "",
+      googleCode: verifyType === "google" ? googleCode : "",
     });
     if (!validation.success) {
       const issue = validation.error.issues[0];
@@ -137,10 +144,11 @@ export default function ModifyEmailPage() {
       const payload: Record<string, string> = {
         email: newEmail,
         type: "changeEmail",
-        code: emailCode,
         password,
       };
-      if (needsGoogle) {
+      if (verifyType === "email") {
+        payload.code = emailCode;
+      } else {
         payload.googleCode = googleCode;
       }
       const response = await apiRequest<ApiResponse>({
@@ -198,26 +206,51 @@ export default function ModifyEmailPage() {
           </label>
 
           <label className="space-y-2 text-sm font-medium text-(--paragraph)">
-            Email code
-            <div className="flex items-center gap-3">
+            Verification method
+            <div className="flex items-center gap-4 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--foreground)">
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  checked={verifyType === "email"}
+                  onChange={() => setVerifyType("email")}
+                />
+                Email code
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  checked={verifyType === "google"}
+                  onChange={() => setVerifyType("google")}
+                  disabled={!needsGoogle}
+                />
+                Google code
+              </label>
+            </div>
+          </label>
+
+          {verifyType === "email" ? (
+            <label className="space-y-2 text-sm font-medium text-(--paragraph)">
+              <span className="flex items-center justify-between">
+                Email code
+                <button
+                  type="button"
+                  onClick={handleSendCode}
+                  className="text-xs font-semibold text-(--foreground)"
+                  disabled={cooldown > 0 || loading}
+                >
+                  {cooldown > 0 ? `${cooldown}s` : "Send code"}
+                </button>
+              </span>
               <input
                 className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
                 placeholder="Enter code"
                 value={emailCode}
                 onChange={(event) => setEmailCode(event.target.value)}
               />
-              <button
-                type="button"
-                onClick={handleSendCode}
-                className="h-12 min-w-[120px] rounded-2xl border border-(--stroke) bg-(--background) px-4 text-xs font-semibold text-(--foreground)"
-                disabled={cooldown > 0 || loading}
-              >
-                {cooldown > 0 ? `${cooldown}s` : "Send code"}
-              </button>
-            </div>
-          </label>
+            </label>
+          ) : null}
 
-          {needsGoogle ? (
+          {verifyType === "google" ? (
             <label className="space-y-2 text-sm font-medium text-(--paragraph)">
               Google code
               <input

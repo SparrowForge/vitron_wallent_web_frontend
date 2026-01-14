@@ -7,16 +7,15 @@ import {
   sendRegisterCodeAction,
 } from "@/app/auth/actions";
 import LandingHeader from "@/features/navigation/components/LandingHeader";
-import Spinner from "@/shared/components/ui/Spinner";
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { persistTokens } from "@/lib/auth";
-import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import {
   loginCredentialsSchema,
-  loginVerifySchema,
   registerSchema,
 } from "@/lib/validationSchemas";
+import Spinner from "@/shared/components/ui/Spinner";
+import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -27,6 +26,7 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [emailCode, setEmailCode] = useState("");
   const [googleCode, setGoogleCode] = useState("");
+  const [verifyType, setVerifyType] = useState<"email" | "google">("email");
   const [step, setStep] = useState<"credentials" | "verify">("credentials");
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -211,26 +211,20 @@ export default function AuthPage() {
             throw new Error(getFirstError(result.error));
           }
           setStep("verify");
-          await sendLoginCodeAction(email, "login");
-          setCooldown(60);
-          setInfoMessage("Verification code sent to your email.");
           setStatus("idle");
           return;
         }
-        const result = loginVerifySchema.safeParse({
-          email,
-          password,
-          emailCode,
-          googleCode,
-        });
-        if (!result.success) {
-          throw new Error(getFirstError(result.error));
+        if (verifyType === "email" && !emailCode) {
+          throw new Error("Email code is required.");
+        }
+        if (verifyType === "google" && !googleCode) {
+          throw new Error("Google code is required.");
         }
         const loginResponse = await loginWithPasswordAndCodeAction({
           username: email,
           password,
-          code: emailCode,
-          googleCode: googleCode || undefined,
+          code: verifyType === "email" ? emailCode : undefined,
+          googleCode: verifyType === "google" ? googleCode : undefined,
         });
         persistTokens(loginResponse.data);
         router.push("/wallet");
@@ -291,6 +285,7 @@ export default function AuthPage() {
     setStep("credentials");
     setEmailCode("");
     setGoogleCode("");
+    setVerifyType("email");
     setErrorMessage("");
     setInfoMessage("");
     setStatus("idle");
@@ -355,45 +350,92 @@ export default function AuthPage() {
 
             {(mode === "register" || step === "verify") && (
               <>
-                <label className="flex flex-col gap-2 text-sm font-medium text-(--foreground)">
-                  Email code
-                  <input
-                    type="text"
-                    placeholder="Enter the code"
-                    className="h-11 rounded-lg border border-(--stroke) bg-(--background) px-3 text-sm"
-                    value={emailCode}
-                    onChange={(event) => setEmailCode(event.target.value)}
-                  />
-                </label>
                 {mode === "login" ? (
+                  <>
+                    <div className="flex items-center gap-4 text-sm font-medium text-(--foreground)">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          checked={verifyType === "email"}
+                          onChange={() => setVerifyType("email")}
+                        />
+                        Email code
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          checked={verifyType === "google"}
+                          onChange={() => setVerifyType("google")}
+                        />
+                        Google code
+                      </label>
+                    </div>
+                    {verifyType === "email" ? (
+                      <label className="flex flex-col gap-2 text-sm font-medium text-(--foreground)">
+                        <span className="flex items-center justify-between">
+                          Email code
+                          <button
+                            type="button"
+                            className="text-xs font-semibold text-(--foreground)"
+                            disabled={
+                              status === "loading" || cooldown > 0 || !email
+                            }
+                            onClick={handleSendCode}
+                          >
+                            {cooldown > 0
+                              ? `Resend in ${cooldown}s`
+                              : "Send code"}
+                          </button>
+                        </span>
+                        <input
+                          type="text"
+                          placeholder="Enter the code"
+                          className="h-11 rounded-lg border border-(--stroke) bg-(--background) px-3 text-sm"
+                          value={emailCode}
+                          onChange={(event) => setEmailCode(event.target.value)}
+                        />
+                      </label>
+                    ) : null}
+                    {verifyType === "google" ? (
+                      <label className="flex flex-col gap-2 text-sm font-medium text-(--foreground)">
+                        Google code
+                        <input
+                          type="text"
+                          placeholder="Enter Google code"
+                          className="h-11 rounded-lg border border-(--stroke) bg-(--background) px-3 text-sm"
+                          value={googleCode}
+                          onChange={(event) =>
+                            setGoogleCode(event.target.value)
+                          }
+                        />
+                      </label>
+                    ) : null}
+                  </>
+                ) : null}
+                {mode === "register" ? (
                   <label className="flex flex-col gap-2 text-sm font-medium text-(--foreground)">
-                    Google code (if enabled)
+                    <span className="flex items-center justify-between">
+                      Email code
+                      <button
+                        type="button"
+                        className="text-xs font-semibold text-(--foreground)"
+                        disabled={
+                          status === "loading" || cooldown > 0 || !email
+                        }
+                        onClick={handleSendCode}
+                      >
+                        {cooldown > 0 ? `Resend in ${cooldown}s` : "Send code"}
+                      </button>
+                    </span>
                     <input
                       type="text"
-                      placeholder="Optional"
+                      placeholder="Enter the code"
                       className="h-11 rounded-lg border border-(--stroke) bg-(--background) px-3 text-sm"
-                      value={googleCode}
-                      onChange={(event) => setGoogleCode(event.target.value)}
+                      value={emailCode}
+                      onChange={(event) => setEmailCode(event.target.value)}
                     />
                   </label>
                 ) : null}
-                <button
-                  type="button"
-                  className="h-11 w-full rounded-lg border border-(--stroke) bg-(--background) text-sm font-semibold text-(--foreground)"
-                  disabled={status === "loading" || cooldown > 0}
-                  onClick={handleSendCode}
-                >
-                  {status === "loading" && cooldown === 0 ? (
-                    <span className="inline-flex items-center justify-center gap-2">
-                      <Spinner size={16} />
-                      Sending...
-                    </span>
-                  ) : cooldown > 0 ? (
-                    `Resend in ${cooldown}s`
-                  ) : (
-                    "Send code"
-                  )}
-                </button>
               </>
             )}
 

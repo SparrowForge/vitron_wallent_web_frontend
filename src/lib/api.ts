@@ -3,6 +3,7 @@ import { clearAuthTokens, persistTokens } from "@/lib/auth";
 
 type ApiOptions = RequestInit & {
   path: string;
+  retryCount?: number;
 };
 
 export async function apiRequest<T>({ path, ...init }: ApiOptions): Promise<T> {
@@ -15,43 +16,67 @@ export async function apiRequest<T>({ path, ...init }: ApiOptions): Promise<T> {
     ...(authHeader ? { Authorization: authHeader } : {}),
     ...(init.headers ?? {}),
   };
-  const targetUrl = path.startsWith("/api/") ? path : `${API_BASE_URL}${path}`;
-  let proxyData: unknown = undefined;
-  if (init.body) {
-    try {
-      proxyData = JSON.parse(init.body as string);
-    } catch {
-      proxyData = init.body;
-    }
-  }
-  const response = await fetch("/api/proxy", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      url: targetUrl,
-      method: init.method ?? "GET",
-      headers,
-      data: proxyData,
-    }),
-  });
+  const isLocalApi = path.startsWith("/api/");
+  const targetUrl = isLocalApi ? path : `${API_BASE_URL}${path}`;
+  let response: Response;
 
-  const payload = (await response.json()) as {
+  if (isLocalApi) {
+    response = await fetch(targetUrl, {
+      ...init,
+      headers,
+    });
+  } else {
+    let proxyData: unknown = undefined;
+    if (init.body) {
+      try {
+        proxyData = JSON.parse(init.body as string);
+      } catch {
+        proxyData = init.body;
+      }
+    }
+    response = await fetch("/api/proxy", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        url: targetUrl,
+        method: init.method ?? "GET",
+        headers,
+        data: proxyData,
+      }),
+    });
+  }
+
+  let payload: {
     code?: number | string;
     msg?: string;
     data?: unknown;
   };
+  const responseClone = response.clone();
+  try {
+    payload = (await response.json()) as {
+      code?: number | string;
+      msg?: string;
+      data?: unknown;
+    };
+  } catch {
+    const text = await responseClone.text();
+    payload = {
+      code: response.ok ? 200 : response.status,
+      msg: text || response.statusText,
+      data: null,
+    };
+  }
 
   if (payload && typeof payload === "object" && "code" in payload) {
     const codeValue = Number(payload.code);
     const isAuthError =
       !Number.isNaN(codeValue) &&
       (codeValue === 401 || codeValue === 20008 || codeValue === 20009);
-    if (
-      isAuthError &&
-      !path.startsWith(API_ENDPOINTS.refreshToken) &&
-      (await refreshToken())
-    ) {
-      return apiRequest<T>({ path, ...init });
+    if (isAuthError && !path.startsWith(API_ENDPOINTS.refreshToken)) {
+      const retryCount = init.retryCount ?? 0;
+      if (retryCount < 2 && (await refreshToken())) {
+        return apiRequest<T>({ path, ...init, retryCount: retryCount + 1 });
+      }
     }
     if (!Number.isNaN(codeValue) && codeValue !== 200) {
       const error = new Error(
@@ -61,6 +86,10 @@ export async function apiRequest<T>({ path, ...init }: ApiOptions): Promise<T> {
       error.data = payload.data;
       throw error;
     }
+  }
+
+  if (!response.ok) {
+    throw new Error(payload.msg || `Request failed with ${response.status}`);
   }
 
   return payload as T;

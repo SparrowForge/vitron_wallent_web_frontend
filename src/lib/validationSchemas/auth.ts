@@ -17,10 +17,15 @@ export const loginCredentialsSchema = z.object({
   password: passwordSchema,
 });
 
-export const loginVerifySchema = loginCredentialsSchema.extend({
-  emailCode: z.string().trim().min(1, "Email code is required."),
-  googleCode: z.string().trim().optional().or(z.literal("")),
-});
+export const loginVerifySchema = loginCredentialsSchema
+  .extend({
+    emailCode: z.string().trim().optional().or(z.literal("")),
+    googleCode: z.string().trim().optional().or(z.literal("")),
+  })
+  .refine((data) => data.emailCode || data.googleCode, {
+    message: "Provide either an email code or a Google code.",
+    path: ["emailCode"],
+  });
 
 export const registerSchema = loginCredentialsSchema.extend({
   emailCode: z.string().trim().min(1, "Email code is required."),

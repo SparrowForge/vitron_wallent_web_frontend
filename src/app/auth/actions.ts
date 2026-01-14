@@ -12,7 +12,7 @@ type RegisterParams = {
 type LoginVerifyParams = {
   username: string;
   password: string;
-  code: string;
+  code?: string;
   googleCode?: string;
 };
 
@@ -107,7 +107,9 @@ async function requestJson<T>(path: string, init: RequestInit) {
         body: isHtml ? "<html response>" : text.slice(0, 2000),
       });
     }
-    const error = new Error(message || `Request failed with ${response.status}`) as Error & {
+    const error = new Error(
+      message || `Request failed with ${response.status}`
+    ) as Error & {
       code?: number | string;
       data?: unknown;
     };
