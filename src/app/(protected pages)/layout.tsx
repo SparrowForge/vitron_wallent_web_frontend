@@ -1,5 +1,5 @@
-import DashboardShell from "@/features/dashboard/components/DashboardShell";
 import AuthGuard from "@/features/auth/components/AuthGuard";
+import DashboardShell from "@/features/dashboard/components/DashboardShell";
 
 export default function ProtectedLayout({
   children,
@@ -7,9 +7,8 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   return (
-    <DashboardShell>
-      <AuthGuard />
-      {children}
-    </DashboardShell>
+    <AuthGuard>
+      <DashboardShell>{children}</DashboardShell>
+    </AuthGuard>
   );
 }

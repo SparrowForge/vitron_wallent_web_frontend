@@ -3,17 +3,9 @@
 import LandingHeader from "@/features/navigation/components/LandingHeader";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 
 export default function LandingPage() {
   const router = useRouter();
-
-  useEffect(() => {
-    const token = localStorage.getItem("vtron_access_token");
-    if (token) {
-      router.replace("/wallet");
-    }
-  }, [router]);
 
   return (
     <div className="flex min-h-screen flex-col">

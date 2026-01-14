@@ -110,16 +110,13 @@ async function refreshToken() {
     }),
   });
 
-  if (!response.ok) {
-    if (response.status === 401) {
-      clearAuthTokens();
-    }
-    return false;
-  }
-
   const data = (await response.json()) as {
     code?: number | string;
-    data?: { token_type?: string; access_token?: string; refresh_token?: string };
+    data?: {
+      token_type?: string;
+      access_token?: string;
+      refresh_token?: string;
+    };
   };
 
   if (
@@ -127,9 +124,7 @@ async function refreshToken() {
     data.code !== null &&
     Number(data.code) !== 200
   ) {
-    if (Number(data.code) === 401) {
-      clearAuthTokens();
-    }
+    clearAuthTokens();
     return false;
   }
 
