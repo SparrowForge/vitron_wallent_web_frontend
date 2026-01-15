@@ -5,16 +5,21 @@ export const emailSchema = z
   .trim()
   .email("Enter a valid email address.");
 
-export const passwordSchema = z
+export const credentialPasswordSchema = z
+  .string()
+  .min(1, "Password is required");
+
+export const strongPasswordSchema = z
   .string()
   .min(8, "Password must be at least 8 characters.")
   .regex(/[A-Z]/, "Password must include an uppercase letter.")
   .regex(/[a-z]/, "Password must include a lowercase letter.")
-  .regex(/\d/, "Password must include a number.");
+  .regex(/\d/, "Password must include a number.")
+  .regex(/[^\w\s]/, "Password must include a special character.");
 
 export const loginCredentialsSchema = z.object({
   email: emailSchema,
-  password: passwordSchema,
+  password: credentialPasswordSchema,
 });
 
 export const loginVerifySchema = loginCredentialsSchema
@@ -28,5 +33,11 @@ export const loginVerifySchema = loginCredentialsSchema
   });
 
 export const registerSchema = loginCredentialsSchema.extend({
+  password: strongPasswordSchema,
+  emailCode: z.string().trim().min(1, "Email code is required."),
+});
+
+export const forgotPasswordSchema = loginCredentialsSchema.extend({
+  password: strongPasswordSchema,
   emailCode: z.string().trim().min(1, "Email code is required."),
 });

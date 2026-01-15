@@ -26,6 +26,12 @@ type LoginResponse = {
   code?: number | string;
 };
 
+type ForgotParams = {
+  username: string;
+  password: string;
+  code: string;
+};
+
 async function requestJson<T>(path: string, init: RequestInit) {
   const url = `${API_BASE_URL}${path}`;
   const headerList = await headers();
@@ -108,7 +114,7 @@ async function requestJson<T>(path: string, init: RequestInit) {
       });
     }
     const error = new Error(
-      message || `Request failed with ${response.status}`
+      `[api] ${message || `Request failed with ${response.status}`}`
     ) as Error & {
       code?: number | string;
       data?: unknown;
@@ -129,7 +135,7 @@ async function requestJson<T>(path: string, init: RequestInit) {
     const codeValue = Number(payload.code);
     if (!Number.isNaN(codeValue) && codeValue !== 200) {
       const error = new Error(
-        payload.msg || `Request failed with code ${payload.code}`
+        `[api] ${payload.msg || `Request failed with code ${payload.code}`}`
       ) as Error & { code?: number | string; data?: unknown };
       error.code = payload.code;
       error.data = payload.data;
@@ -188,6 +194,18 @@ export async function sendRegisterCodeAction(email: string) {
   return response;
 }
 
+export async function sendForgotCodeAction(email: string) {
+  const response = await requestJson<LoginResponse>(
+    `${API_ENDPOINTS.registerSendCode}?email=${encodeURIComponent(
+      email
+    )}&type=reset`,
+    {
+      method: "GET",
+    }
+  );
+  return response;
+}
+
 export async function registerWithPasswordAction(params: RegisterParams) {
   const response = await requestJson<LoginResponse>(API_ENDPOINTS.register, {
     method: "POST",
@@ -196,5 +214,16 @@ export async function registerWithPasswordAction(params: RegisterParams) {
       registerType: "app",
     }),
   });
+  return response;
+}
+
+export async function resetPasswordAction(params: ForgotParams) {
+  const response = await requestJson<LoginResponse>(
+    API_ENDPOINTS.forgetPassword,
+    {
+      method: "POST",
+      body: JSON.stringify(params),
+    }
+  );
   return response;
 }

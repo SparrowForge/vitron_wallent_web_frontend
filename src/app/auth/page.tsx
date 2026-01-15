@@ -3,24 +3,27 @@
 import {
   loginWithPasswordAndCodeAction,
   registerWithPasswordAction,
+  resetPasswordAction,
+  sendForgotCodeAction,
   sendLoginCodeAction,
   sendRegisterCodeAction,
 } from "@/app/auth/actions";
 import LandingHeader from "@/features/navigation/components/LandingHeader";
-import { apiRequest } from "@/lib/api";
-import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { persistTokens } from "@/lib/auth";
 import {
+  emailSchema,
+  forgotPasswordSchema,
   loginCredentialsSchema,
   registerSchema,
 } from "@/lib/validationSchemas";
 import Spinner from "@/shared/components/ui/Spinner";
+import PasswordInput from "@/shared/components/ui/PasswordInput";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function AuthPage() {
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,193 +35,62 @@ export default function AuthPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
   const [cooldown, setCooldown] = useState(0);
+  const [fieldErrors, setFieldErrors] = useState<{
+    email?: string;
+    password?: string;
+    emailCode?: string;
+    googleCode?: string;
+  }>({});
 
   useToastMessages({ errorMessage, infoMessage });
 
-  const base64UrlToBuffer = (value: string) => {
-    const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
-    const padding = base64.length % 4;
-    const padded = padding
-      ? base64.padEnd(base64.length + (4 - padding), "=")
-      : base64;
-    const binary = atob(padded);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i += 1) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-    return bytes.buffer;
-  };
-
-  const bufferToBase64Url = (buffer: ArrayBuffer) => {
-    const bytes = new Uint8Array(buffer);
-    let binary = "";
-    bytes.forEach((byte) => {
-      binary += String.fromCharCode(byte);
-    });
-    return btoa(binary)
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_")
-      .replace(/=+$/, "");
-  };
-
-  const normalizeUserHandle = (handle?: string | null) => {
-    if (!handle) {
-      return undefined;
-    }
-    return handle.replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
-  };
-
-  const handlePasskeyLogin = async () => {
-    if (!email) {
-      setErrorMessage("Enter your email to use passkey login.");
-      return;
-    }
-    if (!window.PublicKeyCredential || !navigator.credentials) {
-      setErrorMessage("Passkey login is not supported on this device.");
-      return;
-    }
-    setStatus("loading");
-    setErrorMessage("");
-    setInfoMessage("");
-    try {
-      const checkResponse = await apiRequest<{
-        code?: number | string;
-        msg?: string;
-        data?: number | string;
-      }>({
-        path: API_ENDPOINTS.passkeyCheck,
-        method: "POST",
-        body: JSON.stringify({ username: email }),
-      });
-      if (Number(checkResponse.code) !== 200) {
-        throw new Error(checkResponse.msg || "Unable to check passkey.");
-      }
-      if (Number(checkResponse.data) !== 1) {
-        throw new Error("Passkey is not enabled for this account.");
-      }
-
-      const startResponse = await apiRequest<{
-        code?: number | string;
-        msg?: string;
-        data?: {
-          assertionId?: string;
-          credentialId?: string;
-          publicKeyCredentialRequestOptions?: {
-            challenge?: string;
-          };
-          assertionRequest?: {
-            userHandle?: string;
-          };
-        };
-      }>({
-        path: API_ENDPOINTS.passkeyLoginStart,
-        method: "POST",
-        body: JSON.stringify({ username: email }),
-      });
-      if (Number(startResponse.code) !== 200 || !startResponse.data) {
-        throw new Error(startResponse.msg || "Unable to start passkey login.");
-      }
-      const challenge =
-        startResponse.data.publicKeyCredentialRequestOptions?.challenge;
-      const credentialId = startResponse.data.credentialId;
-      const assertionId = startResponse.data.assertionId;
-      if (!challenge || !credentialId || !assertionId) {
-        throw new Error("Invalid passkey login response.");
-      }
-
-      const publicKey: PublicKeyCredentialRequestOptions = {
-        challenge: base64UrlToBuffer(challenge),
-        allowCredentials: [
-          {
-            type: "public-key",
-            id: base64UrlToBuffer(credentialId),
-          },
-        ],
-      };
-
-      const credential = (await navigator.credentials.get({
-        publicKey,
-      })) as PublicKeyCredential | null;
-      if (!credential) {
-        throw new Error("Passkey login cancelled.");
-      }
-      const response = credential.response as AuthenticatorAssertionResponse;
-      const userHandle =
-        response.userHandle instanceof ArrayBuffer
-          ? bufferToBase64Url(response.userHandle)
-          : undefined;
-
-      const loginPayload = {
-        authType: "passkey",
-        assertionId,
-        credential: {
-          type: credential.type,
-          id: bufferToBase64Url(credential.rawId),
-          rawId: bufferToBase64Url(credential.rawId),
-          response: {
-            clientDataJSON: bufferToBase64Url(response.clientDataJSON),
-            authenticatorData: bufferToBase64Url(response.authenticatorData),
-            signature: bufferToBase64Url(response.signature),
-            userHandle:
-              normalizeUserHandle(
-                startResponse.data.assertionRequest?.userHandle
-              ) ?? userHandle,
-          },
-          clientExtensionResults: credential.getClientExtensionResults(),
-        },
-      };
-
-      const loginResponse = await apiRequest<{
-        code?: number | string;
-        msg?: string;
-        data?: {
-          access_token?: string;
-          refresh_token?: string;
-          token_type?: string;
-        };
-      }>({
-        path: API_ENDPOINTS.login,
-        method: "POST",
-        body: JSON.stringify(loginPayload),
-      });
-      if (Number(loginResponse.code) !== 200) {
-        throw new Error(loginResponse.msg || "Passkey login failed.");
-      }
-      persistTokens(loginResponse.data);
-      router.push("/wallet");
-    } catch (error) {
-      setStatus("error");
-      setErrorMessage(
-        error instanceof Error ? error.message : "Passkey login failed."
-      );
-    } finally {
-      setStatus("idle");
-    }
-  };
-
   const getFirstError = (error: { errors: { message: string }[] }) =>
     error.errors[0]?.message ?? "Please check your entries.";
+
+  const setValidationErrors = (message: string, field?: keyof typeof fieldErrors) => {
+    if (field) {
+      setFieldErrors((prev) => ({ ...prev, [field]: message }));
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setStatus("loading");
     setErrorMessage("");
+    setFieldErrors({});
     try {
       if (mode === "login") {
         if (step === "credentials") {
           const result = loginCredentialsSchema.safeParse({ email, password });
           if (!result.success) {
-            throw new Error(getFirstError(result.error));
+            const issue = result.error.issues[0];
+            setValidationErrors(issue?.message ?? getFirstError(result.error), issue?.path?.[0] as keyof typeof fieldErrors);
+            setStatus("idle");
+            return;
           }
           setStep("verify");
           setStatus("idle");
           return;
         }
+        const baseCheck = loginCredentialsSchema.safeParse({ email, password });
+        if (!baseCheck.success) {
+          const issue = baseCheck.error.issues[0];
+          setValidationErrors(
+            issue?.message ?? getFirstError(baseCheck.error),
+            issue?.path?.[0] as keyof typeof fieldErrors
+          );
+          setStatus("idle");
+          return;
+        }
         if (verifyType === "email" && !emailCode) {
-          throw new Error("Email code is required.");
+          setValidationErrors("Email code is required.", "emailCode");
+          setStatus("idle");
+          return;
         }
         if (verifyType === "google" && !googleCode) {
-          throw new Error("Google code is required.");
+          setValidationErrors("Google code is required.", "googleCode");
+          setStatus("idle");
+          return;
         }
         const loginResponse = await loginWithPasswordAndCodeAction({
           username: email,
@@ -228,14 +100,17 @@ export default function AuthPage() {
         });
         persistTokens(loginResponse.data);
         router.push("/wallet");
-      } else {
+      } else if (mode === "register") {
         const result = registerSchema.safeParse({
           email,
           password,
           emailCode,
         });
         if (!result.success) {
-          throw new Error(getFirstError(result.error));
+          const issue = result.error.issues[0];
+          setValidationErrors(issue?.message ?? getFirstError(result.error), issue?.path?.[0] as keyof typeof fieldErrors);
+          setStatus("idle");
+          return;
         }
         const registerResponse = await registerWithPasswordAction({
           username: email,
@@ -244,6 +119,33 @@ export default function AuthPage() {
         });
         persistTokens(registerResponse.data);
         router.push("/wallet");
+      } else {
+        const result = forgotPasswordSchema.safeParse({
+          email,
+          password,
+          emailCode,
+        });
+        if (!result.success) {
+          const issue = result.error.issues[0];
+          setValidationErrors(
+            issue?.message ?? getFirstError(result.error),
+            issue?.path?.[0] as keyof typeof fieldErrors
+          );
+          setStatus("idle");
+          return;
+        }
+        await resetPasswordAction({
+          username: email,
+          password,
+          code: emailCode,
+        });
+        setInfoMessage("Password reset successful. Please log in.");
+        setMode("login");
+        setStep("credentials");
+        setEmailCode("");
+        setPassword("");
+        setStatus("idle");
+        return;
       }
     } catch (error) {
       setStatus("error");
@@ -259,14 +161,22 @@ export default function AuthPage() {
     setErrorMessage("");
     setInfoMessage("");
     try {
-      const result = loginCredentialsSchema.safeParse({ email, password });
+      const result =
+        mode === "login"
+          ? loginCredentialsSchema.safeParse({ email, password })
+          : emailSchema.safeParse(email);
       if (!result.success) {
-        throw new Error(getFirstError(result.error));
+        const issue = result.error?.issues[0];
+        setValidationErrors(issue?.message ?? getFirstError(result.error), "email");
+        setStatus("idle");
+        return;
       }
       if (mode === "login") {
         await sendLoginCodeAction(email, "login");
-      } else {
+      } else if (mode === "register") {
         await sendRegisterCodeAction(email);
+      } else {
+        await sendForgotCodeAction(email);
       }
       setCooldown(60);
       setInfoMessage("Verification code sent to your email.");
@@ -288,6 +198,7 @@ export default function AuthPage() {
     setVerifyType("email");
     setErrorMessage("");
     setInfoMessage("");
+    setFieldErrors({});
     setStatus("idle");
     setCooldown(0);
   };
@@ -309,7 +220,11 @@ export default function AuthPage() {
         <section className="w-full max-w-md rounded-2xl border border-(--stroke) bg-(--basic-cta) p-8 shadow-sm">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold text-(--foreground)">
-              {mode === "login" ? "Welcome back" : "Create your account"}
+              {mode === "login"
+                ? "Welcome back"
+                : mode === "register"
+                  ? "Create your account"
+                  : "Reset password"}
             </h1>
             <button
               type="button"
@@ -323,7 +238,9 @@ export default function AuthPage() {
           <p className="mt-2 text-sm text-(--paragraph)">
             {mode === "login"
               ? "Sign in to access your dashboard."
-              : "Spin up a new wallet in a few minutes."}
+              : mode === "register"
+                ? "Spin up a new wallet in a few minutes."
+                : "Use your email and code to reset your password."}
           </p>
 
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
@@ -334,21 +251,37 @@ export default function AuthPage() {
                 placeholder="you@wallet.com"
                 className="h-11 rounded-lg border border-(--stroke) bg-(--background) px-3 text-sm"
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  if (fieldErrors.email) {
+                    setFieldErrors((prev) => ({ ...prev, email: "" }));
+                  }
+                }}
               />
+              {fieldErrors.email ? (
+                <span className="text-xs text-red-500">{fieldErrors.email}</span>
+              ) : null}
             </label>
             <label className="flex flex-col gap-2 text-sm font-medium text-(--foreground)">
-              Password
-              <input
-                type="password"
+              {mode === "forgot" ? "New Password" : "Password"}
+              <PasswordInput
                 placeholder="••••••••"
-                className="h-11 rounded-lg border border-(--stroke) bg-(--background) px-3 text-sm"
+                className="h-11"
+                inputClassName="h-11 w-full rounded-lg border border-(--stroke) bg-(--background) px-3 text-sm"
                 value={password}
-                onChange={(event) => setPassword(event.target.value)}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  if (fieldErrors.password) {
+                    setFieldErrors((prev) => ({ ...prev, password: "" }));
+                  }
+                }}
               />
+              {fieldErrors.password ? (
+                <span className="text-xs text-red-500">{fieldErrors.password}</span>
+              ) : null}
             </label>
 
-            {(mode === "register" || step === "verify") && (
+            {(mode === "register" || mode === "forgot" || step === "verify") && (
               <>
                 {mode === "login" ? (
                   <>
@@ -357,7 +290,14 @@ export default function AuthPage() {
                         <input
                           type="radio"
                           checked={verifyType === "email"}
-                          onChange={() => setVerifyType("email")}
+                          onChange={() => {
+                            setVerifyType("email");
+                            setFieldErrors((prev) => ({
+                              ...prev,
+                              emailCode: "",
+                              googleCode: "",
+                            }));
+                          }}
                         />
                         Email code
                       </label>
@@ -365,7 +305,14 @@ export default function AuthPage() {
                         <input
                           type="radio"
                           checked={verifyType === "google"}
-                          onChange={() => setVerifyType("google")}
+                          onChange={() => {
+                            setVerifyType("google");
+                            setFieldErrors((prev) => ({
+                              ...prev,
+                              emailCode: "",
+                              googleCode: "",
+                            }));
+                          }}
                         />
                         Google code
                       </label>
@@ -392,8 +339,21 @@ export default function AuthPage() {
                           placeholder="Enter the code"
                           className="h-11 rounded-lg border border-(--stroke) bg-(--background) px-3 text-sm"
                           value={emailCode}
-                          onChange={(event) => setEmailCode(event.target.value)}
+                          onChange={(event) => {
+                            setEmailCode(event.target.value);
+                            if (fieldErrors.emailCode) {
+                              setFieldErrors((prev) => ({
+                                ...prev,
+                                emailCode: "",
+                              }));
+                            }
+                          }}
                         />
+                        {fieldErrors.emailCode ? (
+                          <span className="text-xs text-red-500">
+                            {fieldErrors.emailCode}
+                          </span>
+                        ) : null}
                       </label>
                     ) : null}
                     {verifyType === "google" ? (
@@ -404,18 +364,29 @@ export default function AuthPage() {
                           placeholder="Enter Google code"
                           className="h-11 rounded-lg border border-(--stroke) bg-(--background) px-3 text-sm"
                           value={googleCode}
-                          onChange={(event) =>
-                            setGoogleCode(event.target.value)
-                          }
+                          onChange={(event) => {
+                            setGoogleCode(event.target.value);
+                            if (fieldErrors.googleCode) {
+                              setFieldErrors((prev) => ({
+                                ...prev,
+                                googleCode: "",
+                              }));
+                            }
+                          }}
                         />
+                        {fieldErrors.googleCode ? (
+                          <span className="text-xs text-red-500">
+                            {fieldErrors.googleCode}
+                          </span>
+                        ) : null}
                       </label>
                     ) : null}
                   </>
                 ) : null}
-                {mode === "register" ? (
+                {mode === "register" || mode === "forgot" ? (
                   <label className="flex flex-col gap-2 text-sm font-medium text-(--foreground)">
                     <span className="flex items-center justify-between">
-                      Email code
+                      {mode === "forgot" ? "Email code" : "Email code"}
                       <button
                         type="button"
                         className="text-xs font-semibold text-(--foreground)"
@@ -432,8 +403,21 @@ export default function AuthPage() {
                       placeholder="Enter the code"
                       className="h-11 rounded-lg border border-(--stroke) bg-(--background) px-3 text-sm"
                       value={emailCode}
-                      onChange={(event) => setEmailCode(event.target.value)}
+                      onChange={(event) => {
+                        setEmailCode(event.target.value);
+                        if (fieldErrors.emailCode) {
+                          setFieldErrors((prev) => ({
+                            ...prev,
+                            emailCode: "",
+                          }));
+                        }
+                      }}
                     />
+                    {fieldErrors.emailCode ? (
+                      <span className="text-xs text-red-500">
+                        {fieldErrors.emailCode}
+                      </span>
+                    ) : null}
                   </label>
                 ) : null}
               </>
@@ -455,31 +439,52 @@ export default function AuthPage() {
                 ) : (
                   "Login"
                 )
-              ) : (
+              ) : mode === "register" ? (
                 "Create account"
+              ) : (
+                "Reset password"
               )}
             </button>
           </form>
           {mode === "login" ? (
             <button
               type="button"
-              onClick={handlePasskeyLogin}
-              className="mt-3 h-11 w-full rounded-lg border border-(--stroke) bg-(--background) text-sm font-semibold text-(--foreground)"
-              disabled={status === "loading"}
+              onClick={() => {
+                setMode("forgot");
+                setStep("credentials");
+                setEmailCode("");
+                setGoogleCode("");
+                setVerifyType("email");
+                setFieldErrors({});
+                setStatus("idle");
+              }}
+              className="mt-3 text-sm font-medium text-(--paragraph)"
             >
-              Use passkey
+              Forgot password?
             </button>
           ) : null}
 
-          {null}
-
           <div className="mt-6 text-center text-sm text-(--paragraph)">
             <span>
-              {mode === "login" ? "New to Vtron?" : "Already have an account?"}
+              {mode === "login"
+                ? "New to Vtron?"
+                : "Already have an account?"}
             </span>{" "}
             <button
               type="button"
-              onClick={handleToggleMode}
+              onClick={() => {
+                if (mode === "forgot") {
+                  setMode("login");
+                } else {
+                  handleToggleMode();
+                }
+                setStep("credentials");
+                setEmailCode("");
+                setGoogleCode("");
+                setVerifyType("email");
+                setFieldErrors({});
+                setStatus("idle");
+              }}
               className="font-semibold text-(--foreground)"
             >
               {mode === "login" ? "Create one" : "Login"}

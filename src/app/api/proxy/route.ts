@@ -29,6 +29,7 @@ function sanitizeHeaders(headers: Record<string, string>) {
 
 export async function POST(request: Request) {
   const payload = (await request.json()) as ProxyPayload;
+  console.log("API Request", payload);
   if (!payload?.url) {
     return NextResponse.json(
       { msg: "Missing url in payload.", code: 400 },

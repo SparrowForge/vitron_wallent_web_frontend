@@ -80,7 +80,7 @@ export async function apiRequest<T>({ path, ...init }: ApiOptions): Promise<T> {
     }
     if (!Number.isNaN(codeValue) && codeValue !== 200) {
       const error = new Error(
-        payload.msg || `Request failed with code ${payload.code}`
+        `[api] ${payload.msg || `Request failed with code ${payload.code}`}`
       ) as Error & { code?: number | string; data?: unknown };
       error.code = payload.code;
       error.data = payload.data;

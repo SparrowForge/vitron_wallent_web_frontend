@@ -1,16 +1,20 @@
 import { z } from "zod";
-import { emailSchema, passwordSchema } from "./auth";
+import {
+  emailSchema,
+  credentialPasswordSchema as basicPasswordSchema,
+  strongPasswordSchema,
+} from "./auth";
 
 export const modifyEmailSchema = z.object({
   newEmail: emailSchema,
-  password: passwordSchema,
+  password: basicPasswordSchema,
   emailCode: z.string().trim().optional().or(z.literal("")),
   googleCode: z.string().trim().optional().or(z.literal("")),
 });
 
 export const loginPasswordSchema = z
   .object({
-    password: passwordSchema,
+    password: strongPasswordSchema,
     confirmPassword: z.string().trim().min(1, "Confirm password is required."),
     emailCode: z.string().trim().optional().or(z.literal("")),
     googleCode: z.string().trim().optional().or(z.literal("")),

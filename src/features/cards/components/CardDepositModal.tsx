@@ -3,6 +3,7 @@
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import Spinner from "@/shared/components/ui/Spinner";
+import PasswordInput from "@/shared/components/ui/PasswordInput";
 import { cardDepositSchema } from "@/lib/validationSchemas";
 import ModalShell from "@/shared/components/ui/ModalShell";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
@@ -316,9 +317,9 @@ export default function CardDepositModal({
         <div className="mt-4 space-y-3">
           <label className="space-y-2 text-xs font-medium text-(--paragraph)">
             Payment password
-            <input
-              type="password"
-              className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
+            <PasswordInput
+              className="h-12"
+              inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
               placeholder="Enter payment password"
               value={payPassword}
               onChange={(event) => setPayPassword(event.target.value)}

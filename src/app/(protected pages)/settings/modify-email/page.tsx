@@ -5,6 +5,7 @@ import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { clearAuthTokens } from "@/lib/auth";
 import { emailSchema } from "@/lib/validationSchemas";
 import { modifyEmailSchema } from "@/lib/validationSchemas";
+import PasswordInput from "@/shared/components/ui/PasswordInput";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -196,9 +197,9 @@ export default function ModifyEmailPage() {
 
           <label className="space-y-2 text-sm font-medium text-(--paragraph)">
             Login password
-            <input
-              type="password"
-              className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
+            <PasswordInput
+              className="h-12"
+              inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
               placeholder="Enter login password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}

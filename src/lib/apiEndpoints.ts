@@ -3,6 +3,7 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 export const API_ENDPOINTS = {
   login: "/merchant-server/login",
   register: "/merchant-server/merchant/registMember",
+  forgetPassword: "/merchant-server/merchant/forgetPassword",
   registerSendCode: "/merchant-server/email/sendEmail",
   sendCheckEmail: "/merchant-server/email/sendCheckEmail",
   refreshToken: "/merchant-server/login",

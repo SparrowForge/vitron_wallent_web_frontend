@@ -43,7 +43,7 @@ export default function ReceiveModal({
   const [qrSourceIndex, setQrSourceIndex] = useState(0);
   const [qrLoadError, setQrLoadError] = useState(false);
 
-  useToastMessages({ errorMessage, infoMessage });
+  useToastMessages({ errorMessage });
 
   useEffect(() => {
     if (!open) {
@@ -143,91 +143,94 @@ export default function ReceiveModal({
       ariaLabel="Receive"
       className="max-w-md"
     >
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full border border-(--stroke) bg-(--background) px-3 py-2 text-xs font-semibold text-(--paragraph)"
-          >
-            Back
-          </button>
-          <div className="text-sm font-semibold text-(--foreground)">
-            Receive
-          </div>
-          <span className="text-xs text-(--paragraph)">{walletName}</span>
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-full border border-(--stroke) bg-(--background) px-3 py-2 text-xs font-semibold text-(--paragraph)"
+        >
+          Back
+        </button>
+        <div className="text-sm font-semibold text-(--foreground)">Receive</div>
+        <span className="text-xs text-(--paragraph)">{walletName}</span>
+      </div>
+
+      <div className="mt-6 rounded-3xl border border-(--stroke) bg-(--background) px-6 py-8 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-(--basic-cta) text-(--foreground)">
+          {merchantInfo?.headUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={merchantInfo.headUrl}
+              alt="User avatar"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <span className="text-lg font-semibold">
+              {(merchantInfo?.email ?? "E")[0]?.toUpperCase()}
+            </span>
+          )}
+        </div>
+        <div className="mt-4 text-lg font-semibold text-(--foreground)">
+          {merchantInfo?.id ?? "—"} (ID)
+        </div>
+        <div className="mt-1 text-xs text-(--paragraph)">
+          {merchantInfo?.email ?? "Loading..."}
         </div>
 
-        <div className="mt-6 rounded-3xl border border-(--stroke) bg-(--background) px-6 py-8 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-(--basic-cta) text-(--foreground)">
-            {merchantInfo?.headUrl ? (
+        <div className="mt-6 grid place-items-center">
+          <div className="grid h-44 w-44 place-items-center rounded-2xl border border-(--stroke) bg-(--basic-cta)">
+            {qrImageUrl && !qrLoadError ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={merchantInfo.headUrl}
-                alt="User avatar"
-                className="h-full w-full object-cover"
+                src={qrImageUrl}
+                alt="Receive QR"
+                className="h-40 w-40 object-contain"
+                onError={() => {
+                  if (qrSourceIndex < qrImageSources.length - 1) {
+                    setQrSourceIndex((prev) => prev + 1);
+                  } else {
+                    setQrLoadError(true);
+                  }
+                }}
               />
             ) : (
-              <span className="text-lg font-semibold">
-                {(merchantInfo?.email ?? "E")[0]?.toUpperCase()}
+              <span className="text-xs text-(--paragraph)">
+                {loading ? "Loading QR..." : "QR unavailable"}
               </span>
             )}
           </div>
-          <div className="mt-4 text-lg font-semibold text-(--foreground)">
-            {merchantInfo?.id ?? "—"} (ID)
-          </div>
-          <div className="mt-1 text-xs text-(--paragraph)">
-            {merchantInfo?.email ?? "Loading..."}
-          </div>
-
-          <div className="mt-6 grid place-items-center">
-            <div className="grid h-44 w-44 place-items-center rounded-2xl border border-(--stroke) bg-(--basic-cta)">
-              {qrImageUrl && !qrLoadError ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={qrImageUrl}
-                  alt="Receive QR"
-                  className="h-40 w-40 object-contain"
-                  onError={() => {
-                    if (qrSourceIndex < qrImageSources.length - 1) {
-                      setQrSourceIndex((prev) => prev + 1);
-                    } else {
-                      setQrLoadError(true);
-                    }
-                  }}
-                />
-              ) : (
-                <span className="text-xs text-(--paragraph)">
-                  {loading ? "Loading QR..." : "QR unavailable"}
-                </span>
-              )}
-            </div>
-          </div>
         </div>
+      </div>
 
-        {null}
+      {null}
 
-        <p className="mt-6 text-center text-xs text-(--paragraph)">
-          Scan the QR code above to receive payment.
-        </p>
+      <p className="mt-6 text-center text-xs text-(--paragraph)">
+        Scan the QR code above to receive payment.
+      </p>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <button
-            type="button"
-            onClick={handleCopy}
-            className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) text-sm font-semibold text-(--foreground)"
-            disabled={!qrValue}
-          >
-            Copy QR string
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            className="h-12 w-full rounded-2xl bg-(--brand) text-sm font-semibold text-(--background)"
-            disabled={!qrImageUrl}
-          >
-            Save picture
-          </button>
-        </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) text-sm font-semibold text-(--foreground)"
+          disabled={!qrValue}
+        >
+          Copy QR string
+        </button>
+        <button
+          type="button"
+          onClick={handleSave}
+          className="h-12 w-full rounded-2xl bg-(--brand) text-sm font-semibold text-(--background)"
+          disabled={!qrImageUrl}
+        >
+          Save picture
+        </button>
+        {infoMessage && (
+          <span className="mt-2 w-full text-center text-xs text-(--success)">
+            {infoMessage}
+          </span>
+        )}
+      </div>
     </ModalShell>
   );
 }

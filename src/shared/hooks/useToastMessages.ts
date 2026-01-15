@@ -16,27 +16,67 @@ export function useToastMessages({
   successMessage,
   warningMessage,
 }: ToastMessagesOptions) {
+  const sanitizeMessage = (message: string) =>
+    message.replace("[api] ", "");
+
   useEffect(() => {
-    if (errorMessage) {
-      toast.error(errorMessage, { toastId: "toast-error" });
+    if (errorMessage?.startsWith("[api] ")) {
+      const toastId = "toast-error";
+      const message = sanitizeMessage(errorMessage);
+      if (toast.isActive(toastId)) {
+        toast.update(toastId, {
+          render: message,
+          type: "error",
+          autoClose: 5000,
+        });
+      } else {
+        toast.error(message, { toastId });
+      }
     }
   }, [errorMessage]);
 
   useEffect(() => {
     if (warningMessage) {
-      toast.warning(warningMessage, { toastId: "toast-warning" });
+      const toastId = "toast-warning";
+      if (toast.isActive(toastId)) {
+        toast.update(toastId, {
+          render: warningMessage,
+          type: "warning",
+          autoClose: 5000,
+        });
+      } else {
+        toast.warning(warningMessage, { toastId });
+      }
     }
   }, [warningMessage]);
 
   useEffect(() => {
     if (successMessage) {
-      toast.success(successMessage, { toastId: "toast-success" });
+      const toastId = "toast-success";
+      if (toast.isActive(toastId)) {
+        toast.update(toastId, {
+          render: successMessage,
+          type: "success",
+          autoClose: 5000,
+        });
+      } else {
+        toast.success(successMessage, { toastId });
+      }
     }
   }, [successMessage]);
 
   useEffect(() => {
     if (infoMessage) {
-      toast.success(infoMessage, { toastId: "toast-info" });
+      const toastId = "toast-info";
+      if (toast.isActive(toastId)) {
+        toast.update(toastId, {
+          render: infoMessage,
+          type: "info",
+          autoClose: 5000,
+        });
+      } else {
+        toast.info(infoMessage, { toastId });
+      }
     }
   }, [infoMessage]);
 }

@@ -3,10 +3,14 @@
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import Spinner from "@/shared/components/ui/Spinner";
+import PasswordInput from "@/shared/components/ui/PasswordInput";
 import { withdrawSchema } from "@/lib/validationSchemas";
 import ModalShell from "@/shared/components/ui/ModalShell";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { z } from "zod";
 
 type WithdrawModalProps = {
   open: boolean;
@@ -35,42 +39,81 @@ type VerifyCodeResponse = {
   msg?: string;
 };
 
+const withdrawFormSchema = withdrawSchema
+  .extend({
+    verifyType: z.enum(["email", "google"]),
+    verifyCode: z.string().trim().optional(),
+    googleCode: z.string().trim().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.verifyType === "email" && !data.verifyCode) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Email code is required.",
+        path: ["verifyCode"],
+      });
+    }
+    if (data.verifyType === "google" && !data.googleCode) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Google code is required.",
+        path: ["googleCode"],
+      });
+    }
+  });
+
+type WithdrawFormValues = z.infer<typeof withdrawFormSchema>;
+
 export default function WithdrawModal({
   open,
   walletName,
   onClose,
   onSuccess,
 }: WithdrawModalProps) {
-  type FieldErrorState = {
-    network?: string;
-    address?: string;
-    amount?: string;
-    payPassword?: string;
-    verifyCode?: string;
-    googleCode?: string;
-  };
-
-  const [network, setNetwork] = useState("");
-  const [address, setAddress] = useState("");
-  const [amount, setAmount] = useState("");
-  const [payPassword, setPayPassword] = useState("");
-  const [verifyType, setVerifyType] = useState<"email" | "google">("email");
-  const [verifyCode, setVerifyCode] = useState("");
-  const [googleCode, setGoogleCode] = useState("");
   const [cooldown, setCooldown] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [config, setConfig] =
     useState<WithdrawConfigResponse["data"]>(undefined);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrorState>({});
+  const {
+    control,
+    register,
+    handleSubmit,
+    setError,
+    setValue,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<WithdrawFormValues>({
+    resolver: zodResolver(withdrawFormSchema),
+    mode: "onSubmit",
+    reValidateMode: "onChange",
+    defaultValues: {
+      network: "",
+      address: "",
+      amount: "",
+      payPassword: "",
+      verifyType: "email",
+      verifyCode: "",
+      googleCode: "",
+    },
+  });
 
   useToastMessages({ errorMessage, infoMessage });
+
+  const verifyType = watch("verifyType");
+  const amountInput = watch("amount");
+  const networkValue = watch("network");
+  const addressValue = watch("address");
+  const payPasswordValue = watch("payPassword");
+  const verifyCodeValue = watch("verifyCode");
+  const googleCodeValue = watch("googleCode");
 
   const availableAmount = Number(config?.amount ?? 0);
   const minWithdraw = Number(config?.minWithdraw ?? 0);
   const ratio = Number(config?.ratio ?? 0);
-  const amountValue = Number(amount || 0);
+  const amountValue = Number(amountInput || 0);
 
   const safeAvailable = Number.isFinite(availableAmount) ? availableAmount : 0;
   const safeMinWithdraw = Number.isFinite(minWithdraw) ? minWithdraw : 0;
@@ -81,23 +124,24 @@ export default function WithdrawModal({
   const estimateValue = safeAmount - feeValue;
 
   const canSubmit = useMemo(() => {
-    if (!amount || !address || !network || !payPassword) return false;
+    if (!networkValue || !addressValue || !payPasswordValue) return false;
+    if (!amountInput || safeAmount <= 0) return false;
     if (safeAmount < safeMinWithdraw || safeAmount > safeAvailable)
       return false;
-    if (verifyType === "email" && !verifyCode) return false;
-    if (verifyType === "google" && !googleCode) return false;
+    if (verifyType === "email" && !verifyCodeValue) return false;
+    if (verifyType === "google" && !googleCodeValue) return false;
     return true;
   }, [
-    amount,
-    address,
-    network,
-    payPassword,
+    networkValue,
+    addressValue,
+    payPasswordValue,
+    amountInput,
     safeAmount,
     safeMinWithdraw,
     safeAvailable,
     verifyType,
-    verifyCode,
-    googleCode,
+    verifyCodeValue,
+    googleCodeValue,
   ]);
 
   useEffect(() => {
@@ -148,74 +192,56 @@ export default function WithdrawModal({
 
   const handleMax = () => {
     if (!availableAmount) return;
-    setAmount(availableAmount.toFixed(2));
+    setValue("amount", availableAmount.toFixed(2), { shouldValidate: true });
   };
 
   const resetForm = () => {
-    setNetwork("");
-    setAddress("");
-    setAmount("");
-    setPayPassword("");
-    setVerifyCode("");
-    setGoogleCode("");
+    reset({
+      network: "",
+      address: "",
+      amount: "",
+      payPassword: "",
+      verifyType: "email",
+      verifyCode: "",
+      googleCode: "",
+    });
     setErrorMessage("");
     setInfoMessage("");
     setCooldown(0);
   };
 
-  const handleWithdraw = async () => {
+  const onSubmit = async (values: WithdrawFormValues) => {
     setErrorMessage("");
     setInfoMessage("");
-    setFieldErrors((prev) => ({ ...prev, verifyCode: "", googleCode: "" }));
-    const validation = withdrawSchema.safeParse({
-      network,
-      address,
-      amount,
-      payPassword,
-    });
-    if (!validation.success) {
-      const issue = validation.error.issues[0];
-      if (issue?.path?.[0]) {
-        setFieldErrors((prev) => ({
-          ...prev,
-          [issue.path[0] as keyof FieldErrorState]: issue.message,
-        }));
-      }
-      setErrorMessage(issue?.message ?? "Please complete all required fields.");
+    if (safeAmount < safeMinWithdraw) {
+      setError("amount", {
+        type: "validate",
+        message: `Minimum ${safeMinWithdraw.toFixed(2)} USD`,
+      });
       return;
     }
-    if (verifyType === "email" && !verifyCode) {
-      setFieldErrors((prev) => ({
-        ...prev,
-        verifyCode: "Email code is required.",
-      }));
-      setErrorMessage("Email code is required.");
-      return;
-    }
-    if (verifyType === "google" && !googleCode) {
-      setFieldErrors((prev) => ({
-        ...prev,
-        googleCode: "Google code is required.",
-      }));
-      setErrorMessage("Google code is required.");
-      return;
-    }
-    if (!canSubmit) {
-      setErrorMessage("Please complete all required fields.");
+    if (safeAmount > safeAvailable) {
+      setError("amount", {
+        type: "validate",
+        message: "Amount exceeds available balance.",
+      });
       return;
     }
     setLoading(true);
     try {
       const payload: Record<string, string> = {
-        addressChain: network,
-        amount,
-        address,
-        payPassword,
+        addressChain: values.network,
+        amount: String(values.amount),
+        address: values.address,
+        payPassword: values.payPassword,
       };
-      if (verifyType === "email") payload.code = verifyCode;
-      else payload.googleCode = googleCode;
+      if (values.verifyType === "email") {
+        payload.code = values.verifyCode ?? "";
+      } else {
+        payload.googleCode = values.googleCode ?? "";
+      }
 
-      const response = await apiRequest<WithdrawApplyResponse>({
+      await apiRequest<WithdrawApplyResponse>({
         path: API_ENDPOINTS.withdrawApply,
         method: "POST",
         body: JSON.stringify(payload),
@@ -228,7 +254,7 @@ export default function WithdrawModal({
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "Withdraw request failed."
-      );
+        );
     } finally {
       setLoading(false);
     }
@@ -242,7 +268,7 @@ export default function WithdrawModal({
     }
     setLoading(true);
     try {
-      const response = await apiRequest<VerifyCodeResponse>({
+      await apiRequest<VerifyCodeResponse>({
         path: `${API_ENDPOINTS.sendVerifyCode}?type=withdraw`,
         method: "GET",
       });
@@ -290,18 +316,7 @@ export default function WithdrawModal({
             Network
             <div className="flex items-center justify-between rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
               <select
-                value={network}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  setNetwork(value);
-                  const result = withdrawSchema.pick({ network: true }).safeParse({
-                    network: value,
-                  });
-                  setFieldErrors((prev) => ({
-                    ...prev,
-                    network: result.success ? "" : result.error.issues[0]?.message,
-                  }));
-                }}
+                {...register("network")}
                 className="w-full bg-transparent text-sm text-(--double-foreground) focus:outline-none"
               >
                 <option value="">Please choose</option>
@@ -310,8 +325,10 @@ export default function WithdrawModal({
               </select>
               <span className="text-(--placeholder)">▾</span>
             </div>
-            {fieldErrors.network ? (
-              <p className="text-[11px] text-red-500">{fieldErrors.network}</p>
+            {errors.network ? (
+              <p className="text-[11px] text-red-500">
+                {errors.network.message}
+              </p>
             ) : null}
           </label>
 
@@ -320,21 +337,12 @@ export default function WithdrawModal({
             <input
               className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
               placeholder="Please input"
-              value={address}
-              onChange={(event) => {
-                const value = event.target.value;
-                setAddress(value);
-                const result = withdrawSchema
-                  .pick({ address: true })
-                  .safeParse({ address: value });
-                setFieldErrors((prev) => ({
-                  ...prev,
-                  address: result.success ? "" : result.error.issues[0]?.message,
-                }));
-              }}
+              {...register("address")}
             />
-            {fieldErrors.address ? (
-              <p className="text-[11px] text-red-500">{fieldErrors.address}</p>
+            {errors.address ? (
+              <p className="text-[11px] text-red-500">
+                {errors.address.message}
+              </p>
             ) : null}
           </label>
 
@@ -345,18 +353,7 @@ export default function WithdrawModal({
                 type="number"
                 className="w-full bg-transparent text-(--foreground) placeholder:text-(--placeholder) focus:outline-none"
                 placeholder={`Minimum ${safeMinWithdraw || 0}`}
-                value={amount}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  setAmount(value);
-                  const result = withdrawSchema
-                    .pick({ amount: true })
-                    .safeParse({ amount: value });
-                  setFieldErrors((prev) => ({
-                    ...prev,
-                    amount: result.success ? "" : result.error.issues[0]?.message,
-                  }));
-                }}
+                {...register("amount")}
               />
               <span className="ml-3 text-(--double-foreground)">USD</span>
               <button
@@ -367,8 +364,10 @@ export default function WithdrawModal({
                 Max
               </button>
             </div>
-            {fieldErrors.amount ? (
-              <p className="text-[11px] text-red-500">{fieldErrors.amount}</p>
+            {errors.amount ? (
+              <p className="text-[11px] text-red-500">
+                {errors.amount.message}
+              </p>
             ) : null}
             <div className="text-xs text-(--paragraph)">
               Available: {safeAvailable.toFixed(2)} USD
@@ -394,27 +393,24 @@ export default function WithdrawModal({
         <div className="mt-4 space-y-3">
           <label className="space-y-2 text-xs font-medium text-(--paragraph)">
             Payment password
-            <input
-              type="password"
-              className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
-              placeholder="Enter payment password"
-              value={payPassword}
-              onChange={(event) => {
-                const value = event.target.value;
-                setPayPassword(value);
-                const result = withdrawSchema
-                  .pick({ payPassword: true })
-                  .safeParse({ payPassword: value });
-                setFieldErrors((prev) => ({
-                  ...prev,
-                  payPassword: result.success
-                    ? ""
-                    : result.error.issues[0]?.message,
-                }));
-              }}
+            <Controller
+              control={control}
+              name="payPassword"
+              render={({ field }) => (
+                <PasswordInput
+                  className="h-12"
+                  inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
+                  placeholder="Enter payment password"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                />
+              )}
             />
-            {fieldErrors.payPassword ? (
-              <p className="text-[11px] text-red-500">{fieldErrors.payPassword}</p>
+            {errors.payPassword ? (
+              <p className="text-[11px] text-red-500">
+                {errors.payPassword.message}
+              </p>
             ) : null}
           </label>
 
@@ -424,16 +420,16 @@ export default function WithdrawModal({
               <label className="flex items-center gap-2">
                 <input
                   type="radio"
-                  checked={verifyType === "email"}
-                  onChange={() => setVerifyType("email")}
+                  value="email"
+                  {...register("verifyType")}
                 />
                 Email
               </label>
               <label className="flex items-center gap-2">
                 <input
                   type="radio"
-                  checked={verifyType === "google"}
-                  onChange={() => setVerifyType("google")}
+                  value="google"
+                  {...register("verifyType")}
                 />
                 Google
               </label>
@@ -447,13 +443,7 @@ export default function WithdrawModal({
                 <input
                   className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
                   placeholder="Enter code"
-                  value={verifyCode}
-                  onChange={(event) => {
-                    setVerifyCode(event.target.value);
-                    if (fieldErrors.verifyCode) {
-                      setFieldErrors((prev) => ({ ...prev, verifyCode: "" }));
-                    }
-                  }}
+                  {...register("verifyCode")}
                 />
                 <button
                   type="button"
@@ -473,6 +463,11 @@ export default function WithdrawModal({
                   )}
                 </button>
               </div>
+              {errors.verifyCode ? (
+                <p className="text-[11px] text-red-500">
+                  {errors.verifyCode.message}
+                </p>
+              ) : null}
             </label>
           ) : (
             <label className="space-y-2 text-xs font-medium text-(--paragraph)">
@@ -480,17 +475,11 @@ export default function WithdrawModal({
               <input
                 className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
                 placeholder="Enter Google code"
-                value={googleCode}
-                onChange={(event) => {
-                  setGoogleCode(event.target.value);
-                  if (fieldErrors.googleCode) {
-                    setFieldErrors((prev) => ({ ...prev, googleCode: "" }));
-                  }
-                }}
+                {...register("googleCode")}
               />
-              {fieldErrors.googleCode ? (
+              {errors.googleCode ? (
                 <p className="text-[11px] text-red-500">
-                  {fieldErrors.googleCode}
+                  {errors.googleCode.message}
                 </p>
               ) : null}
             </label>
@@ -499,7 +488,7 @@ export default function WithdrawModal({
 
         <button
           type="button"
-          onClick={handleWithdraw}
+          onClick={handleSubmit(onSubmit)}
           className={`mt-6 h-12 w-full rounded-2xl text-sm font-semibold ${
             canSubmit
               ? "bg-(--brand) text-(--background)"

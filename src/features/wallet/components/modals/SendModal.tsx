@@ -5,6 +5,7 @@ import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { emailSchema } from "@/lib/validationSchemas";
 import { transferSchema } from "@/lib/validationSchemas";
 import Spinner from "@/shared/components/ui/Spinner";
+import PasswordInput from "@/shared/components/ui/PasswordInput";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
 import ModalShell from "@/shared/components/ui/ModalShell";
@@ -419,9 +420,9 @@ export default function SendModal({
         <div className="mt-4 space-y-3">
           <label className="space-y-2 text-xs font-medium text-(--paragraph)">
             Payment password
-            <input
-              type="password"
-              className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
+            <PasswordInput
+              className="h-12"
+              inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
               placeholder="Enter payment password"
               value={payPassword}
               onChange={(event) => {

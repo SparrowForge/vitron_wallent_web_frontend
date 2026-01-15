@@ -3,6 +3,7 @@
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { loginPasswordSchema } from "@/lib/validationSchemas";
+import PasswordInput from "@/shared/components/ui/PasswordInput";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
 
@@ -30,8 +31,26 @@ export default function LoginPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{
+    password?: string;
+    confirmPassword?: string;
+    emailCode?: string;
+    googleCode?: string;
+  }>({});
 
   useToastMessages({ errorMessage, infoMessage });
+
+  const getFirstError = (error: { errors: { message: string }[] }) =>
+    error.errors[0]?.message ?? "Please check your entries.";
+
+  const setValidationError = (
+    message: string,
+    field?: keyof typeof fieldErrors
+  ) => {
+    if (field) {
+      setFieldErrors((prev) => ({ ...prev, [field]: message }));
+    }
+  };
 
   const canSubmit = useMemo(() => {
     if (!password || !confirmPassword) {
@@ -104,6 +123,7 @@ export default function LoginPasswordPage() {
   const handleSubmit = async () => {
     setErrorMessage("");
     setInfoMessage("");
+    setFieldErrors({});
     const validation = loginPasswordSchema.safeParse({
       password,
       confirmPassword,
@@ -112,11 +132,25 @@ export default function LoginPasswordPage() {
     });
     if (!validation.success) {
       const issue = validation.error.issues[0];
-      setErrorMessage(issue?.message ?? "Please complete the required fields.");
+      setValidationError(
+        issue?.message ?? getFirstError(validation.error),
+        issue?.path?.[0] as keyof typeof fieldErrors
+      );
       return;
     }
     if (!canSubmit) {
-      setErrorMessage("Please complete the required fields.");
+      setFieldErrors({
+        ...(password ? {} : { password: "Password is required." }),
+        ...(confirmPassword
+          ? {}
+          : { confirmPassword: "Confirm password is required." }),
+        ...(verifyType === "email" && !emailCode
+          ? { emailCode: "Email code is required." }
+          : {}),
+        ...(verifyType === "google" && !googleCode
+          ? { googleCode: "Google code is required." }
+          : {}),
+      });
       return;
     }
     setLoading(true);
@@ -167,24 +201,42 @@ export default function LoginPasswordPage() {
         <div className="space-y-4">
           <label className="space-y-2 text-sm font-medium text-(--paragraph)">
             New password
-            <input
-              type="password"
-              className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
+            <PasswordInput
+              className="h-12"
+              inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
               placeholder="Enter new password"
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                if (fieldErrors.password) {
+                  setFieldErrors((prev) => ({ ...prev, password: "" }));
+                }
+              }}
             />
+            {fieldErrors.password ? (
+              <p className="text-xs text-red-500">{fieldErrors.password}</p>
+            ) : null}
           </label>
 
           <label className="space-y-2 text-sm font-medium text-(--paragraph)">
             Confirm password
-            <input
-              type="password"
-              className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
+            <PasswordInput
+              className="h-12"
+              inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
               placeholder="Confirm new password"
               value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
+              onChange={(event) => {
+                setConfirmPassword(event.target.value);
+                if (fieldErrors.confirmPassword) {
+                  setFieldErrors((prev) => ({ ...prev, confirmPassword: "" }));
+                }
+              }}
             />
+            {fieldErrors.confirmPassword ? (
+              <p className="text-xs text-red-500">
+                {fieldErrors.confirmPassword}
+              </p>
+            ) : null}
           </label>
 
           <label className="space-y-2 text-sm font-medium text-(--paragraph)">
@@ -227,8 +279,16 @@ export default function LoginPasswordPage() {
                 className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
                 placeholder="Enter code"
                 value={emailCode}
-                onChange={(event) => setEmailCode(event.target.value)}
+                onChange={(event) => {
+                  setEmailCode(event.target.value);
+                  if (fieldErrors.emailCode) {
+                    setFieldErrors((prev) => ({ ...prev, emailCode: "" }));
+                  }
+                }}
               />
+              {fieldErrors.emailCode ? (
+                <p className="text-xs text-red-500">{fieldErrors.emailCode}</p>
+              ) : null}
             </label>
           ) : null}
 
@@ -239,8 +299,16 @@ export default function LoginPasswordPage() {
                 className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
                 placeholder="Enter Google code"
                 value={googleCode}
-                onChange={(event) => setGoogleCode(event.target.value)}
+                onChange={(event) => {
+                  setGoogleCode(event.target.value);
+                  if (fieldErrors.googleCode) {
+                    setFieldErrors((prev) => ({ ...prev, googleCode: "" }));
+                  }
+                }}
               />
+              {fieldErrors.googleCode ? (
+                <p className="text-xs text-red-500">{fieldErrors.googleCode}</p>
+              ) : null}
             </label>
           ) : null}
         </div>

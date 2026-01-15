@@ -3,6 +3,7 @@
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { transactionPasswordSchema } from "@/lib/validationSchemas";
+import PasswordInput from "@/shared/components/ui/PasswordInput";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
 
@@ -173,12 +174,12 @@ export default function TransactionPasswordPage() {
         <div className="space-y-4">
           <label className="space-y-2 text-sm font-medium text-(--paragraph)">
             Transaction password (6 digits)
-            <input
-              type="password"
+            <PasswordInput
               inputMode="numeric"
               pattern="\d*"
               maxLength={6}
-              className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
+              className="h-12"
+              inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
               value={payPassword}
               onChange={(event) => setPayPassword(event.target.value)}
             />
@@ -186,12 +187,12 @@ export default function TransactionPasswordPage() {
 
           <label className="space-y-2 text-sm font-medium text-(--paragraph)">
             Confirm password
-            <input
-              type="password"
+            <PasswordInput
               inputMode="numeric"
               pattern="\d*"
               maxLength={6}
-              className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
+              className="h-12"
+              inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
             />
