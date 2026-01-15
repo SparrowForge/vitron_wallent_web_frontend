@@ -148,8 +148,9 @@ export default function WalletSendPage() {
   }, []);
 
   useEffect(() => {
-    const hash = searchParams.get("hash");
-    if (!hash) {
+    const rawHash = searchParams.get("hash") ?? "";
+    const normalizedHash = rawHash.replace(/ /g, "+").trim();
+    if (!normalizedHash) {
       return;
     }
     const loadRecipient = async () => {
@@ -160,7 +161,7 @@ export default function WalletSendPage() {
           path: API_ENDPOINTS.walletDecrypt,
           method: "POST",
           body: JSON.stringify({
-            data: decodeURIComponent(hash),
+            data: normalizedHash,
           }),
         });
         if (!response.data?.email) {
