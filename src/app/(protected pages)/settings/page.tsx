@@ -1,8 +1,10 @@
 "use client";
 
-import { clearAuthTokens } from "@/lib/auth";
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import { clearAuthTokens } from "@/lib/auth";
+import Spinner from "@/shared/components/ui/Spinner";
+import { LogOut } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -16,7 +18,12 @@ export default function SettingsPage() {
       action: "Edit",
       href: "/settings/modify-email",
     },
-    { title: "Passkey", action: "Manage", href: "/settings/passkey", hidden: true },
+    {
+      title: "Passkey",
+      action: "Manage",
+      href: "/settings/passkey",
+      hidden: true,
+    },
     {
       title: "Google authentication",
       action: "Open",
@@ -32,6 +39,7 @@ export default function SettingsPage() {
       title: "Login password",
       action: "Edit",
       href: "/settings/login-password",
+      hidden: true,
     },
     {
       title: "Network diagnostics",
@@ -76,62 +84,73 @@ export default function SettingsPage() {
           {securityItems
             .filter((item) => !item.hidden)
             .map((item) => {
-            const content = (
-              <>
-                <div>
-                  <div className="text-sm font-semibold text-(--double-foreground)">
-                    {item.title}
+              const content = (
+                <>
+                  <div>
+                    <div className="text-sm font-semibold text-(--double-foreground)">
+                      {item.title}
+                    </div>
+                    <div className="mt-1 text-xs text-(--paragraph)">
+                      Tap to manage
+                    </div>
                   </div>
-                  <div className="mt-1 text-xs text-(--paragraph)">
-                    Tap to manage
+                  <div className="flex items-center gap-2 text-xs">
+                    <span
+                      className={
+                        item.accent ? "text-(--brand)" : "text-(--paragraph)"
+                      }
+                    >
+                      {item.action}
+                    </span>
+                    <span className="text-(--paragraph)">›</span>
                   </div>
-                </div>
-                <div className="flex items-center gap-2 text-xs">
-                  <span
-                    className={
-                      item.accent ? "text-(--brand)" : "text-(--paragraph)"
-                    }
-                  >
-                    {item.action}
-                  </span>
-                  <span className="text-(--paragraph)">›</span>
-                </div>
-              </>
-            );
+                </>
+              );
 
-            if (item.href) {
+              if (item.href) {
+                return (
+                  <Link
+                    key={item.title}
+                    href={item.href}
+                    className="flex w-full items-center justify-between rounded-2xl border border-(--stroke) bg-(--background) px-4 py-4 text-left transition hover:border-(--stroke-high)"
+                  >
+                    {content}
+                  </Link>
+                );
+              }
+
               return (
-                <Link
+                <button
                   key={item.title}
-                  href={item.href}
+                  type="button"
                   className="flex w-full items-center justify-between rounded-2xl border border-(--stroke) bg-(--background) px-4 py-4 text-left transition hover:border-(--stroke-high)"
                 >
                   {content}
-                </Link>
+                </button>
               );
-            }
-
-            return (
-              <button
-                key={item.title}
-                type="button"
-                className="flex w-full items-center justify-between rounded-2xl border border-(--stroke) bg-(--background) px-4 py-4 text-left transition hover:border-(--stroke-high)"
-              >
-                {content}
-              </button>
-            );
-          })}
+            })}
         </div>
       </section>
 
-      <button
-        type="button"
-        onClick={handleLogout}
-        className="w-full rounded-2xl bg-(--foreground) py-3 text-sm font-semibold text-(--background)"
-        disabled={loggingOut}
-      >
-        {loggingOut ? "Logging out..." : "Logout"}
-      </button>
+      <div className="mt-8 flex flex-col justify-center items-center gap-3 sm:flex-row">
+        <div
+          onClick={handleLogout}
+          className=" cursor-pointer inline-flex justify-center gap-2 w-2/3 h-11 items-center rounded-full bg-(--brand) px-6 text-sm font-semibold text-(--background)"
+        >
+          {loggingOut ? (
+            <>
+              <Spinner size={16} />
+              Logging out...
+            </>
+          ) : (
+            <>
+              {" "}
+              <LogOut />
+              Logout
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

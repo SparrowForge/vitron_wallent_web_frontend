@@ -120,14 +120,24 @@ export default function ReceiveModal({
     setQrLoadError(false);
   }, [qrLink]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!qrImageUrl) {
       return;
     }
-    const link = document.createElement("a");
-    link.href = qrImageUrl;
-    link.download = "vtron-receive-qr.png";
-    link.click();
+    try {
+      const response = await fetch(qrImageUrl);
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = "vtron-receive-qr.png";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      setErrorMessage("Unable to download QR image.");
+    }
   };
 
   const handleCopy = async () => {

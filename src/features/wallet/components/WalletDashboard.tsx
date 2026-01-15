@@ -224,7 +224,7 @@ export default function WalletDashboard() {
               <select
                 value={selectedId ?? ""}
                 onChange={(event) => setSelectedId(Number(event.target.value))}
-                className="rounded-lg border border-(--stroke) bg-(--background) px-2 py-1 text-xs text-(--foreground) focus:outline-none sm:text-sm"
+                className=" cursor-pointer rounded-lg border border-(--stroke) bg-(--background) px-2 py-1 text-xs text-(--foreground) focus:outline-none sm:text-sm"
               >
                 {wallets.map((wallet) => (
                   <option key={wallet.id} value={wallet.id}>
