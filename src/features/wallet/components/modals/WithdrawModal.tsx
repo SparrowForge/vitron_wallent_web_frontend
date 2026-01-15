@@ -2,10 +2,10 @@
 
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
-import Spinner from "@/shared/components/ui/Spinner";
-import PasswordInput from "@/shared/components/ui/PasswordInput";
 import { withdrawSchema } from "@/lib/validationSchemas";
 import ModalShell from "@/shared/components/ui/ModalShell";
+import PasswordInput from "@/shared/components/ui/PasswordInput";
+import Spinner from "@/shared/components/ui/Spinner";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo, useState } from "react";
@@ -92,7 +92,7 @@ export default function WithdrawModal({
     defaultValues: {
       network: "",
       address: "",
-      amount: "",
+      amount: 0,
       payPassword: "",
       verifyType: "email",
       verifyCode: "",
@@ -192,14 +192,14 @@ export default function WithdrawModal({
 
   const handleMax = () => {
     if (!availableAmount) return;
-    setValue("amount", availableAmount.toFixed(2), { shouldValidate: true });
+    setValue("amount", availableAmount, { shouldValidate: true });
   };
 
   const resetForm = () => {
     reset({
       network: "",
       address: "",
-      amount: "",
+      amount: 0,
       payPassword: "",
       verifyType: "email",
       verifyCode: "",
@@ -254,7 +254,7 @@ export default function WithdrawModal({
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "Withdraw request failed."
-        );
+      );
     } finally {
       setLoading(false);
     }
@@ -290,222 +290,208 @@ export default function WithdrawModal({
       ariaLabel="Withdrawal"
       className="max-w-md"
     >
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full border border-(--stroke) bg-(--background) px-3 py-2 text-xs font-semibold text-(--paragraph)"
-          >
-            Back
-          </button>
-          <div className="text-sm font-semibold text-(--foreground)">
-            Withdrawal
-          </div>
-          <span className="text-xs text-(--paragraph)">{walletName}</span>
-        </div>
-
-        <div className="mt-6 space-y-4">
-          <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-            Currency
-            <div className="rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
-              USDT
-            </div>
-          </label>
-
-          <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-            Network
-            <div className="flex items-center justify-between rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
-              <select
-                {...register("network")}
-                className="w-full bg-transparent text-sm text-(--double-foreground) focus:outline-none"
-              >
-                <option value="">Please choose</option>
-                <option value="USDT-ERC20">USDT-ERC20</option>
-                <option value="USDT-TRC20">USDT-TRC20</option>
-              </select>
-              <span className="text-(--placeholder)">▾</span>
-            </div>
-            {errors.network ? (
-              <p className="text-[11px] text-red-500">
-                {errors.network.message}
-              </p>
-            ) : null}
-          </label>
-
-          <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-            Payment address
-            <input
-              className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
-              placeholder="Please input"
-              {...register("address")}
-            />
-            {errors.address ? (
-              <p className="text-[11px] text-red-500">
-                {errors.address.message}
-              </p>
-            ) : null}
-          </label>
-
-          <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-            Withdrawal amount
-            <div className="flex items-center justify-between rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm">
-              <input
-                type="number"
-                className="w-full bg-transparent text-(--foreground) placeholder:text-(--placeholder) focus:outline-none"
-                placeholder={`Minimum ${safeMinWithdraw || 0}`}
-                {...register("amount")}
-              />
-              <span className="ml-3 text-(--double-foreground)">USD</span>
-              <button
-                type="button"
-                onClick={handleMax}
-                className="ml-3 text-(--brand)"
-              >
-                Max
-              </button>
-            </div>
-            {errors.amount ? (
-              <p className="text-[11px] text-red-500">
-                {errors.amount.message}
-              </p>
-            ) : null}
-            <div className="text-xs text-(--paragraph)">
-              Available: {safeAvailable.toFixed(2)} USD
-            </div>
-          </label>
-        </div>
-
-        <div className="mt-6 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-xs text-(--paragraph)">
-          <div className="flex items-center justify-between">
-            <span>Fee</span>
-            <span className="text-(--double-foreground)">
-              {feeValue.toFixed(2)} USD
-            </span>
-          </div>
-          <div className="mt-2 flex items-center justify-between">
-            <span>Received amount</span>
-            <span className="text-(--double-foreground)">
-              {estimateValue.toFixed(2)} USDT
-            </span>
-          </div>
-        </div>
-
-        <div className="mt-4 space-y-3">
-          <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-            Payment password
-            <Controller
-              control={control}
-              name="payPassword"
-              render={({ field }) => (
-                <PasswordInput
-                  className="h-12"
-                  inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
-                  placeholder="Enter payment password"
-                  value={field.value}
-                  onChange={field.onChange}
-                  onBlur={field.onBlur}
-                />
-              )}
-            />
-            {errors.payPassword ? (
-              <p className="text-[11px] text-red-500">
-                {errors.payPassword.message}
-              </p>
-            ) : null}
-          </label>
-
-          <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-            Verification method
-            <div className="flex items-center gap-3 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  value="email"
-                  {...register("verifyType")}
-                />
-                Email
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  value="google"
-                  {...register("verifyType")}
-                />
-                Google
-              </label>
-            </div>
-          </label>
-
-          {verifyType === "email" ? (
-            <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-              Email code
-              <div className="flex items-center gap-3">
-                <input
-                  className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
-                  placeholder="Enter code"
-                  {...register("verifyCode")}
-                />
-                <button
-                  type="button"
-                  onClick={handleSendCode}
-                  className="h-12 min-w-[120px] rounded-2xl border border-(--stroke) bg-(--background) px-4 text-xs font-semibold text-(--foreground)"
-                  disabled={cooldown > 0 || loading}
-                >
-                  {loading && cooldown === 0 ? (
-                    <span className="inline-flex items-center gap-2">
-                      <Spinner size={14} />
-                      Sending...
-                    </span>
-                  ) : cooldown > 0 ? (
-                    `${cooldown}s`
-                  ) : (
-                    "Send code"
-                  )}
-                </button>
-              </div>
-              {errors.verifyCode ? (
-                <p className="text-[11px] text-red-500">
-                  {errors.verifyCode.message}
-                </p>
-              ) : null}
-            </label>
-          ) : (
-            <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-              Google code
-              <input
-                className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
-                placeholder="Enter Google code"
-                {...register("googleCode")}
-              />
-              {errors.googleCode ? (
-                <p className="text-[11px] text-red-500">
-                  {errors.googleCode.message}
-                </p>
-              ) : null}
-            </label>
-          )}
-        </div>
-
+      <div className="flex items-center justify-between">
         <button
           type="button"
-          onClick={handleSubmit(onSubmit)}
-          className={`mt-6 h-12 w-full rounded-2xl text-sm font-semibold ${
-            canSubmit
-              ? "bg-(--brand) text-(--background)"
-              : "bg-(--stroke) text-(--placeholder)"
-          }`}
-          disabled={!canSubmit || loading}
+          onClick={onClose}
+          className="rounded-full border border-(--stroke) bg-(--background) px-3 py-2 text-xs font-semibold text-(--paragraph)"
         >
-          {loading ? (
-            <span className="inline-flex items-center justify-center gap-2">
-              <Spinner size={16} className="border-(--background)" />
-              Submitting...
-            </span>
-          ) : (
-            "Withdrawal"
-          )}
+          Back
         </button>
-        {null}
+        <div className="text-sm font-semibold text-(--foreground)">
+          Withdrawal
+        </div>
+        <span className="text-xs text-(--paragraph)">{walletName}</span>
+      </div>
+
+      <div className="mt-6 space-y-4">
+        <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+          Currency
+          <div className="rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
+            USDT
+          </div>
+        </label>
+
+        <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+          Network
+          <div className="flex items-center justify-between rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
+            <select
+              {...register("network")}
+              className="w-full bg-transparent text-sm text-(--double-foreground) focus:outline-none"
+            >
+              <option value="">Please choose</option>
+              <option value="USDT-ERC20">USDT-ERC20</option>
+              <option value="USDT-TRC20">USDT-TRC20</option>
+            </select>
+            <span className="text-(--placeholder)">▾</span>
+          </div>
+          {errors.network ? (
+            <p className="text-[11px] text-red-500">{errors.network.message}</p>
+          ) : null}
+        </label>
+
+        <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+          Payment address
+          <input
+            className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
+            placeholder="Please input"
+            {...register("address")}
+          />
+          {errors.address ? (
+            <p className="text-[11px] text-red-500">{errors.address.message}</p>
+          ) : null}
+        </label>
+
+        <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+          Withdrawal amount
+          <div className="flex items-center justify-between rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm">
+            <input
+              type="number"
+              className="w-full bg-transparent text-(--foreground) placeholder:text-(--placeholder) focus:outline-none"
+              placeholder={`Minimum ${safeMinWithdraw || 0}`}
+              {...register("amount")}
+            />
+            <span className="ml-3 text-(--double-foreground)">USD</span>
+            <button
+              type="button"
+              onClick={handleMax}
+              className="ml-3 text-(--brand)"
+            >
+              Max
+            </button>
+          </div>
+          {errors.amount ? (
+            <p className="text-[11px] text-red-500">{errors.amount.message}</p>
+          ) : null}
+          <div className="text-xs text-(--paragraph)">
+            Available: {safeAvailable.toFixed(2)} USD
+          </div>
+        </label>
+      </div>
+
+      <div className="mt-6 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-xs text-(--paragraph)">
+        <div className="flex items-center justify-between">
+          <span>Fee</span>
+          <span className="text-(--double-foreground)">
+            {feeValue.toFixed(2)} USD
+          </span>
+        </div>
+        <div className="mt-2 flex items-center justify-between">
+          <span>Received amount</span>
+          <span className="text-(--double-foreground)">
+            {estimateValue.toFixed(2)} USDT
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-4 space-y-3">
+        <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+          Payment password
+          <Controller
+            control={control}
+            name="payPassword"
+            render={({ field }) => (
+              <PasswordInput
+                className="h-12"
+                inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
+                placeholder="Enter payment password"
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+              />
+            )}
+          />
+          {errors.payPassword ? (
+            <p className="text-[11px] text-red-500">
+              {errors.payPassword.message}
+            </p>
+          ) : null}
+        </label>
+
+        <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+          Verification method
+          <div className="flex items-center gap-3 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
+            <label className="flex items-center gap-2">
+              <input type="radio" value="email" {...register("verifyType")} />
+              Email
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="radio" value="google" {...register("verifyType")} />
+              Google
+            </label>
+          </div>
+        </label>
+
+        {verifyType === "email" ? (
+          <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+            Email code
+            <div className="flex items-center gap-3">
+              <input
+                className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
+                placeholder="Enter code"
+                {...register("verifyCode")}
+              />
+              <button
+                type="button"
+                onClick={handleSendCode}
+                className="h-12 min-w-[120px] rounded-2xl border border-(--stroke) bg-(--background) px-4 text-xs font-semibold text-(--foreground)"
+                disabled={cooldown > 0 || loading}
+              >
+                {loading && cooldown === 0 ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Spinner size={14} />
+                    Sending...
+                  </span>
+                ) : cooldown > 0 ? (
+                  `${cooldown}s`
+                ) : (
+                  "Send code"
+                )}
+              </button>
+            </div>
+            {errors.verifyCode ? (
+              <p className="text-[11px] text-red-500">
+                {errors.verifyCode.message}
+              </p>
+            ) : null}
+          </label>
+        ) : (
+          <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+            Google code
+            <input
+              className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
+              placeholder="Enter Google code"
+              {...register("googleCode")}
+            />
+            {errors.googleCode ? (
+              <p className="text-[11px] text-red-500">
+                {errors.googleCode.message}
+              </p>
+            ) : null}
+          </label>
+        )}
+      </div>
+
+      <button
+        type="button"
+        onClick={handleSubmit(onSubmit)}
+        className={`mt-6 h-12 w-full rounded-2xl text-sm font-semibold ${
+          canSubmit
+            ? "bg-(--brand) text-(--background)"
+            : "bg-(--stroke) text-(--placeholder)"
+        }`}
+        disabled={!canSubmit || loading}
+      >
+        {loading ? (
+          <span className="inline-flex items-center justify-center gap-2">
+            <Spinner size={16} className="border-(--background)" />
+            Submitting...
+          </span>
+        ) : (
+          "Withdrawal"
+        )}
+      </button>
+      {null}
     </ModalShell>
   );
 }

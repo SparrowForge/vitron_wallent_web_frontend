@@ -1,5 +1,7 @@
 import AuthGuard from "@/features/auth/components/AuthGuard";
 import DashboardShell from "@/features/dashboard/components/DashboardShell";
+import Spinner from "@/shared/components/ui/Spinner";
+import { Suspense } from "react";
 
 export default function ProtectedLayout({
   children,
@@ -7,8 +9,10 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AuthGuard>
-      <DashboardShell>{children}</DashboardShell>
-    </AuthGuard>
+    <Suspense fallback={<Spinner />}>
+      <AuthGuard>
+        <DashboardShell>{children}</DashboardShell>
+      </AuthGuard>
+    </Suspense>
   );
 }
