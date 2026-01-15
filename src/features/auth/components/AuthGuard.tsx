@@ -81,7 +81,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-[50vh] items-center justify-center text-sm text-(--paragraph)">
         <span className="inline-flex items-center gap-2">
           <Spinner size={16} />
-          Checking session...
         </span>
       </div>
     );
