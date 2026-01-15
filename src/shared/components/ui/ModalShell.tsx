@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 type ModalShellProps = {
   open: boolean;
@@ -17,6 +17,21 @@ export default function ModalShell({
   className = "",
   children,
 }: ModalShellProps) {
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open, onClose]);
+
   if (!open) {
     return null;
   }
@@ -27,7 +42,7 @@ export default function ModalShell({
       role="dialog"
       aria-modal="true"
       aria-label={ariaLabel}
-      onClick={onClose}
+      // onClick={onClose}
     >
       <div
         className={`w-full max-h-[90vh] overflow-y-auto rounded-3xl border border-(--stroke) bg-(--basic-cta) p-6 shadow-2xl ${className}`}

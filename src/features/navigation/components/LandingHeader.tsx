@@ -1,5 +1,6 @@
 "use client";
 
+import { HomeIcon, LogIn } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -20,15 +21,21 @@ export default function LandingHeader() {
       {hasToken ? (
         <Link
           href="/wallet"
-          className="rounded-md bg-(--primary) px-4 py-2 text-(--button-foreground) hover:bg-(--primary-hover)"
+          className="flex justify-center items-center gap-2 cursor-pointer rounded-md bg-(--primary) px-4 py-2 text-(--button-foreground) hover:bg-(--primary-hover)"
         >
+          <HomeIcon
+            className={`border border-(--stroke) ${"bg-(--brand-10) text-(--brand)"}`}
+          />
           Dashboard
         </Link>
       ) : (
         <Link
           href="/auth"
-          className="rounded-md bg-(--primary) px-4 py-2 text-(--button-foreground) hover:bg-(--primary-hover)"
+          className="flex justify-center items-center gap-2 rounded-md bg-(--primary) px-4 py-2 text-(--button-foreground) hover:bg-(--primary-hover)"
         >
+          <LogIn
+            className={`border border-(--stroke) ${"bg-(--brand-10) text-(--brand)"}`}
+          />
           Login
         </Link>
       )}

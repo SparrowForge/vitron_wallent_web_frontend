@@ -3,7 +3,7 @@
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import Spinner from "@/shared/components/ui/Spinner";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const getAccessToken = () => {
@@ -22,6 +22,8 @@ const getRefreshToken = () => {
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isChecking, setIsChecking] = useState(true);
   const [isAuthed, setIsAuthed] = useState(false);
 
@@ -31,6 +33,11 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       const token = getAccessToken();
       const refreshToken = getRefreshToken();
       if (!token && !refreshToken) {
+        if (typeof window !== "undefined") {
+          const search = searchParams.toString();
+          const returnTo = search ? `${pathname}?${search}` : pathname;
+          sessionStorage.setItem("vtron_return_to", returnTo);
+        }
         router.replace("/");
         if (active) {
           setIsChecking(false);
@@ -49,6 +56,11 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         });
         if (!response.data) {
           // clearAuthTokens();
+          if (typeof window !== "undefined") {
+            const search = searchParams.toString();
+            const returnTo = search ? `${pathname}?${search}` : pathname;
+            sessionStorage.setItem("vtron_return_to", returnTo);
+          }
           router.replace("/");
           if (active) {
             setIsChecking(false);
@@ -62,6 +74,11 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         }
       } catch (err) {
         // clearAuthTokens();
+        if (typeof window !== "undefined") {
+          const search = searchParams.toString();
+          const returnTo = search ? `${pathname}?${search}` : pathname;
+          sessionStorage.setItem("vtron_return_to", returnTo);
+        }
         router.replace("/");
         if (active) {
           setIsChecking(false);
@@ -74,7 +91,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     return () => {
       active = false;
     };
-  }, [router]);
+  }, [router, pathname, searchParams]);
 
   if (isChecking) {
     return (

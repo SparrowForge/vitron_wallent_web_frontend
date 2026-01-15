@@ -62,7 +62,7 @@ const getAuthHeader = () => {
   const tokenType = (localStorage.getItem("vtron_token_type") ?? "").trim();
   if (!token) return "";
   // Ensure a space between token type and token (e.g., "Bearer <token>")
-  return tokenType ? `${tokenType} ${token}` : token;
+  return tokenType ? `${tokenType}${token}` : token;
 };
 
 const toDateTime = (value: string) => {
@@ -171,7 +171,7 @@ export default function AuthenticationForm() {
       postCode: "",
       areaCode: "",
       phone: "",
-      idType: "PASSPORT",
+      idType: "",
       idNumber: "",
       birthday: "",
       startTime: "",
@@ -197,12 +197,16 @@ export default function AuthenticationForm() {
     [countryId]
   );
 
-  // Keep your original behavior: when country changes, reset idType to PASSPORT.
   useEffect(() => {
     if (countryId === undefined) return;
-    setValue("idType", "PASSPORT", { shouldValidate: true, shouldDirty: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [countryId]);
+    const hasMatch = idTypeOptions.some((option) => option.value === idType);
+    if (!hasMatch) {
+      setValue("idType", idTypeOptions[0]?.value ?? "PASSPORT", {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+  }, [countryId, idType, idTypeOptions, setValue]);
 
   useEffect(() => {
     let mounted = true;

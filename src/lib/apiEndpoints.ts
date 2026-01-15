@@ -11,6 +11,7 @@ export const API_ENDPOINTS = {
   merchantUpdate: "/merchant-server/merchant/update",
   walletList: "/merchant-server/merchantWallet/list",
   walletCollection: "/merchant-server/merchantWallet/collection",
+  walletDecrypt: "/merchant-server/merchantWallet/decrypt",
   depositConfig: "/merchant-server/orderRecord/toDeposit",
   depositGetAddress: "/merchant-server/orderRecord/getAddress",
   depositResetAddress: "/merchant-server/orderRecord/resetAddress",

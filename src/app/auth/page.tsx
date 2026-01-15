@@ -16,8 +16,8 @@ import {
   loginCredentialsSchema,
   registerSchema,
 } from "@/lib/validationSchemas";
-import Spinner from "@/shared/components/ui/Spinner";
 import PasswordInput from "@/shared/components/ui/PasswordInput";
+import Spinner from "@/shared/components/ui/Spinner";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -47,7 +47,10 @@ export default function AuthPage() {
   const getFirstError = (error: { errors: { message: string }[] }) =>
     error.errors[0]?.message ?? "Please check your entries.";
 
-  const setValidationErrors = (message: string, field?: keyof typeof fieldErrors) => {
+  const setValidationErrors = (
+    message: string,
+    field?: keyof typeof fieldErrors
+  ) => {
     if (field) {
       setFieldErrors((prev) => ({ ...prev, [field]: message }));
     }
@@ -64,7 +67,10 @@ export default function AuthPage() {
           const result = loginCredentialsSchema.safeParse({ email, password });
           if (!result.success) {
             const issue = result.error.issues[0];
-            setValidationErrors(issue?.message ?? getFirstError(result.error), issue?.path?.[0] as keyof typeof fieldErrors);
+            setValidationErrors(
+              issue?.message ?? getFirstError(result.error),
+              issue?.path?.[0] as keyof typeof fieldErrors
+            );
             setStatus("idle");
             return;
           }
@@ -99,7 +105,16 @@ export default function AuthPage() {
           googleCode: verifyType === "google" ? googleCode : undefined,
         });
         persistTokens(loginResponse.data);
-        router.push("/wallet");
+        const returnTo =
+          typeof window !== "undefined"
+            ? sessionStorage.getItem("vtron_return_to")
+            : null;
+        if (returnTo && returnTo.startsWith("/")) {
+          sessionStorage.removeItem("vtron_return_to");
+          router.push(returnTo);
+        } else {
+          router.push("/wallet");
+        }
       } else if (mode === "register") {
         const result = registerSchema.safeParse({
           email,
@@ -108,7 +123,10 @@ export default function AuthPage() {
         });
         if (!result.success) {
           const issue = result.error.issues[0];
-          setValidationErrors(issue?.message ?? getFirstError(result.error), issue?.path?.[0] as keyof typeof fieldErrors);
+          setValidationErrors(
+            issue?.message ?? getFirstError(result.error),
+            issue?.path?.[0] as keyof typeof fieldErrors
+          );
           setStatus("idle");
           return;
         }
@@ -118,7 +136,16 @@ export default function AuthPage() {
           code: emailCode,
         });
         persistTokens(registerResponse.data);
-        router.push("/wallet");
+        const returnTo =
+          typeof window !== "undefined"
+            ? sessionStorage.getItem("vtron_return_to")
+            : null;
+        if (returnTo && returnTo.startsWith("/")) {
+          sessionStorage.removeItem("vtron_return_to");
+          router.push(returnTo);
+        } else {
+          router.push("/wallet");
+        }
       } else {
         const result = forgotPasswordSchema.safeParse({
           email,
@@ -167,7 +194,10 @@ export default function AuthPage() {
           : emailSchema.safeParse(email);
       if (!result.success) {
         const issue = result.error?.issues[0];
-        setValidationErrors(issue?.message ?? getFirstError(result.error), "email");
+        setValidationErrors(
+          issue?.message ?? getFirstError(result.error),
+          "email"
+        );
         setStatus("idle");
         return;
       }
@@ -221,10 +251,10 @@ export default function AuthPage() {
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold text-(--foreground)">
               {mode === "login"
-                ? "Welcome back"
+                ? "Login to your account"
                 : mode === "register"
-                  ? "Create your account"
-                  : "Reset password"}
+                ? "Create your account"
+                : "Reset password"}
             </h1>
             <button
               type="button"
@@ -237,10 +267,10 @@ export default function AuthPage() {
 
           <p className="mt-2 text-sm text-(--paragraph)">
             {mode === "login"
-              ? "Sign in to access your dashboard."
+              ? "Welcome back. Sign in to access your dashboard."
               : mode === "register"
-                ? "Spin up a new wallet in a few minutes."
-                : "Use your email and code to reset your password."}
+              ? "Spin up a new wallet in a few minutes."
+              : "Use your email and code to reset your password."}
           </p>
 
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
@@ -259,7 +289,9 @@ export default function AuthPage() {
                 }}
               />
               {fieldErrors.email ? (
-                <span className="text-xs text-red-500">{fieldErrors.email}</span>
+                <span className="text-xs text-red-500">
+                  {fieldErrors.email}
+                </span>
               ) : null}
             </label>
             <label className="flex flex-col gap-2 text-sm font-medium text-(--foreground)">
@@ -277,11 +309,15 @@ export default function AuthPage() {
                 }}
               />
               {fieldErrors.password ? (
-                <span className="text-xs text-red-500">{fieldErrors.password}</span>
+                <span className="text-xs text-red-500">
+                  {fieldErrors.password}
+                </span>
               ) : null}
             </label>
 
-            {(mode === "register" || mode === "forgot" || step === "verify") && (
+            {(mode === "register" ||
+              mode === "forgot" ||
+              step === "verify") && (
               <>
                 {mode === "login" ? (
                   <>
@@ -466,9 +502,7 @@ export default function AuthPage() {
 
           <div className="mt-6 text-center text-sm text-(--paragraph)">
             <span>
-              {mode === "login"
-                ? "New to Vtron?"
-                : "Already have an account?"}
+              {mode === "login" ? "New to Vtron?" : "Already have an account?"}
             </span>{" "}
             <button
               type="button"

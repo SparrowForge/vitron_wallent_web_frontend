@@ -1,19 +1,19 @@
 "use client";
 
+import DepositModal from "@/features/wallet/components/modals/DepositModal";
+import ReceiveModal from "@/features/wallet/components/modals/ReceiveModal";
+import SendModal from "@/features/wallet/components/modals/SendModal";
+import WithdrawModal from "@/features/wallet/components/modals/WithdrawModal";
+import { apiRequest } from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import {
   depositSvg,
   receiveSvg,
   sendSvg,
   withdrawSvg,
 } from "@/shared/components/Svgs/Svg";
-import DepositModal from "@/features/wallet/components/modals/DepositModal";
-import ReceiveModal from "@/features/wallet/components/modals/ReceiveModal";
-import SendModal from "@/features/wallet/components/modals/SendModal";
-import WithdrawModal from "@/features/wallet/components/modals/WithdrawModal";
 import Spinner from "@/shared/components/ui/Spinner";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
-import { apiRequest } from "@/lib/api";
-import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Wallet = {
@@ -305,7 +305,7 @@ export default function WalletDashboard() {
                   Amount
                 </th>
                 <th className="px-3 py-3 sm:px-4">Date</th>
-                <th className="px-3 py-3 sm:px-4">Status</th>
+                <th className="px-3 py-3 sm:px-4">Type</th>
               </tr>
             </thead>
             <tbody className="text-(--double-foreground)">

@@ -43,7 +43,7 @@ export default function ReceiveModal({
   const [qrSourceIndex, setQrSourceIndex] = useState(0);
   const [qrLoadError, setQrLoadError] = useState(false);
 
-  useToastMessages({ errorMessage });
+  useToastMessages({ errorMessage, infoMessage });
 
   useEffect(() => {
     if (!open) {
@@ -92,23 +92,30 @@ export default function ReceiveModal({
     void loadData();
   }, [open]);
 
-  const qrImageSources = useMemo(() => {
+  const qrLink = useMemo(() => {
     if (!qrValue) {
+      return "";
+    }
+    return `${process.env.NEXT_PUBLIC_CLIENT_BASE_URL}/wallet/send?hash=${qrValue}`;
+  }, [qrValue]);
+
+  const qrImageSources = useMemo(() => {
+    if (!qrLink) {
       return [];
     }
-    const encoded = encodeURIComponent(qrValue);
+    const encoded = encodeURIComponent(qrLink);
     return [
       `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encoded}`,
       `https://chart.googleapis.com/chart?chs=220x220&cht=qr&chl=${encoded}`,
     ];
-  }, [qrValue]);
+  }, [qrLink]);
 
   const qrImageUrl = qrImageSources[qrSourceIndex] ?? "";
 
   useEffect(() => {
     setQrSourceIndex(0);
     setQrLoadError(false);
-  }, [qrValue]);
+  }, [qrLink]);
 
   const handleSave = () => {
     if (!qrImageUrl) {
@@ -121,14 +128,14 @@ export default function ReceiveModal({
   };
 
   const handleCopy = async () => {
-    if (!qrValue) {
+    if (!qrLink) {
       return;
     }
     try {
-      await navigator.clipboard.writeText(qrValue);
-      setInfoMessage("QR string copied.");
+      await navigator.clipboard.writeText(qrLink);
+      setInfoMessage("Send link copied.");
     } catch {
-      setErrorMessage("Unable to copy QR string.");
+      setErrorMessage("Unable to copy send link.");
     }
   };
 
@@ -213,9 +220,9 @@ export default function ReceiveModal({
           type="button"
           onClick={handleCopy}
           className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) text-sm font-semibold text-(--foreground)"
-          disabled={!qrValue}
+          disabled={!qrLink}
         >
-          Copy QR string
+          Copy link
         </button>
         <button
           type="button"
@@ -223,7 +230,7 @@ export default function ReceiveModal({
           className="h-12 w-full rounded-2xl bg-(--brand) text-sm font-semibold text-(--background)"
           disabled={!qrImageUrl}
         >
-          Save picture
+          Save QR
         </button>
         {infoMessage && (
           <span className="mt-2 w-full text-center text-xs text-(--success)">

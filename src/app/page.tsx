@@ -1,6 +1,7 @@
 "use client";
 
 import LandingHeader from "@/features/navigation/components/LandingHeader";
+import { Rocket } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -26,13 +27,8 @@ export default function LandingPage() {
             href="/auth"
             className="inline-flex h-11 items-center justify-center rounded-full bg-(--brand) px-6 text-sm font-semibold text-(--background)"
           >
+            <Rocket className="mr-2 h-4 w-4" />
             Get started
-          </Link>
-          <Link
-            href="/auth"
-            className="inline-flex h-11 items-center justify-center rounded-full border border-(--stroke) px-6 text-sm font-semibold text-(--foreground)"
-          >
-            Log in
           </Link>
         </div>
       </main>

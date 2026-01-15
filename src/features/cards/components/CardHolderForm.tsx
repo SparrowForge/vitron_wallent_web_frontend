@@ -186,17 +186,16 @@ export default function CardHolderForm({
     [countryId]
   );
 
-  // When country changes, reset idType to PASSPORT (same behavior as your original code)
   useEffect(() => {
-    // only reset if countryId is set (avoid resetting on first render)
-    if (countryId !== undefined) {
-      setValue("idType", "PASSPORT", {
+    if (countryId === undefined) return;
+    const hasMatch = idTypeOptions.some((option) => option.value === idType);
+    if (!hasMatch) {
+      setValue("idType", idTypeOptions[0]?.value ?? "PASSPORT", {
         shouldValidate: true,
         shouldDirty: true,
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [countryId]);
+  }, [countryId, idType, idTypeOptions, setValue]);
 
   useEffect(() => {
     let mounted = true;
@@ -566,16 +565,21 @@ export default function CardHolderForm({
             {...register("countryId")}
             className="h-11 w-full rounded-xl border border-(--stroke) bg-(--background) px-3 text-sm text-(--foreground)"
             onChange={(e) => {
-              // keep RHF in sync + your original behavior: reset idType
               const value = e.target.value;
               setValue("countryId", value, {
                 shouldValidate: true,
                 shouldDirty: true,
               });
-              setValue("idType", "PASSPORT", {
-                shouldValidate: true,
-                shouldDirty: true,
-              });
+              const nextOptions = getIdTypeOptions(value);
+              const nextHasMatch = nextOptions.some(
+                (option) => option.value === idType
+              );
+              if (!nextHasMatch) {
+                setValue("idType", nextOptions[0]?.value ?? "PASSPORT", {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                });
+              }
             }}
           >
             <option value="">Please choose</option>

@@ -1,16 +1,17 @@
+import { clearAuthTokens } from "@/lib/auth";
 import {
   CreditCard,
+  LogOut,
   Megaphone,
   PanelLeftClose,
   PanelLeftOpen,
-  Search,
   Settings,
   ShieldCheck,
   Wallet,
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const primaryNav = [
   // { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
@@ -21,6 +22,7 @@ const primaryNav = [
   // { href: "/payments", label: "Payment", icon: Receipt },
   { href: "/authentication", label: "Authentication", icon: ShieldCheck },
   { href: "/notice", label: "Notice", icon: Megaphone },
+  { href: "/settings", label: "Settings", icon: Settings },
   // { href: "/contact", label: "Contact", icon: Mail },
 ];
 
@@ -38,9 +40,13 @@ export default function Sidebar({
   onToggleCollapse,
 }: SidebarProps) {
   const pathname = usePathname();
-
+  const router = useRouter();
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
+  const handleLogout = () => {
+    clearAuthTokens();
+    router.replace("/");
+  };
 
   return (
     <>
@@ -58,7 +64,7 @@ export default function Sidebar({
         } ${isCollapsed ? "lg:w-20" : "lg:w-72"}`}
       >
         <div className="flex h-16 items-center justify-between gap-3 px-6 lg:justify-start">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 mt-6">
             <div className="grid h-9 w-9 place-items-center rounded-full bg-(--brand-10) text-(--brand)">
               <span className="text-lg font-semibold">V</span>
             </div>
@@ -79,18 +85,7 @@ export default function Sidebar({
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className={`px-6 pb-4 ${isCollapsed ? "lg:px-3" : ""}`}>
-          <div className="flex items-center gap-2 rounded-lg border border-(--stroke) bg-(--basic-cta) px-3 py-2 text-sm text-(--paragraph)">
-            <Search className="h-4 w-4 text-(--icon-color)" />
-            <input
-              placeholder="Search"
-              className={`w-full bg-transparent text-sm text-(--foreground) placeholder:text-(--placeholder) focus:outline-none ${
-                isCollapsed ? "lg:hidden" : ""
-              }`}
-            />
-          </div>
-        </div>
-        <nav className="flex flex-1 flex-col gap-1 px-3 pb-6">
+        <nav className="flex flex-1 flex-col gap-1 px-3 pb-6 mt-10">
           {primaryNav.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);
@@ -120,20 +115,19 @@ export default function Sidebar({
               </Link>
             );
           })}
+          <div
+            onClick={handleLogout}
+            className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${"text-(--paragraph) hover:bg-(--stroke-high) hover:text-(--foreground)"} cursor-pointer`}
+          >
+            <span
+              className={`grid h-8 w-8 place-items-center rounded-lg border border-(--stroke) ${"bg-(--brand-10) text-(--brand)"}`}
+            >
+              <LogOut className="h-4 w-4" />
+            </span>
+            <span className={isCollapsed ? "lg:hidden" : ""}>Logout</span>
+          </div>
         </nav>
         <div className="mt-auto px-3 pb-6">
-          <div className="mb-3 h-px bg-(--stroke)" />
-          <Link
-            href="/settings"
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-(--paragraph) transition hover:bg-(--stroke-high) hover:text-(--foreground)"
-          >
-            <span className="grid h-8 w-8 place-items-center rounded-lg border border-(--stroke) bg-(--basic-cta) text-(--icon-color)">
-              <Settings className="h-4 w-4" />
-            </span>
-            <span className={isCollapsed ? "lg:hidden" : ""}>
-              Settings v1.0.2
-            </span>
-          </Link>
           <button
             type="button"
             onClick={onToggleCollapse}
