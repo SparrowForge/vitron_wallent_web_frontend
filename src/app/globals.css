@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
 @source "../**/*.{js,ts,jsx,tsx,mdx}";
 
 @theme inline {
@@ -37,5 +36,11 @@
   }
   button:disabled {
     cursor: not-allowed;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  * {
+    filter: none !important; /* Override any existing filters */
   }
 }

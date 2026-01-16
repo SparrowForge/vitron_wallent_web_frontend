@@ -437,21 +437,6 @@ export default function CardHolderForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <label className="text-sm font-medium text-(--paragraph)">
-            Last name
-          </label>
-          <input
-            {...register("lastName")}
-            className="h-11 w-full rounded-xl border border-(--stroke) bg-(--background) px-3 text-sm text-(--foreground)"
-          />
-          {errors.lastName?.message ? (
-            <p className="text-xs text-red-500">
-              {String(errors.lastName.message)}
-            </p>
-          ) : null}
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-(--paragraph)">
             First name
           </label>
           <input
@@ -461,6 +446,20 @@ export default function CardHolderForm({
           {errors.firstName?.message ? (
             <p className="text-xs text-red-500">
               {String(errors.firstName.message)}
+            </p>
+          ) : null}
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-(--paragraph)">
+            Last name
+          </label>
+          <input
+            {...register("lastName")}
+            className="h-11 w-full rounded-xl border border-(--stroke) bg-(--background) px-3 text-sm text-(--foreground)"
+          />
+          {errors.lastName?.message ? (
+            <p className="text-xs text-red-500">
+              {String(errors.lastName.message)}
             </p>
           ) : null}
         </div>
