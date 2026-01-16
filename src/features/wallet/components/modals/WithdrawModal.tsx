@@ -317,7 +317,7 @@ export default function WithdrawModal({
           <div className="flex items-center justify-between rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
             <select
               {...register("network")}
-              className="w-full bg-transparent text-sm text-(--double-foreground) focus:outline-none"
+              className="w-full bg-black text-sm text-white focus:outline-none"
             >
               <option value="">Please choose</option>
               <option value="USDT-ERC20">USDT-ERC20</option>
