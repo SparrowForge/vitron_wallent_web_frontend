@@ -38,6 +38,7 @@ export const API_ENDPOINTS = {
   kycUploadFile: "/merchant-server/upload/kyc/file",
   cardDetail: "/merchant-server/merchantCard/importance",
   cardHide: "/merchant-server/merchantCard/hide",
+  cardRecordPage: "/merchant-server/cardRecord/page",
   cardRechargeConfig: "/merchant-server/merchantCard/pre/deposit",
   cardRechargeApply: "/merchant-server/merchantCard/deposit",
   cardModify: "/merchant-server/merchantCard/modify",

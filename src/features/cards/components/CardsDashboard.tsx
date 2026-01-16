@@ -58,12 +58,40 @@ type CardBalanceResponse = {
   };
 };
 
+type CardRecord = {
+  tradeId?: string;
+  orderId?: string;
+  amount?: string;
+  currency?: string;
+  type?: string;
+  typeString?: string;
+  createTime?: string;
+};
+
+type CardRecordResponse = {
+  code?: number | string;
+  msg?: string;
+  data?: {
+    total?: number;
+    size?: number;
+    pages?: number;
+    current?: number;
+    records?: CardRecord[];
+  };
+};
+
 const getCardId = (card: ApiCard) =>
   String(card.cardId ?? card.id ?? card.cardNo ?? "");
 
 const getLast4 = (card: ApiCard) => {
   const source = String(card.cardNo ?? card.cardId ?? card.id ?? "");
   return source.length >= 4 ? source.slice(-4) : source || "----";
+};
+
+const formatOrderId = (value?: string) => {
+  if (!value) return "--";
+  if (value.length <= 10) return value;
+  return `${value.slice(0, 6)}...${value.slice(-4)}`;
 };
 
 export default function CardsDashboard() {
@@ -78,6 +106,12 @@ export default function CardsDashboard() {
   const [cardBalances, setCardBalances] = useState<
     Record<string, { balance: string; currency: string }>
   >({});
+  const [recordPage, setRecordPage] = useState(1);
+  const [recordPages, setRecordPages] = useState(1);
+  const [recordTotal, setRecordTotal] = useState(0);
+  const [recordLoading, setRecordLoading] = useState(false);
+  const [recordError, setRecordError] = useState("");
+  const [records, setRecords] = useState<CardRecord[]>([]);
 
   useToastMessages({ errorMessage });
 
@@ -198,6 +232,71 @@ export default function CardsDashboard() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!selectedId) {
+      setRecords([]);
+      setRecordPages(1);
+      setRecordTotal(0);
+      return;
+    }
+    setRecordPage(1);
+  }, [selectedId]);
+
+  useEffect(() => {
+    if (!selectedId) {
+      return;
+    }
+    let mounted = true;
+    const loadRecords = async () => {
+      setRecordLoading(true);
+      setRecordError("");
+      try {
+        const response = await apiRequest<CardRecordResponse>({
+          path: API_ENDPOINTS.cardRecordPage,
+          method: "POST",
+          body: JSON.stringify({
+            cardId: selectedId,
+            pageIndex: recordPage,
+            pageSize: 10,
+          }),
+        });
+        if (!mounted) {
+          return;
+        }
+        if (!response.data) {
+          setRecords([]);
+          setRecordPages(1);
+          setRecordTotal(0);
+          return;
+        }
+        setRecords(response.data.records ?? []);
+        setRecordPages(response.data.pages ?? 1);
+        setRecordTotal(response.data.total ?? 0);
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+        setRecords([]);
+        setRecordPages(1);
+        setRecordTotal(0);
+        setRecordError(
+          error instanceof Error
+            ? error.message
+            : "Unable to load card transactions."
+        );
+      } finally {
+        if (mounted) {
+          setRecordLoading(false);
+        }
+      }
+    };
+
+    loadRecords();
+    return () => {
+      mounted = false;
+    };
+  }, [selectedId, recordPage]);
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -270,7 +369,19 @@ export default function CardsDashboard() {
             return (
               <div
                 key={cardId}
-                className="rounded-2xl border border-(--stroke) bg-(--basic-cta) p-5"
+                role="button"
+                tabIndex={0}
+                onClick={() => setSelectedId(cardId)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    setSelectedId(cardId);
+                  }
+                }}
+                className={`rounded-2xl border bg-(--basic-cta) p-5 transition ${
+                  selectedId === cardId
+                    ? "border-(--brand) shadow-[0_0_0_1px_rgba(132,204,22,0.35)]"
+                    : "border-(--stroke)"
+                }`}
               >
                 <div className="relative overflow-hidden rounded-2xl bg-(--background) p-5">
                   <div className="text-sm uppercase tracking-[0.3em] text-(--paragraph)">
@@ -337,6 +448,108 @@ export default function CardsDashboard() {
           })}
         </section>
       )}
+
+      {cards.length > 0 ? (
+        <section className="rounded-2xl border border-(--stroke) bg-(--basic-cta) p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold text-(--foreground)">
+              Transaction history
+            </h2>
+            <p className="text-xs text-(--paragraph)">
+              {recordTotal} records
+            </p>
+          </div>
+
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[520px] text-left text-xs text-(--paragraph)">
+              <thead>
+                <tr className="text-[11px] uppercase tracking-[0.16em] text-(--placeholder)">
+                  <th className="px-3 py-2">Order</th>
+                  <th className="px-3 py-2">Type</th>
+                  <th className="px-3 py-2">Amount</th>
+                  <th className="px-3 py-2">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recordLoading ? (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-3 py-4 text-sm text-(--paragraph)"
+                    >
+                      Loading transactions...
+                    </td>
+                  </tr>
+                ) : recordError ? (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-3 py-4 text-sm text-red-500"
+                    >
+                      {recordError}
+                    </td>
+                  </tr>
+                ) : records.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-3 py-4 text-sm text-(--paragraph)"
+                    >
+                      No transactions yet.
+                    </td>
+                  </tr>
+                ) : (
+                  records.map((record, index) => (
+                    <tr
+                      key={`${record.orderId ?? record.tradeId ?? "row"}-${index}`}
+                      className="border-t border-(--stroke)"
+                    >
+                      <td className="px-3 py-3 text-(--double-foreground)">
+                        {formatOrderId(record.orderId ?? record.tradeId)}
+                      </td>
+                      <td className="px-3 py-3">
+                        {record.typeString ?? record.type ?? "--"}
+                      </td>
+                      <td className="px-3 py-3 text-(--double-foreground)">
+                        {record.amount ?? "--"} {record.currency ?? ""}
+                      </td>
+                      <td className="px-3 py-3">
+                        {record.createTime ?? "--"}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between text-xs text-(--paragraph)">
+            <button
+              type="button"
+              onClick={() => setRecordPage((prev) => Math.max(prev - 1, 1))}
+              className="rounded-full border border-(--stroke) bg-(--background) px-3 py-2 text-[11px] font-semibold text-(--foreground)"
+              disabled={recordPage <= 1 || recordLoading}
+            >
+              Previous
+            </button>
+            <span>
+              Page {recordPage} of {recordPages}
+            </span>
+            <button
+              type="button"
+              onClick={() =>
+                setRecordPage((prev) =>
+                  Math.min(prev + 1, Math.max(recordPages, 1))
+                )
+              }
+              className="rounded-full border border-(--stroke) bg-(--background) px-3 py-2 text-[11px] font-semibold text-(--foreground)"
+              disabled={recordPage >= recordPages || recordLoading}
+            >
+              Next
+            </button>
+          </div>
+        </section>
+      ) : null}
 
       <CardViewModal
         open={viewOpen}
