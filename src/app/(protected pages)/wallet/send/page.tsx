@@ -367,7 +367,7 @@ export default function WalletSendPage() {
               <select
                 value={currency}
                 onChange={(event) => setCurrency(event.target.value)}
-                className="w-full bg-transparent text-sm text-(--double-foreground) focus:outline-none"
+                className="w-full bg-(--background) text-sm text-(--foreground) focus:outline-none"
               >
                 {balances.map((entry) => (
                   <option key={entry.currency} value={entry.currency}>

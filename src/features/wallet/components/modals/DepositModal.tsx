@@ -1,10 +1,10 @@
 "use client";
 
-import Spinner from "@/shared/components/ui/Spinner";
-import ModalShell from "@/shared/components/ui/ModalShell";
-import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import ModalShell from "@/shared/components/ui/ModalShell";
+import Spinner from "@/shared/components/ui/Spinner";
+import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
 
 type DepositModalProps = {
@@ -223,126 +223,124 @@ export default function DepositModal({
       ariaLabel="Deposit crypto"
       className="max-w-md"
     >
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full border border-(--stroke) bg-(--background) px-3 py-2 text-xs font-semibold text-(--paragraph)"
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-full border border-(--stroke) bg-(--background) px-3 py-2 text-xs font-semibold text-(--paragraph)"
+        >
+          Back
+        </button>
+        <div className="text-sm font-semibold text-(--foreground)">Top up</div>
+        <span className="text-xs text-(--paragraph)">{walletName}</span>
+      </div>
+
+      <div className="mt-6 text-center">
+        <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-(--stroke) bg-(--background) px-4 py-2 text-sm text-(--double-foreground)">
+          <select
+            value={selectedId}
+            onChange={(event) => setSelectedId(event.target.value)}
+            className="bg-(--background) text-sm text-(--foreground) focus:outline-none"
           >
-            Back
-          </button>
-          <div className="text-sm font-semibold text-(--foreground)">
-            Top up
-          </div>
-          <span className="text-xs text-(--paragraph)">{walletName}</span>
+            {coins.map((coin) => {
+              const id = coin.ID ?? String(coin.id ?? "");
+              return (
+                <option key={id + Math.random()} value={id}>
+                  {coin.name ?? coin.currency ?? "Select"}
+                </option>
+              );
+            })}
+          </select>
+          <span className="text-(--placeholder)">▾</span>
         </div>
+      </div>
 
-        <div className="mt-6 text-center">
-          <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-(--stroke) bg-(--background) px-4 py-2 text-sm text-(--double-foreground)">
-            <select
-              value={selectedId}
-              onChange={(event) => setSelectedId(event.target.value)}
-              className="bg-transparent text-sm text-(--double-foreground) focus:outline-none"
-            >
-              {coins.map((coin) => {
-                const id = coin.ID ?? String(coin.id ?? "");
-                return (
-                  <option key={id + Math.random()} value={id}>
-                    {coin.name ?? coin.currency ?? "Select"}
-                  </option>
-                );
-              })}
-            </select>
-            <span className="text-(--placeholder)">▾</span>
-          </div>
-        </div>
-
-        <div className="mt-6 grid place-items-center">
-          <div className="grid h-48 w-48 place-items-center rounded-2xl border border-(--stroke) bg-(--background)">
-            {qrImageUrl && !qrLoadError ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={qrImageUrl}
-                alt="Deposit QR"
-                className="h-44 w-44 object-contain"
-                onError={() => {
-                  if (qrSourceIndex < qrImageSources.length - 1) {
-                    setQrSourceIndex((prev) => prev + 1);
-                  } else {
-                    setQrLoadError(true);
-                  }
-                }}
-              />
-            ) : (
-              <span className="inline-flex items-center gap-2 text-xs text-(--paragraph)">
-                {loading ? (
-                  <>
-                    <Spinner size={14} />
-                    Loading...
-                  </>
-                ) : (
-                  "No address"
-                )}
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-xs text-(--double-foreground)">
-          <span className="truncate">{qrValue || "Address unavailable"}</span>
-          <button
-            type="button"
-            className="text-(--brand)"
-            onClick={handleCopy}
-            disabled={!qrValue}
-          >
-            Copy
-          </button>
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-(--paragraph)">
-          <button
-            type="button"
-            onClick={refreshAddress}
-            className="rounded-full border border-(--stroke) bg-(--background) px-3 py-1 text-xs text-(--double-foreground)"
-            disabled={loading}
-          >
-            {loading ? (
-              <span className="inline-flex items-center gap-2">
-                <Spinner size={12} />
-                Refreshing...
-              </span>
-            ) : (
-              "Refresh address"
-            )}
-          </button>
-          {null}
-        </div>
-
-        <div className="mt-4 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-xs text-(--paragraph)">
-          <div className="flex items-center justify-between">
-            <span>Ratio</span>
-            <span className="text-(--double-foreground)">{formatRate()}</span>
-          </div>
-          <div className="mt-2 flex items-center justify-between">
-            <span>Top up rates</span>
-            <span className="text-(--double-foreground)">
-              {selectedCoin?.convertFeeRate
-                ? `${selectedCoin.convertFeeRate}%`
-                : "--"}
+      <div className="mt-6 grid place-items-center">
+        <div className="grid h-48 w-48 place-items-center rounded-2xl border border-(--stroke) bg-(--background)">
+          {qrImageUrl && !qrLoadError ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={qrImageUrl}
+              alt="Deposit QR"
+              className="h-44 w-44 object-contain"
+              onError={() => {
+                if (qrSourceIndex < qrImageSources.length - 1) {
+                  setQrSourceIndex((prev) => prev + 1);
+                } else {
+                  setQrLoadError(true);
+                }
+              }}
+            />
+          ) : (
+            <span className="inline-flex items-center gap-2 text-xs text-(--paragraph)">
+              {loading ? (
+                <>
+                  <Spinner size={14} />
+                  Loading...
+                </>
+              ) : (
+                "No address"
+              )}
             </span>
-          </div>
+          )}
         </div>
+      </div>
 
+      <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-xs text-(--double-foreground)">
+        <span className="truncate">{qrValue || "Address unavailable"}</span>
+        <button
+          type="button"
+          className="text-(--brand)"
+          onClick={handleCopy}
+          disabled={!qrValue}
+        >
+          Copy
+        </button>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-(--paragraph)">
+        <button
+          type="button"
+          onClick={refreshAddress}
+          className="rounded-full border border-(--stroke) bg-(--background) px-3 py-1 text-xs text-(--double-foreground)"
+          disabled={loading}
+        >
+          {loading ? (
+            <span className="inline-flex items-center gap-2">
+              <Spinner size={12} />
+              Refreshing...
+            </span>
+          ) : (
+            "Refresh address"
+          )}
+        </button>
         {null}
+      </div>
 
-        <ul className="mt-4 space-y-2 text-xs text-(--paragraph)">
-          <li>
-            This address only accepts USDT recharges from the corresponding
-            network.
-          </li>
-          <li>Please don’t recharge any assets other than USDT.</li>
-        </ul>
+      <div className="mt-4 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-xs text-(--paragraph)">
+        <div className="flex items-center justify-between">
+          <span>Ratio</span>
+          <span className="text-(--double-foreground)">{formatRate()}</span>
+        </div>
+        <div className="mt-2 flex items-center justify-between">
+          <span>Top up rates</span>
+          <span className="text-(--double-foreground)">
+            {selectedCoin?.convertFeeRate
+              ? `${selectedCoin.convertFeeRate}%`
+              : "--"}
+          </span>
+        </div>
+      </div>
+
+      {null}
+
+      <ul className="mt-4 space-y-2 text-xs text-(--paragraph)">
+        <li>
+          This address only accepts USDT recharges from the corresponding
+          network.
+        </li>
+        <li>Please don’t recharge any assets other than USDT.</li>
+      </ul>
     </ModalShell>
   );
 }
