@@ -310,6 +310,7 @@ export default function ModifyEmailPage() {
                     error={fieldErrors.emailCode}
                   />
                   <Button
+                    type="button"
                     variant="outline"
                     onClick={handleSendCode}
                     className="min-w-[120px]"
