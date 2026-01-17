@@ -1,16 +1,15 @@
-"use client";
-
 import LandingHeader from "@/features/navigation/components/LandingHeader";
 import { Rocket } from "lucide-react";
+import { cookies } from "next/headers";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
-export default function LandingPage() {
-  const router = useRouter();
+export default async function LandingPage() {
+  const cookieStore = await cookies();
+  const isAuthenticated = cookieStore.has("vtron_refresh_token");
 
   return (
     <div className="flex min-h-screen flex-col">
-      <LandingHeader />
+      <LandingHeader isAuthenticated={isAuthenticated} />
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-(--paragraph)">
           Crypto Wallet Platform

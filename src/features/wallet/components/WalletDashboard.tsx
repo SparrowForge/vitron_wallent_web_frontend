@@ -42,14 +42,7 @@ const actions = [
   { key: "receive", label: "Receive", icon: receiveSvg },
 ];
 
-const getStoredToken = () => {
-  if (typeof window === "undefined") {
-    return { token: "" };
-  }
-  return {
-    token: localStorage.getItem("vtron_access_token") ?? "",
-  };
-};
+
 
 const formatAmount = (value: string, currency: string) => {
   const numeric = Number(value);
@@ -104,12 +97,7 @@ export default function WalletDashboard() {
     setLoading(true);
     setErrorMessage("");
     try {
-      const { token } = getStoredToken();
-      if (!token) {
-        setWallets([]);
-        setErrorMessage("Please login to view your wallets.");
-        return;
-      }
+
       const response = await apiRequest<WalletListResponse>({
         path: API_ENDPOINTS.walletList,
         method: "POST",

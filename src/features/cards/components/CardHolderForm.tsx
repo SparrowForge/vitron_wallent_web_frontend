@@ -59,14 +59,7 @@ type CardHolderFormProps = {
   holderStatus?: string;
 };
 
-const getAuthHeader = () => {
-  if (typeof window === "undefined") return "";
-  const token = localStorage.getItem("vtron_access_token") ?? "";
-  const tokenType = localStorage.getItem("vtron_token_type") ?? "";
-  if (!token) return "";
-  const trimmed = tokenType.trim();
-  return trimmed ? `${trimmed}${token}` : token;
-};
+
 
 const toDateTime = (value: string) => {
   if (!value) return "";
@@ -346,9 +339,7 @@ export default function CardHolderForm({
 
       const response = await fetch("/api/upload", {
         method: "POST",
-        headers: {
-          Authorization: getAuthHeader(),
-        },
+        headers: {},
         body: formData,
       });
 

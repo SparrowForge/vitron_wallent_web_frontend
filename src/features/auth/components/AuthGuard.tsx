@@ -6,20 +6,6 @@ import Spinner from "@/shared/components/ui/Spinner";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-const getAccessToken = () => {
-  if (typeof window === "undefined") {
-    return "";
-  }
-  return localStorage.getItem("vtron_access_token") ?? "";
-};
-
-const getRefreshToken = () => {
-  if (typeof window === "undefined") {
-    return "";
-  }
-  return localStorage.getItem("vtron_refresh_token") ?? "";
-};
-
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -30,21 +16,24 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let active = true;
     const verify = async () => {
-      const token = getAccessToken();
-      const refreshToken = getRefreshToken();
-      if (!token && !refreshToken) {
-        if (typeof window !== "undefined") {
-          const search = searchParams.toString();
-          const returnTo = search ? `${pathname}?${search}` : pathname;
-          sessionStorage.setItem("vtron_return_to", returnTo);
-        }
-        router.replace("/");
-        if (active) {
-          setIsChecking(false);
-          setIsAuthed(false);
-        }
+      // Skip verification on public routes
+      const publicPaths = ["/", "/auth", "/contact", "/notice"];
+      const isPublic = publicPaths.some(p => pathname === p || pathname.startsWith("/auth/"));
+
+      if (isPublic) {
+        setIsChecking(false);
+        setIsAuthed(false);
+        // We set isAuthed false here because AuthGuard implies "Guard".
+        // If it's public, we don't block, but we also don't assert "Authed".
+        // Actually, if AuthGuard wraps public pages, it should just render children.
+        // But typically AuthGuard blocks unauthenticated access.
+        // If we are on public page, we shouldn't block.
         return;
       }
+
+      // Middleware handles initial protection.
+      // We double check logic here via API if needed, or just let it pass.
+      // For now, we perform the check to ensure token validity beyond just cookie existence.
       try {
         const response = await apiRequest<{
           code?: number | string;
@@ -55,7 +44,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
           body: JSON.stringify({}),
         });
         if (!response.data) {
-          // clearAuthTokens();
+          // ... (rest of logic)
           if (typeof window !== "undefined") {
             const search = searchParams.toString();
             const returnTo = search ? `${pathname}?${search}` : pathname;
@@ -73,7 +62,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
           setIsChecking(false);
         }
       } catch (err) {
-        // clearAuthTokens();
         if (typeof window !== "undefined") {
           const search = searchParams.toString();
           const returnTo = search ? `${pathname}?${search}` : pathname;
@@ -103,7 +91,10 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAuthed) {
+  const publicPaths = ["/", "/auth", "/contact", "/notice"];
+  const isPublic = publicPaths.some(p => pathname === p || pathname.startsWith("/auth/"));
+
+  if (!isAuthed && !isPublic) {
     return null;
   }
 

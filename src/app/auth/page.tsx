@@ -107,7 +107,7 @@ export default function AuthPage() {
           code: verifyType === "email" ? emailCode : undefined,
           googleCode: verifyType === "google" ? googleCode : undefined,
         });
-        persistTokens(loginResponse.data);
+        // persistTokens(loginResponse.data); // Handled by server cookies now
         const returnTo =
           typeof window !== "undefined"
             ? sessionStorage.getItem("vtron_return_to")
@@ -138,7 +138,7 @@ export default function AuthPage() {
           password,
           code: emailCode,
         });
-        persistTokens(registerResponse.data);
+        // persistTokens(registerResponse.data); // Handled by server cookies now
         const returnTo =
           typeof window !== "undefined"
             ? sessionStorage.getItem("vtron_return_to")
@@ -248,7 +248,7 @@ export default function AuthPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <LandingHeader />
+      <LandingHeader isAuthenticated={false} />
       <main className="flex flex-1 items-center justify-center px-6 py-12 relative">
         <section className="relative w-full max-w-md rounded-2xl border border-(--stroke) bg-(--basic-cta) p-8 shadow-sm overflow-hidden">
           <LoadingOverlay loading={status === "loading"} />

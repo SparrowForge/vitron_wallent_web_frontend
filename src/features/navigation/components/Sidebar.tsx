@@ -43,8 +43,8 @@ export default function Sidebar({
   const router = useRouter();
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
-  const handleLogout = () => {
-    clearAuthTokens();
+  const handleLogout = async () => {
+    await clearAuthTokens();
     router.replace("/");
   };
 

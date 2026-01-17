@@ -1,7 +1,7 @@
 "use server";
 
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/apiEndpoints";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 type RegisterParams = {
   username: string;
@@ -31,6 +31,56 @@ type ForgotParams = {
   password: string;
   code: string;
 };
+
+async function setAuthCookies(data: LoginResponse["data"]) {
+  if (!data?.access_token || !data?.refresh_token) {
+    return;
+  }
+  const cookieStore = await cookies();
+  const tokenType = (data.token_type ?? "Bearer").trim();
+
+  // Set Access Token
+  cookieStore.set("vtron_access_token", data.access_token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+  });
+
+  // Set Refresh Token
+  cookieStore.set("vtron_refresh_token", data.refresh_token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+  });
+
+  // Set Token Type
+  cookieStore.set("vtron_token_type", tokenType, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+  });
+}
+
+export async function logoutAction() {
+  const cookieStore = await cookies();
+  cookieStore.delete("vtron_access_token");
+  cookieStore.delete("vtron_refresh_token");
+  cookieStore.delete("vtron_token_type");
+
+  try {
+    await requestJson(API_ENDPOINTS.logout, {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+  } catch (error) {
+    console.error("Logout API call failed:", error);
+    // Ignore error, we still want to clear cookies
+  }
+  return { code: 200, msg: "Logged out" };
+}
 
 async function requestJson<T>(path: string, init: RequestInit) {
   const url = `${API_BASE_URL}${path}`;
@@ -179,6 +229,9 @@ export async function loginWithPasswordAndCodeAction(
       authType: "password",
     }),
   });
+  if (response.data) {
+    await setAuthCookies(response.data);
+  }
   return response;
 }
 
@@ -214,6 +267,9 @@ export async function registerWithPasswordAction(params: RegisterParams) {
       registerType: "app",
     }),
   });
+  if (response.data) {
+    await setAuthCookies(response.data);
+  }
   return response;
 }
 

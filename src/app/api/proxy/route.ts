@@ -27,6 +27,19 @@ function sanitizeHeaders(headers: Record<string, string>) {
   return sanitized;
 }
 
+function parseCookies(cookieHeader: string) {
+  const list: Record<string, string> = {};
+  cookieHeader.split(";").forEach((cookie) => {
+    const parts = cookie.split("=");
+    const name = parts.shift()?.trim();
+    const value = decodeURI(parts.join("="));
+    if (name) {
+      list[name] = value;
+    }
+  });
+  return list;
+}
+
 export async function POST(request: Request) {
   const payload = (await request.json()) as ProxyPayload;
   console.log("API Request", payload);
@@ -41,6 +54,18 @@ export async function POST(request: Request) {
   const headers = sanitizeHeaders(payload.headers ?? {});
   if (!headers["Content-Type"] && method !== "GET") {
     headers["Content-Type"] = "application/json";
+  }
+
+  // Inject Authorization header from cookies if not present
+  if (!headers["Authorization"]) {
+    const cookieHeader = request.headers.get("cookie") || "";
+    const cookies = parseCookies(cookieHeader);
+    const token = cookies["vtron_access_token"];
+    const tokenType = cookies["vtron_token_type"] || "Bearer";
+
+    if (token) {
+      headers["Authorization"] = `${tokenType}${token}`;
+    }
   }
 
   const response = await fetch(payload.url, {

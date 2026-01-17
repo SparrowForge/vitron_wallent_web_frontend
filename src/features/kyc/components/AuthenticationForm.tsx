@@ -62,14 +62,7 @@ type MerchantInfoResponse = {
   } | null;
 };
 
-const getAuthHeader = () => {
-  if (typeof window === "undefined") return "";
-  const token = localStorage.getItem("vtron_access_token") ?? "";
-  const tokenType = (localStorage.getItem("vtron_token_type") ?? "").trim();
-  if (!token) return "";
-  // Ensure a space between token type and token (e.g., "Bearer <token>")
-  return tokenType ? `${tokenType}${token}` : token;
-};
+
 
 const toDateTime = (value: string) => {
   if (!value) return "";
@@ -329,7 +322,7 @@ export default function AuthenticationForm() {
 
       const response = await fetch("/api/upload", {
         method: "POST",
-        headers: { Authorization: getAuthHeader() },
+        headers: {},
         body: formData,
       });
 

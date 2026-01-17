@@ -2,15 +2,9 @@
 
 import { HomeIcon, LogIn } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
-export default function LandingHeader() {
-  const [hasToken, setHasToken] = useState(false);
+export default function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean }) {
 
-  useEffect(() => {
-    const token = localStorage.getItem("vtron_refresh_token");
-    setHasToken(Boolean(token));
-  }, []);
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-(--stroke) bg-(--background) px-6">
@@ -18,7 +12,7 @@ export default function LandingHeader() {
         Vtron Wallet
       </div>
 
-      {hasToken ? (
+      {isAuthenticated ? (
         <Link
           href="/wallet"
           className="flex justify-center items-center gap-2 cursor-pointer rounded-md bg-(--primary) px-4 py-2 text-(--button-foreground) hover:bg-(--primary-hover)"
