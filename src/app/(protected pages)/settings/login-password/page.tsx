@@ -1,8 +1,12 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { loginPasswordSchema } from "@/lib/validationSchemas";
+import { Button } from "@/shared/components/ui/Button";
+import { Card, CardContent } from "@/shared/components/ui/Card";
+import { Input } from "@/shared/components/ui/Input";
 import PasswordInput from "@/shared/components/ui/PasswordInput";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
@@ -197,136 +201,143 @@ export default function LoginPasswordPage() {
         </p>
       </header>
 
-      <section className="rounded-3xl border border-(--stroke) bg-(--basic-cta) p-6">
-        <div className="space-y-4">
-          <label className="space-y-2 text-sm font-medium text-(--paragraph)">
-            New password
-            <PasswordInput
-              className="h-12"
-              inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
-              placeholder="Enter new password"
-              value={password}
-              onChange={(event) => {
-                setPassword(event.target.value);
-                if (fieldErrors.password) {
-                  setFieldErrors((prev) => ({ ...prev, password: "" }));
-                }
-              }}
-            />
-            {fieldErrors.password ? (
-              <p className="text-xs text-red-500">{fieldErrors.password}</p>
-            ) : null}
-          </label>
-
-          <label className="space-y-2 text-sm font-medium text-(--paragraph)">
-            Confirm password
-            <PasswordInput
-              className="h-12"
-              inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
-              placeholder="Confirm new password"
-              value={confirmPassword}
-              onChange={(event) => {
-                setConfirmPassword(event.target.value);
-                if (fieldErrors.confirmPassword) {
-                  setFieldErrors((prev) => ({ ...prev, confirmPassword: "" }));
-                }
-              }}
-            />
-            {fieldErrors.confirmPassword ? (
-              <p className="text-xs text-red-500">
-                {fieldErrors.confirmPassword}
-              </p>
-            ) : null}
-          </label>
-
-          <label className="space-y-2 text-sm font-medium text-(--paragraph)">
-            Verification method
-            <div className="flex items-center gap-4 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--foreground)">
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  checked={verifyType === "email"}
-                  onChange={() => setVerifyType("email")}
-                />
-                Email code
+      <Card variant="glass">
+        <CardContent className="space-y-6 p-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                New password
               </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  checked={verifyType === "google"}
-                  onChange={() => setVerifyType("google")}
-                  disabled={!needsGoogle}
-                />
-                Google code
-              </label>
+              <PasswordInput
+                placeholder="Enter new password"
+                value={password}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  if (fieldErrors.password) {
+                    setFieldErrors((prev) => ({ ...prev, password: "" }));
+                  }
+                }}
+              />
+              {fieldErrors.password ? (
+                <p className="text-xs text-red-500">{fieldErrors.password}</p>
+              ) : null}
             </div>
-          </label>
 
-          {verifyType === "email" ? (
-            <label className="space-y-2 text-sm font-medium text-(--paragraph)">
-              <span className="flex items-center justify-between">
-                Email code
-                <button
-                  type="button"
-                  onClick={handleSendCode}
-                  className="text-xs font-semibold text-(--foreground)"
-                  disabled={cooldown > 0 || loading}
-                >
-                  {cooldown > 0 ? `${cooldown}s` : "Send code"}
-                </button>
-              </span>
-              <input
-                className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
-                placeholder="Enter code"
-                value={emailCode}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                Confirm password
+              </label>
+              <PasswordInput
+                placeholder="Confirm new password"
+                value={confirmPassword}
                 onChange={(event) => {
-                  setEmailCode(event.target.value);
-                  if (fieldErrors.emailCode) {
-                    setFieldErrors((prev) => ({ ...prev, emailCode: "" }));
+                  setConfirmPassword(event.target.value);
+                  if (fieldErrors.confirmPassword) {
+                    setFieldErrors((prev) => ({ ...prev, confirmPassword: "" }));
                   }
                 }}
               />
-              {fieldErrors.emailCode ? (
-                <p className="text-xs text-red-500">{fieldErrors.emailCode}</p>
+              {fieldErrors.confirmPassword ? (
+                <p className="text-xs text-red-500">
+                  {fieldErrors.confirmPassword}
+                </p>
               ) : null}
-            </label>
-          ) : null}
+            </div>
 
-          {verifyType === "google" ? (
-            <label className="space-y-2 text-sm font-medium text-(--paragraph)">
-              Google code
-              <input
-                className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
-                placeholder="Enter Google code"
-                value={googleCode}
-                onChange={(event) => {
-                  setGoogleCode(event.target.value);
-                  if (fieldErrors.googleCode) {
-                    setFieldErrors((prev) => ({ ...prev, googleCode: "" }));
-                  }
-                }}
-              />
-              {fieldErrors.googleCode ? (
-                <p className="text-xs text-red-500">{fieldErrors.googleCode}</p>
-              ) : null}
-            </label>
-          ) : null}
-        </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                Verification method
+              </label>
+              <div className="flex items-center gap-4 rounded-xl border border-(--stroke) bg-(--background)/50 px-4 py-3 text-sm text-(--foreground)">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={verifyType === "email"}
+                    onChange={() => setVerifyType("email")}
+                    className="accent-(--brand)"
+                  />
+                  Email code
+                </label>
+                <label className={cn(
+                  "flex items-center gap-2 cursor-pointer",
+                  !needsGoogle && "opacity-50 cursor-not-allowed"
+                )}>
+                  <input
+                    type="radio"
+                    checked={verifyType === "google"}
+                    onChange={() => setVerifyType("google")}
+                    disabled={!needsGoogle}
+                    className="accent-(--brand)"
+                  />
+                  Google code
+                </label>
+              </div>
+            </div>
 
-        <button
-          type="button"
-          onClick={handleSubmit}
-          className={`mt-6 h-12 w-full rounded-2xl text-sm font-semibold ${
-            canSubmit
-              ? "bg-(--brand) text-(--background)"
-              : "bg-(--stroke) text-(--placeholder)"
-          }`}
-          disabled={!canSubmit || loading}
-        >
-          {loading ? "Updating..." : "Update password"}
-        </button>
-        {null}
-      </section>
+            {verifyType === "email" ? (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-(--paragraph)">
+                    Email code
+                  </label>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={handleSendCode}
+                    className="h-auto p-0 text-xs font-semibold text-(--brand)"
+                    disabled={cooldown > 0 || loading}
+                  >
+                    {cooldown > 0 ? `${cooldown}s` : "Send code"}
+                  </Button>
+                </div>
+                <Input
+                  placeholder="Enter code"
+                  value={emailCode}
+                  onChange={(event) => {
+                    setEmailCode(event.target.value);
+                    if (fieldErrors.emailCode) {
+                      setFieldErrors((prev) => ({ ...prev, emailCode: "" }));
+                    }
+                  }}
+                />
+                {fieldErrors.emailCode ? (
+                  <p className="text-xs text-red-500">{fieldErrors.emailCode}</p>
+                ) : null}
+              </div>
+            ) : null}
+
+            {verifyType === "google" ? (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-(--paragraph)">
+                  Google code
+                </label>
+                <Input
+                  placeholder="Enter Google code"
+                  value={googleCode}
+                  onChange={(event) => {
+                    setGoogleCode(event.target.value);
+                    if (fieldErrors.googleCode) {
+                      setFieldErrors((prev) => ({ ...prev, googleCode: "" }));
+                    }
+                  }}
+                />
+                {fieldErrors.googleCode ? (
+                  <p className="text-xs text-red-500">{fieldErrors.googleCode}</p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+
+          <Button
+            onClick={handleSubmit}
+            className="w-full"
+            disabled={!canSubmit || loading}
+            loading={loading}
+          >
+            Update password
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

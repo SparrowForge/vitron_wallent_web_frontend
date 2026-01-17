@@ -12,7 +12,7 @@ export default function AuthenticationPage() {
         </h1>
       </header>
 
-      <section className="rounded-3xl border border-(--stroke) bg-(--basic-cta) p-6">
+      <section>
         <AuthenticationForm />
       </section>
     </div>

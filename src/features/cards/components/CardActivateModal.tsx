@@ -2,10 +2,12 @@
 
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
-import Spinner from "@/shared/components/ui/Spinner";
-import PasswordInput from "@/shared/components/ui/PasswordInput";
-import { cardActivateSchema } from "@/lib/validationSchemas";
+import { Button } from "@/shared/components/ui/Button";
+import { Input } from "@/shared/components/ui/Input";
 import ModalShell from "@/shared/components/ui/ModalShell";
+import PasswordInput from "@/shared/components/ui/PasswordInput";
+import Spinner from "@/shared/components/ui/Spinner";
+import { cardActivateSchema } from "@/lib/validationSchemas";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
 
@@ -104,9 +106,8 @@ export default function CardActivateModal({
     setInfoMessage("");
     try {
       const response = await apiRequest<ApiResponse>({
-        path: `${API_ENDPOINTS.sendVerifyCode}?type=${
-          verificationPurpose === "getCode" ? "activeCodeCheck" : "activeCard"
-        }`,
+        path: `${API_ENDPOINTS.sendVerifyCode}?type=${verificationPurpose === "getCode" ? "activeCodeCheck" : "activeCard"
+          }`,
         method: "GET",
       });
       setCooldown(60);
@@ -223,161 +224,150 @@ export default function CardActivateModal({
       ariaLabel="Activate card"
       className="max-w-md"
     >
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full border border-(--stroke) bg-(--background) px-3 py-2 text-xs font-semibold text-(--paragraph)"
-          >
-            Back
-          </button>
-          <div className="text-sm font-semibold text-(--foreground)">
-            Activate card
-          </div>
-          <span className="text-xs text-(--paragraph)">{maskedNumber}</span>
+      <div className="flex items-center justify-between">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onClose}
+          className="rounded-full"
+        >
+          Back
+        </Button>
+        <div className="text-sm font-semibold text-(--foreground)">
+          Activate card
         </div>
+        <span className="text-xs text-(--paragraph)">{maskedNumber}</span>
+      </div>
 
-        <div className="mt-6 space-y-4">
+      <div className="mt-6 space-y-4">
+        <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+          Activation code
+          <div className="flex items-center gap-3">
+            <Input
+              placeholder="Enter activation code"
+              value={activeCode}
+              onChange={(event) => setActiveCode(event.target.value)}
+            />
+            <Button
+              type="button"
+              onClick={handleRequestActiveCode}
+              className="min-w-[120px]"
+              disabled={loading}
+            >
+              Get code
+            </Button>
+          </div>
+        </label>
+
+        <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+          Payment password
+          <PasswordInput
+            className="h-12"
+            inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
+            placeholder="Enter payment password"
+            value={payPassword}
+            onChange={(event) => setPayPassword(event.target.value)}
+          />
+        </label>
+      </div>
+
+      {emailCheck ? (
+        <div className="mt-4 space-y-3">
           <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-            Activation code
-            <div className="flex items-center gap-3">
-              <input
-                className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
-                placeholder="Enter activation code"
-                value={activeCode}
-                onChange={(event) => setActiveCode(event.target.value)}
-              />
-              <button
-                type="button"
-                onClick={handleRequestActiveCode}
-                className="h-12 min-w-[120px] rounded-2xl border border-(--stroke) bg-(--background) px-4 text-xs font-semibold text-(--foreground)"
-                disabled={loading}
-              >
+            Verification purpose
+            <div className="flex items-center gap-3 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  checked={verificationPurpose === "activate"}
+                  onChange={() => setVerificationPurpose("activate")}
+                />
+                Activate
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  checked={verificationPurpose === "getCode"}
+                  onChange={() => setVerificationPurpose("getCode")}
+                />
                 Get code
-              </button>
+              </label>
+            </div>
+          </label>
+          <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+            Verification method
+            <div className="flex items-center gap-3 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  checked={verifyType === "email"}
+                  onChange={() => setVerifyType("email")}
+                />
+                Email
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  checked={verifyType === "google"}
+                  onChange={() => setVerifyType("google")}
+                />
+                Google
+              </label>
             </div>
           </label>
 
-          <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-            Payment password
-            <PasswordInput
-              className="h-12"
-              inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
-              placeholder="Enter payment password"
-              value={payPassword}
-              onChange={(event) => setPayPassword(event.target.value)}
-            />
-          </label>
-        </div>
-
-        {emailCheck ? (
-          <div className="mt-4 space-y-3">
+          {verifyType === "email" ? (
             <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-              Verification purpose
-              <div className="flex items-center gap-3 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    checked={verificationPurpose === "activate"}
-                    onChange={() => setVerificationPurpose("activate")}
-                  />
-                  Activate
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    checked={verificationPurpose === "getCode"}
-                    onChange={() => setVerificationPurpose("getCode")}
-                  />
-                  Get code
-                </label>
-              </div>
-            </label>
-            <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-              Verification method
-              <div className="flex items-center gap-3 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    checked={verifyType === "email"}
-                    onChange={() => setVerifyType("email")}
-                  />
-                  Email
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    checked={verifyType === "google"}
-                    onChange={() => setVerifyType("google")}
-                  />
-                  Google
-                </label>
-              </div>
-            </label>
-
-            {verifyType === "email" ? (
-              <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-                Email code
-                <div className="flex items-center gap-3">
-                  <input
-                    className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
-                    placeholder="Enter code"
-                    value={verifyCode}
-                    onChange={(event) => setVerifyCode(event.target.value)}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleSendCode}
-                    className="h-12 min-w-[120px] rounded-2xl border border-(--stroke) bg-(--background) px-4 text-xs font-semibold text-(--foreground)"
-                    disabled={cooldown > 0 || loading}
-                  >
-                    {loading && cooldown === 0 ? (
-                      <span className="inline-flex items-center gap-2">
-                        <Spinner size={14} />
-                        Sending...
-                      </span>
-                    ) : cooldown > 0 ? (
-                      `${cooldown}s`
-                    ) : (
-                      "Send code"
-                    )}
-                  </button>
-                </div>
-              </label>
-            ) : (
-              <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-                Google code
-                <input
-                  className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
-                  placeholder="Enter Google code"
-                  value={googleCode}
-                  onChange={(event) => setGoogleCode(event.target.value)}
+              Email code
+              <div className="flex items-center gap-3">
+                <Input
+                  placeholder="Enter code"
+                  value={verifyCode}
+                  onChange={(event) => setVerifyCode(event.target.value)}
                 />
-              </label>
-            )}
-          </div>
-        ) : null}
-
-        <button
-          type="button"
-          onClick={handleActivate}
-          className={`mt-6 h-12 w-full rounded-2xl text-sm font-semibold ${
-            canSubmit
-              ? "bg-(--brand) text-(--background)"
-              : "bg-(--stroke) text-(--placeholder)"
-          }`}
-          disabled={!canSubmit || loading}
-        >
-          {loading ? (
-            <span className="inline-flex items-center justify-center gap-2">
-              <Spinner size={16} className="border-(--background)" />
-              Activating...
-            </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSendCode}
+                  className="min-w-[120px]"
+                  disabled={cooldown > 0 || loading}
+                >
+                  {loading && cooldown === 0 ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Spinner size={14} />
+                      Sending...
+                    </span>
+                  ) : cooldown > 0 ? (
+                    `${cooldown}s`
+                  ) : (
+                    "Send code"
+                  )}
+                </Button>
+              </div>
+            </label>
           ) : (
-            "Activate"
+            <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+              Google code
+              <Input
+                placeholder="Enter Google code"
+                value={googleCode}
+                onChange={(event) => setGoogleCode(event.target.value)}
+              />
+            </label>
           )}
-        </button>
-        {null}
+        </div>
+      ) : null}
+
+      <Button
+        type="button"
+        onClick={handleActivate}
+        className="mt-6 w-full"
+        disabled={!canSubmit || loading}
+        loading={loading}
+      >
+        Activate
+      </Button>
+      {null}
     </ModalShell>
   );
 }

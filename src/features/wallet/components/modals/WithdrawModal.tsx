@@ -3,8 +3,11 @@
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { withdrawSchema } from "@/lib/validationSchemas";
+import { Button } from "@/shared/components/ui/Button";
+import { Input } from "@/shared/components/ui/Input";
 import ModalShell from "@/shared/components/ui/ModalShell";
 import PasswordInput from "@/shared/components/ui/PasswordInput";
+import { Select } from "@/shared/components/ui/Select";
 import Spinner from "@/shared/components/ui/Spinner";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -291,13 +294,14 @@ export default function WithdrawModal({
       className="max-w-md"
     >
       <div className="flex items-center justify-between">
-        <button
-          type="button"
+        <Button
+          variant="outline"
+          size="sm"
           onClick={onClose}
-          className="rounded-full border border-(--stroke) bg-(--background) px-3 py-2 text-xs font-semibold text-(--paragraph)"
+          className="rounded-full"
         >
           Back
-        </button>
+        </Button>
         <div className="text-sm font-semibold text-(--foreground)">
           Withdrawal
         </div>
@@ -332,37 +336,33 @@ export default function WithdrawModal({
 
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Payment address
-          <input
-            className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
+          <Input
             placeholder="Please input"
             {...register("address")}
+            error={errors.address?.message}
           />
-          {errors.address ? (
-            <p className="text-[11px] text-red-500">{errors.address.message}</p>
-          ) : null}
         </label>
 
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Withdrawal amount
-          <div className="flex items-center justify-between rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm">
-            <input
+          <div className="flex items-center gap-2">
+            <Input
               type="number"
-              className="w-full bg-(--background) text-(--foreground) placeholder:text-(--placeholder) focus:outline-none"
               placeholder={`Minimum ${safeMinWithdraw || 0}`}
               {...register("amount")}
+              error={errors.amount?.message}
             />
-            <span className="ml-3 text-(--double-foreground)">USD</span>
-            <button
+            <span className="text-sm text-(--double-foreground)">USD</span>
+            <Button
+              variant="ghost"
+              size="sm"
               type="button"
               onClick={handleMax}
-              className="ml-3 text-(--brand)"
+              className="text-(--brand)"
             >
               Max
-            </button>
+            </Button>
           </div>
-          {errors.amount ? (
-            <p className="text-[11px] text-red-500">{errors.amount.message}</p>
-          ) : null}
           <div className="text-xs text-(--paragraph)">
             Available: {safeAvailable.toFixed(2)} USD
           </div>
@@ -426,15 +426,16 @@ export default function WithdrawModal({
           <label className="space-y-2 text-xs font-medium text-(--paragraph)">
             Email code
             <div className="flex items-center gap-3">
-              <input
-                className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
+              <Input
                 placeholder="Enter code"
                 {...register("verifyCode")}
+                error={errors.verifyCode?.message}
               />
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={handleSendCode}
-                className="h-12 min-w-[120px] rounded-2xl border border-(--stroke) bg-(--background) px-4 text-xs font-semibold text-(--foreground)"
+                className="min-w-[120px]"
                 disabled={cooldown > 0 || loading}
               >
                 {loading && cooldown === 0 ? (
@@ -447,50 +448,30 @@ export default function WithdrawModal({
                 ) : (
                   "Send code"
                 )}
-              </button>
+              </Button>
             </div>
-            {errors.verifyCode ? (
-              <p className="text-[11px] text-red-500">
-                {errors.verifyCode.message}
-              </p>
-            ) : null}
           </label>
         ) : (
           <label className="space-y-2 text-xs font-medium text-(--paragraph)">
             Google code
-            <input
-              className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
+            <Input
               placeholder="Enter Google code"
               {...register("googleCode")}
+              error={errors.googleCode?.message}
             />
-            {errors.googleCode ? (
-              <p className="text-[11px] text-red-500">
-                {errors.googleCode.message}
-              </p>
-            ) : null}
           </label>
         )}
       </div>
 
-      <button
+      <Button
         type="button"
         onClick={handleSubmit(onSubmit)}
-        className={`mt-6 h-12 w-full rounded-2xl text-sm font-semibold ${
-          canSubmit
-            ? "bg-(--brand) text-(--background)"
-            : "bg-(--stroke) text-(--placeholder)"
-        }`}
+        className="mt-6 w-full"
         disabled={!canSubmit || loading}
+        loading={loading}
       >
-        {loading ? (
-          <span className="inline-flex items-center justify-center gap-2">
-            <Spinner size={16} className="border-(--background)" />
-            Submitting...
-          </span>
-        ) : (
-          "Withdrawal"
-        )}
-      </button>
+        Withdrawal
+      </Button>
       {null}
     </ModalShell>
   );

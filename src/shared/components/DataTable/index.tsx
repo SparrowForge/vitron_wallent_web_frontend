@@ -20,9 +20,9 @@ export default function DataTable<T extends Record<string, ReactNode>>({
   emptyMessage = "No records yet.",
 }: DataTableProps<T>) {
   return (
-    <section className="rounded-2xl border border-(--stroke) bg-(--basic-cta) shadow-sm">
+    <section className="overflow-hidden rounded-2xl border border-(--stroke) bg-(--basic-cta)/50 shadow-sm backdrop-blur-xl transition-all hover:bg-(--basic-cta)/80">
       {title ? (
-        <div className="border-b border-(--stroke) px-4 py-3 sm:px-6 sm:py-4">
+        <div className="border-b border-(--stroke) px-4 py-4 sm:px-6">
           <h2 className="text-base font-semibold text-(--foreground)">
             {title}
           </h2>
@@ -30,23 +30,24 @@ export default function DataTable<T extends Record<string, ReactNode>>({
       ) : null}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs sm:text-sm">
-          <thead className="bg-(--basic-cta) text-(--paragraph)">
+          <thead className="bg-(--background)/50 text-(--paragraph)">
             <tr>
               {columns.map((column) => (
                 <th
                   key={String(column.key)}
-                  className={`px-4 py-3 font-medium sm:px-6 ${column.className ?? ""}`}
+                  className={`border-b border-(--stroke) px-4 py-3 font-medium uppercase tracking-wider text-[11px] sm:px-6 ${column.className ?? ""
+                    }`}
                 >
                   {column.label}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-(--stroke)">
             {data.length === 0 ? (
               <tr>
                 <td
-                  className="px-4 py-10 text-center text-sm text-(--paragraph) sm:px-6"
+                  className="px-4 py-12 text-center text-sm text-(--paragraph) sm:px-6"
                   colSpan={columns.length}
                 >
                   {emptyMessage}
@@ -56,12 +57,13 @@ export default function DataTable<T extends Record<string, ReactNode>>({
               data.map((row, index) => (
                 <tr
                   key={`row-${index}`}
-                  className="border-t border-(--stroke)"
+                  className="group transition-colors hover:bg-(--stroke)/10"
                 >
                   {columns.map((column) => (
                     <td
                       key={String(column.key)}
-                      className={`px-4 py-4 sm:px-6 ${column.className ?? ""}`}
+                      className={`px-4 py-4 text-(--foreground) sm:px-6 ${column.className ?? ""
+                        }`}
                     >
                       {row[column.key]}
                     </td>

@@ -2,7 +2,9 @@
 
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import { Button } from "@/shared/components/ui/Button";
 import ModalShell from "@/shared/components/ui/ModalShell";
+import { Select } from "@/shared/components/ui/Select";
 import Spinner from "@/shared/components/ui/Spinner";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
@@ -74,7 +76,7 @@ export default function DepositModal({
     setCoins((prev) =>
       prev.map((coin) =>
         (coin.ID ?? String(coin.id)) ===
-        (selectedCoin.ID ?? String(selectedCoin.id))
+          (selectedCoin.ID ?? String(selectedCoin.id))
           ? { ...coin, address }
           : coin
       )
@@ -224,23 +226,23 @@ export default function DepositModal({
       className="max-w-md"
     >
       <div className="flex items-center justify-between">
-        <button
-          type="button"
+        <Button
+          variant="outline"
+          size="sm"
           onClick={onClose}
-          className="rounded-full border border-(--stroke) bg-(--background) px-3 py-2 text-xs font-semibold text-(--paragraph)"
+          className="rounded-full"
         >
           Back
-        </button>
+        </Button>
         <div className="text-sm font-semibold text-(--foreground)">Top up</div>
         <span className="text-xs text-(--paragraph)">{walletName}</span>
       </div>
 
       <div className="mt-6 text-center">
-        <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-(--stroke) bg-(--background) px-4 py-2 text-sm text-(--double-foreground)">
-          <select
+        <div className="mx-auto w-full max-w-[200px]">
+          <Select
             value={selectedId}
             onChange={(event) => setSelectedId(event.target.value)}
-            className="bg-(--background) text-sm text-(--foreground) focus:outline-none"
           >
             {coins.map((coin) => {
               const id = coin.ID ?? String(coin.id ?? "");
@@ -250,8 +252,7 @@ export default function DepositModal({
                 </option>
               );
             })}
-          </select>
-          <span className="text-(--placeholder)">▾</span>
+          </Select>
         </div>
       </div>
 
@@ -288,21 +289,23 @@ export default function DepositModal({
 
       <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-xs text-(--double-foreground)">
         <span className="truncate">{qrValue || "Address unavailable"}</span>
-        <button
-          type="button"
-          className="text-(--brand)"
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={handleCopy}
           disabled={!qrValue}
+          className="h-auto p-0 text-xs text-(--brand)"
         >
           Copy
-        </button>
+        </Button>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-(--paragraph)">
-        <button
-          type="button"
+        <Button
+          variant="outline"
+          size="sm"
           onClick={refreshAddress}
-          className="rounded-full border border-(--stroke) bg-(--background) px-3 py-1 text-xs text-(--double-foreground)"
+          className="rounded-full h-7 text-xs"
           disabled={loading}
         >
           {loading ? (
@@ -313,7 +316,7 @@ export default function DepositModal({
           ) : (
             "Refresh address"
           )}
-        </button>
+        </Button>
         {null}
       </div>
 

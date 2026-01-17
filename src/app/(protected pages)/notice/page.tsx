@@ -2,6 +2,7 @@
 
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import EmptyState from "@/shared/components/ui/EmptyState";
 import Spinner from "@/shared/components/ui/Spinner";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { Copy, SlidersHorizontal } from "lucide-react";
@@ -160,11 +161,10 @@ export default function NoticePage() {
                     setFilterType(option.value);
                     setFilterOpen(false);
                   }}
-                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left ${
-                    filterType === option.value
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left ${filterType === option.value
                       ? "bg-(--background) text-(--double-foreground)"
                       : "text-(--paragraph)"
-                  }`}
+                    }`}
                 >
                   {option.label}
                   {filterType === option.value ? "•" : ""}
@@ -175,12 +175,10 @@ export default function NoticePage() {
         </div>
       </header>
 
-      <section className="rounded-3xl border border-(--stroke) bg-(--basic-cta) p-6">
-        <div className="space-y-6">
+      <section className="glass rounded-3xl p-6">
+        <div className="space-y-4">
           {items.length === 0 && !loading ? (
-            <div className="rounded-2xl border border-(--stroke) bg-(--background) p-6 text-sm text-(--paragraph)">
-              No notifications yet.
-            </div>
+            <EmptyState message="No notifications yet." />
           ) : null}
 
           {items.map((item, index) => {
@@ -188,34 +186,36 @@ export default function NoticePage() {
             return (
               <div
                 key={`${item.opt ?? "notice"}-${index}`}
-                className="rounded-2xl border border-(--stroke) bg-(--background) p-5"
+                className="group relative overflow-hidden rounded-2xl glass-card p-5 transition-all duration-300 hover:border-(--brand)/20 hover:shadow-[0_4px_24px_rgba(0,0,0,0.1)] hover:-translate-y-1 animate-in fade-in slide-in-from-bottom-4 fill-mode-forwards"
+                style={{ animationDelay: `${index * 50}ms` }}
               >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-(--white)/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
                 <div className="flex items-center justify-between text-xs text-(--paragraph)">
-                  <span>{isActivation ? "Activation code" : "3D Secure code"}</span>
+                  <span className="font-medium">{isActivation ? "Activation code" : "3D Secure code"}</span>
                   <button
                     type="button"
                     onClick={() => handleCopy(item.opt)}
-                    className="inline-flex items-center gap-2 text-(--brand)"
+                    className="inline-flex items-center gap-2 rounded-full bg-(--brand)/10 px-3 py-1 text-(--brand) transition hover:bg-(--brand)/20"
                   >
                     <Copy className="h-3.5 w-3.5" />
                     Copy
                   </button>
                 </div>
-                <div className="mt-2 text-2xl font-semibold text-(--foreground)">
+                <div className="mt-3 text-3xl font-bold tracking-tight text-(--foreground)">
                   {item.opt || "-"}
                 </div>
-                <div className="mt-4 h-px bg-(--stroke)" />
+                <div className="mt-4 h-px bg-(--white)/5" />
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-(--paragraph)">
                   <div>
                     <div className="text-(--placeholder)">Card number</div>
-                    <div className="mt-1 text-sm text-(--double-foreground)">
+                    <div className="mt-1 text-sm font-medium text-(--double-foreground)">
                       {formatCardNo(item.cardNo)}
                     </div>
                   </div>
                   {!isActivation ? (
                     <div>
                       <div className="text-(--placeholder)">Amount</div>
-                      <div className="mt-1 text-sm text-(--double-foreground)">
+                      <div className="mt-1 text-sm font-medium text-(--double-foreground)">
                         {typeof item.amount === "number"
                           ? item.amount.toFixed(2)
                           : item.amount ?? "-"}{" "}
@@ -225,7 +225,7 @@ export default function NoticePage() {
                   ) : null}
                   <div>
                     <div className="text-(--placeholder)">Date</div>
-                    <div className="mt-1 text-sm text-(--double-foreground)">
+                    <div className="mt-1 text-sm font-medium text-(--double-foreground)">
                       {formatDate(item.createTime)}
                     </div>
                   </div>
@@ -244,7 +244,7 @@ export default function NoticePage() {
           {hasMore && !loading ? (
             <button
               type="button"
-              className="w-full rounded-2xl border border-(--stroke) bg-(--background) py-3 text-sm font-semibold text-(--double-foreground)"
+              className="w-full rounded-2xl border border-(--stroke) bg-(--background)/50 py-3 text-sm font-semibold text-(--double-foreground) transition hover:bg-(--background) hover:text-(--foreground)"
               onClick={() => {
                 const nextPage = page + 1;
                 setPage(nextPage);

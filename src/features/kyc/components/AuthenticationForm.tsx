@@ -8,6 +8,10 @@ import { z } from "zod";
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { authenticationSchema } from "@/lib/validationSchemas";
+import { Button } from "@/shared/components/ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/Card";
+import { Input } from "@/shared/components/ui/Input";
+import { Select } from "@/shared/components/ui/Select";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 
 type Country = {
@@ -388,479 +392,465 @@ export default function AuthenticationForm() {
     }
   };
 
-  const renderFieldError = (fieldMessage?: unknown) =>
-    fieldMessage ? (
-      <p className="text-xs text-red-500">{String(fieldMessage)}</p>
-    ) : null;
+
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-      <div className="rounded-xl border border-(--stroke) bg-(--background) px-4 py-2 text-sm text-(--paragraph)">
+      <div className="rounded-xl border border-(--brand)/20 bg-(--brand)/5 px-4 py-3 text-sm font-medium text-(--brand)">
         KYC status: {getKycStatusLabel(kycStatus)}
         {kycRemark ? (
-          <span className="block text-xs text-(--placeholder)">
+          <span className="block mt-1 text-xs text-(--brand)/80">
             {kycRemark}
           </span>
         ) : null}
         {pageLoading ? (
-          <span className="ml-2 text-xs text-(--placeholder)">
-            (loading...)
-          </span>
+          <span className="ml-2 text-xs opacity-70">(loading...)</span>
         ) : null}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-(--paragraph)">
-            First name
-          </label>
-          <input
-            {...register("firstName")}
-            className="h-11 w-full rounded-xl border border-(--stroke) bg-(--background) px-3 text-sm text-(--foreground)"
-          />
-          {renderFieldError(errors.firstName?.message)}
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-(--paragraph)">
-            Last name
-          </label>
-          <input
-            {...register("lastName")}
-            className="h-11 w-full rounded-xl border border-(--stroke) bg-(--background) px-3 text-sm text-(--foreground)"
-          />
-          {renderFieldError(errors.lastName?.message)}
-        </div>
-      </div>
+      <Card variant="glass">
+        <CardHeader>
+          <CardTitle>Personal Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                First name
+              </label>
+              <Input
+                {...register("firstName")}
+                error={errors.firstName?.message}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                First name
+              </label>
+              <Input
+                {...register("firstName")}
+                error={errors.firstName?.message}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                Last name
+              </label>
+              <Input
+                {...register("lastName")}
+                error={errors.lastName?.message}
+              />
+            </div>
+          </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-(--paragraph)">
-            Gender
-          </label>
-          <select
-            {...register("gender")}
-            className="h-11 w-full rounded-xl border border-(--stroke) bg-(--background) px-3 text-sm text-(--foreground)"
-          >
-            <option value="">Please choose</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-          </select>
-          {renderFieldError(errors.gender?.message)}
-        </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-3">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                Gender
+              </label>
+              <Select {...register("gender")} error={errors.gender?.message}>
+                <option value="">Please choose</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </Select>
+            </div>
 
-        <div className="space-y-2 sm:col-span-2">
-          <label className="text-sm font-medium text-(--paragraph)">
-            Occupation
-          </label>
-          <select
-            {...register("occupation")}
-            className="h-11 w-full rounded-xl border border-(--stroke) bg-(--background) px-3 text-sm text-(--foreground)"
-          >
-            <option value="">Please choose</option>
-            {occupations.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          {renderFieldError(errors.occupation?.message)}
-        </div>
-      </div>
+            <div className="space-y-2 sm:col-span-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                Occupation
+              </label>
+              <Select
+                {...register("occupation")}
+                error={errors.occupation?.message}
+              >
+                <option value="">Please choose</option>
+                {occupations.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-(--paragraph)">
-            Annual salary
-          </label>
-          <input
-            {...register("annualSalary")}
-            className="h-11 w-full rounded-xl border border-(--stroke) bg-(--background) px-3 text-sm text-(--foreground)"
-          />
-          {renderFieldError(errors.annualSalary?.message)}
-        </div>
+      <Card variant="glass">
+        <CardHeader>
+          <CardTitle>Financial Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                Annual salary
+              </label>
+              <Input
+                {...register("annualSalary")}
+                error={errors.annualSalary?.message}
+              />
+            </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-(--paragraph)">
-            Account purpose
-          </label>
-          <input
-            {...register("accountPurpose")}
-            className="h-11 w-full rounded-xl border border-(--stroke) bg-(--background) px-3 text-sm text-(--foreground)"
-          />
-          {renderFieldError(errors.accountPurpose?.message)}
-        </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                Account purpose
+              </label>
+              <Input
+                {...register("accountPurpose")}
+                error={errors.accountPurpose?.message}
+              />
+            </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-(--paragraph)">
-            Monthly volume
-          </label>
-          <input
-            {...register("expectedMonthlyVolume")}
-            className="h-11 w-full rounded-xl border border-(--stroke) bg-(--background) px-3 text-sm text-(--foreground)"
-          />
-          {renderFieldError(errors.expectedMonthlyVolume?.message)}
-        </div>
-      </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                Monthly volume
+              </label>
+              <Input
+                {...register("expectedMonthlyVolume")}
+                error={errors.expectedMonthlyVolume?.message}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-(--paragraph)">
-            Country / Region
-          </label>
-          <select
-            {...register("countryId")}
-            className="h-11 w-full rounded-xl border border-(--stroke) bg-(--background) px-3 text-sm text-(--foreground)"
-            onChange={(e) => {
-              const value = e.target.value;
-              setValue("countryId", value, {
-                shouldValidate: true,
-                shouldDirty: true,
-              });
-              setValue("idType", "PASSPORT", {
-                shouldValidate: true,
-                shouldDirty: true,
-              });
-            }}
-          >
-            <option value="">Please choose</option>
-            {countries.map((c) => (
-              <option key={resolveId(c)} value={resolveId(c)}>
-                {resolveCountryLabel(c)}
-              </option>
-            ))}
-          </select>
-          {renderFieldError(errors.countryId?.message)}
-        </div>
+      <Card variant="glass">
+        <CardHeader>
+          <CardTitle>Address Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                Country / Region
+              </label>
+              <Select
+                {...register("countryId")}
+                error={errors.countryId?.message}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setValue("countryId", value, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  });
+                  setValue("idType", "PASSPORT", {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  });
+                }}
+              >
+                <option value="">Please choose</option>
+                {countries.map((c) => (
+                  <option key={resolveId(c)} value={resolveId(c)}>
+                    {resolveCountryLabel(c)}
+                  </option>
+                ))}
+              </Select>
+            </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-(--paragraph)">
-            State / Province
-          </label>
-          <input
-            {...register("state")}
-            className="h-11 w-full rounded-xl border border-(--stroke) bg-(--background) px-3 text-sm text-(--foreground)"
-          />
-          {renderFieldError(errors.state?.message)}
-        </div>
-      </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                State / Province
+              </label>
+              <Input {...register("state")} error={errors.state?.message} />
+            </div>
+          </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-(--paragraph)">City</label>
-          <input
-            {...register("city")}
-            className="h-11 w-full rounded-xl border border-(--stroke) bg-(--background) px-3 text-sm text-(--foreground)"
-          />
-          {renderFieldError(errors.city?.message)}
-        </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                City
+              </label>
+              <Input {...register("city")} error={errors.city?.message} />
+            </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-(--paragraph)">
-            Address
-          </label>
-          <input
-            {...register("address")}
-            className="h-11 w-full rounded-xl border border-(--stroke) bg-(--background) px-3 text-sm text-(--foreground)"
-          />
-          {renderFieldError(errors.address?.message)}
-        </div>
-      </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                Address
+              </label>
+              <Input {...register("address")} error={errors.address?.message} />
+            </div>
+          </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-(--paragraph)">
-            Post code
-          </label>
-          <input
-            {...register("postCode")}
-            className="h-11 w-full rounded-xl border border-(--stroke) bg-(--background) px-3 text-sm text-(--foreground)"
-          />
-          {renderFieldError(errors.postCode?.message)}
-        </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                Post code
+              </label>
+              <Input {...register("postCode")} error={errors.postCode?.message} />
+            </div>
 
-        <div className="grid grid-cols-[120px_1fr] gap-3">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-(--paragraph)">
-              Code
-            </label>
-            <select
-              {...register("areaCode")}
-              className="h-11 w-full rounded-xl border border-(--stroke) bg-(--background) px-3 text-sm text-(--foreground)"
+            <div className="grid grid-cols-[120px_1fr] gap-3">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-(--paragraph)">
+                  Code
+                </label>
+                <Select
+                  {...register("areaCode")}
+                  error={errors.areaCode?.message}
+                >
+                  <option value="">Code</option>
+                  {phoneCodes.map((c) => (
+                    <option key={resolveId(c)} value={c.code ?? ""}>
+                      +{c.code}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-(--paragraph)">
+                  Phone
+                </label>
+                <Input {...register("phone")} error={errors.phone?.message} />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card variant="glass">
+        <CardHeader>
+          <CardTitle>Identity Verification</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                ID type
+              </label>
+              <Select {...register("idType")} error={errors.idType?.message}>
+                {idTypeOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                ID number
+              </label>
+              <Input {...register("idNumber")} error={errors.idNumber?.message} />
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-3">
+            <label
+              htmlFor={frontId}
+              className="relative flex h-32 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-dashed border-(--stroke) bg-(--background)/50 transition hover:bg-(--background) hover:border-(--brand)/50"
             >
-              <option value="">Code</option>
-              {phoneCodes.map((c) => (
-                <option key={resolveId(c)} value={c.code ?? ""}>
-                  +{c.code}
-                </option>
-              ))}
-            </select>
-            {renderFieldError(errors.areaCode?.message)}
-          </div>
+              {idFrontUrl ? (
+                <img
+                  src={idFrontUrl}
+                  alt="ID front preview"
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              ) : (
+                <>
+                  <span className="grid h-9 w-9 place-items-center rounded-full border border-(--stroke) bg-(--basic-cta)">
+                    +
+                  </span>
+                  <span className="text-xs text-(--paragraph)">Upload ID front</span>
+                </>
+              )}
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-(--paragraph)">
-              Phone
+              {idFrontUrl ? (
+                <span className="absolute bottom-2 right-2 rounded-full border border-(--stroke) bg-(--background) px-3 py-1 text-[10px] font-semibold text-(--foreground)">
+                  Change
+                </span>
+              ) : null}
+
+              {uploading.idFrontId ? (
+                <span className="absolute inset-0 grid place-items-center bg-black/40 text-xs text-(--foreground)">
+                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-(--stroke) border-t-transparent" />
+                </span>
+              ) : null}
+
+              <input
+                id={frontId}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void handleUpload(file, "idFrontId");
+                }}
+              />
+
+              {errors.idFrontId?.message ? (
+                <span className="absolute bottom-2 left-2 text-[10px] text-red-400">
+                  {String(errors.idFrontId.message)}
+                </span>
+              ) : null}
             </label>
-            <input
-              {...register("phone")}
-              className="h-11 w-full rounded-xl border border-(--stroke) bg-(--background) px-3 text-sm text-(--foreground)"
-            />
-            {renderFieldError(errors.phone?.message)}
+
+            <label
+              htmlFor={backId}
+              className={`relative flex h-32 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-dashed border-(--stroke) bg-(--background)/50 transition hover:bg-(--background) hover:border-(--brand)/50 ${idType === "PASSPORT" ? "opacity-60 pointer-events-none" : ""
+                }`}
+            >
+              {idBackUrl && idType !== "PASSPORT" ? (
+                <img
+                  src={idBackUrl}
+                  alt="ID back preview"
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              ) : (
+                <>
+                  <span className="grid h-9 w-9 place-items-center rounded-full border border-(--stroke) bg-(--basic-cta)">
+                    +
+                  </span>
+                  <span className="text-xs text-(--paragraph)">Upload ID back</span>
+                </>
+              )}
+
+              {idType !== "PASSPORT" && idBackUrl ? (
+                <span className="absolute bottom-2 right-2 rounded-full border border-(--stroke) bg-(--background) px-3 py-1 text-[10px] font-semibold text-(--foreground)">
+                  Change
+                </span>
+              ) : null}
+
+              {uploading.idBackId ? (
+                <span className="absolute inset-0 grid place-items-center bg-black/40 text-xs text-(--foreground)">
+                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-(--stroke) border-t-transparent" />
+                </span>
+              ) : null}
+
+              <input
+                id={backId}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={idType === "PASSPORT"}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void handleUpload(file, "idBackId");
+                }}
+              />
+
+              {errors.idBackId?.message ? (
+                <span className="absolute bottom-2 left-2 text-[10px] text-red-400">
+                  {String(errors.idBackId.message)}
+                </span>
+              ) : null}
+            </label>
+
+            <label
+              htmlFor={holdId}
+              className="relative flex h-32 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-dashed border-(--stroke) bg-(--background)/50 transition hover:bg-(--background) hover:border-(--brand)/50"
+            >
+              {idHoldUrl ? (
+                <img
+                  src={idHoldUrl}
+                  alt="Holding ID preview"
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              ) : (
+                <>
+                  <span className="grid h-9 w-9 place-items-center rounded-full border border-(--stroke) bg-(--basic-cta)">
+                    +
+                  </span>
+                  <span className="text-xs text-(--paragraph)">Upload holding ID</span>
+                </>
+              )}
+
+              {idHoldUrl ? (
+                <span className="absolute bottom-2 right-2 rounded-full border border-(--stroke) bg-(--background) px-3 py-1 text-[10px] font-semibold text-(--foreground)">
+                  Change
+                </span>
+              ) : null}
+
+              {uploading.idHoldId ? (
+                <span className="absolute inset-0 grid place-items-center bg-black/40 text-xs text-(--foreground)">
+                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-(--stroke) border-t-transparent" />
+                </span>
+              ) : null}
+
+              <input
+                id={holdId}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void handleUpload(file, "idHoldId");
+                }}
+              />
+
+              {errors.idHoldId?.message ? (
+                <span className="absolute bottom-2 left-2 text-[10px] text-red-400">
+                  {String(errors.idHoldId.message)}
+                </span>
+              ) : null}
+            </label>
           </div>
-        </div>
-      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-(--paragraph)">
-            ID type
-          </label>
-          <select
-            {...register("idType")}
-            className="h-11 w-full rounded-xl border border-(--stroke) bg-(--background) px-3 text-sm text-(--foreground)"
-          >
-            {idTypeOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          {renderFieldError(errors.idType?.message)}
-        </div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-3">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                Date of birth
+              </label>
+              <Input
+                type="date"
+                error={errors.birthday?.message}
+                value={toDateInputValue(watch("birthday") ?? "")}
+                onChange={(e) =>
+                  setValue("birthday", e.target.value, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  })
+                }
+              />
+            </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-(--paragraph)">
-            ID number
-          </label>
-          <input
-            {...register("idNumber")}
-            className="h-11 w-full rounded-xl border border-(--stroke) bg-(--background) px-3 text-sm text-(--foreground)"
-          />
-          {renderFieldError(errors.idNumber?.message)}
-        </div>
-      </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                Issuing date
+              </label>
+              <Input
+                type="date"
+                error={errors.startTime?.message}
+                value={toDateInputValue(watch("startTime") ?? "")}
+                onChange={(e) =>
+                  setValue("startTime", e.target.value, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  })
+                }
+              />
+            </div>
 
-      {/* Uploads */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <label
-          htmlFor={frontId}
-          className="relative flex h-32 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-dashed border-(--stroke) bg-(--background) text-xs text-(--paragraph)"
-        >
-          {idFrontUrl ? (
-            <img
-              src={idFrontUrl}
-              alt="ID front preview"
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-          ) : (
-            <>
-              <span className="grid h-9 w-9 place-items-center rounded-full border border-(--stroke)">
-                +
-              </span>
-              <span>Upload ID front</span>
-            </>
-          )}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                Expiry date
+              </label>
+              <Input
+                type="date"
+                error={errors.endTime?.message}
+                value={toDateInputValue(watch("endTime") ?? "")}
+                onChange={(e) =>
+                  setValue("endTime", e.target.value, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  })
+                }
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-          {idFrontUrl ? (
-            <span className="absolute bottom-2 right-2 rounded-full border border-(--stroke) bg-(--background) px-3 py-1 text-[10px] font-semibold text-(--foreground)">
-              Change
-            </span>
-          ) : null}
-
-          {uploading.idFrontId ? (
-            <span className="absolute inset-0 grid place-items-center bg-black/40 text-xs text-(--foreground)">
-              <span className="h-5 w-5 animate-spin rounded-full border-2 border-(--stroke) border-t-transparent" />
-            </span>
-          ) : null}
-
-          <input
-            id={frontId}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void handleUpload(file, "idFrontId");
-            }}
-          />
-
-          {errors.idFrontId?.message ? (
-            <span className="absolute bottom-2 left-2 text-[10px] text-red-200">
-              {String(errors.idFrontId.message)}
-            </span>
-          ) : null}
-        </label>
-
-        <label
-          htmlFor={backId}
-          className={`relative flex h-32 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-dashed border-(--stroke) bg-(--background) text-xs text-(--paragraph) ${
-            idType === "PASSPORT" ? "opacity-60" : ""
-          }`}
-        >
-          {idBackUrl && idType !== "PASSPORT" ? (
-            <img
-              src={idBackUrl}
-              alt="ID back preview"
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-          ) : (
-            <>
-              <span className="grid h-9 w-9 place-items-center rounded-full border border-(--stroke)">
-                +
-              </span>
-              <span>Upload ID back</span>
-            </>
-          )}
-
-          {idType !== "PASSPORT" && idBackUrl ? (
-            <span className="absolute bottom-2 right-2 rounded-full border border-(--stroke) bg-(--background) px-3 py-1 text-[10px] font-semibold text-(--foreground)">
-              Change
-            </span>
-          ) : null}
-
-          {uploading.idBackId ? (
-            <span className="absolute inset-0 grid place-items-center bg-black/40 text-xs text-(--foreground)">
-              <span className="h-5 w-5 animate-spin rounded-full border-2 border-(--stroke) border-t-transparent" />
-            </span>
-          ) : null}
-
-          <input
-            id={backId}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            disabled={idType === "PASSPORT"}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void handleUpload(file, "idBackId");
-            }}
-          />
-
-          {errors.idBackId?.message ? (
-            <span className="absolute bottom-2 left-2 text-[10px] text-red-200">
-              {String(errors.idBackId.message)}
-            </span>
-          ) : null}
-        </label>
-
-        <label
-          htmlFor={holdId}
-          className="relative flex h-32 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-dashed border-(--stroke) bg-(--background) text-xs text-(--paragraph)"
-        >
-          {idHoldUrl ? (
-            <img
-              src={idHoldUrl}
-              alt="Holding ID preview"
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-          ) : (
-            <>
-              <span className="grid h-9 w-9 place-items-center rounded-full border border-(--stroke)">
-                +
-              </span>
-              <span>Upload holding ID</span>
-            </>
-          )}
-
-          {idHoldUrl ? (
-            <span className="absolute bottom-2 right-2 rounded-full border border-(--stroke) bg-(--background) px-3 py-1 text-[10px] font-semibold text-(--foreground)">
-              Change
-            </span>
-          ) : null}
-
-          {uploading.idHoldId ? (
-            <span className="absolute inset-0 grid place-items-center bg-black/40 text-xs text-(--foreground)">
-              <span className="h-5 w-5 animate-spin rounded-full border-2 border-(--stroke) border-t-transparent" />
-            </span>
-          ) : null}
-
-          <input
-            id={holdId}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void handleUpload(file, "idHoldId");
-            }}
-          />
-
-          {errors.idHoldId?.message ? (
-            <span className="absolute bottom-2 left-2 text-[10px] text-red-200">
-              {String(errors.idHoldId.message)}
-            </span>
-          ) : null}
-        </label>
-      </div>
-
-      {/* Dates */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-(--paragraph)">
-            Date of birth
-          </label>
-          <input
-            type="date"
-            value={toDateInputValue(watch("birthday") ?? "")}
-            onChange={(e) =>
-              setValue("birthday", e.target.value, {
-                shouldValidate: true,
-                shouldDirty: true,
-              })
-            }
-            className="h-11 w-full rounded-xl border border-(--stroke) bg-(--background) px-3 text-sm text-(--foreground)"
-          />
-          {renderFieldError(errors.birthday?.message)}
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-(--paragraph)">
-            Issuing date
-          </label>
-          <input
-            type="date"
-            value={toDateInputValue(watch("startTime") ?? "")}
-            onChange={(e) =>
-              setValue("startTime", e.target.value, {
-                shouldValidate: true,
-                shouldDirty: true,
-              })
-            }
-            className="h-11 w-full rounded-xl border border-(--stroke) bg-(--background) px-3 text-sm text-(--foreground)"
-          />
-          {renderFieldError(errors.startTime?.message)}
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-(--paragraph)">
-            Expiry date
-          </label>
-          <input
-            type="date"
-            value={toDateInputValue(watch("endTime") ?? "")}
-            onChange={(e) =>
-              setValue("endTime", e.target.value, {
-                shouldValidate: true,
-                shouldDirty: true,
-              })
-            }
-            className="h-11 w-full rounded-xl border border-(--stroke) bg-(--background) px-3 text-sm text-(--foreground)"
-          />
-          {renderFieldError(errors.endTime?.message)}
-        </div>
-      </div>
-
-      <button
+      <Button
         type="submit"
+        size="lg"
         disabled={pageLoading || submitLoading}
-        className={`h-11 w-full rounded-xl text-sm font-semibold ${
-          pageLoading || submitLoading
-            ? "bg-(--stroke) text-(--placeholder)"
-            : "bg-(--brand) text-(--background)"
-        }`}
+        className="w-full"
+        loading={submitLoading}
       >
-        {submitLoading ? "Submitting..." : "Submit"}
-      </button>
+        {submitLoading ? "Submitting..." : "Submit KYC Application"}
+      </Button>
     </form>
   );
 }

@@ -16,6 +16,8 @@ import {
   loginCredentialsSchema,
   registerSchema,
 } from "@/lib/validationSchemas";
+import { Button } from "@/shared/components/ui/Button";
+import { Input } from "@/shared/components/ui/Input";
 import PasswordInput from "@/shared/components/ui/PasswordInput";
 import Spinner from "@/shared/components/ui/Spinner";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
@@ -253,33 +255,35 @@ export default function AuthPage() {
               {mode === "login"
                 ? "Login to your account"
                 : mode === "register"
-                ? "Create your account"
-                : "Reset password"}
+                  ? "Create your account"
+                  : "Reset password"}
             </h1>
-            <button
+            <Button
+              variant="link"
               type="button"
-              className="text-sm font-medium text-(--paragraph)"
+              className="h-auto p-0 text-sm font-medium text-(--paragraph)"
               onClick={handleToggleMode}
             >
               {mode === "login" ? "Register" : "Login"}
-            </button>
+            </Button>
           </div>
 
           <p className="mt-2 text-sm text-(--paragraph)">
             {mode === "login"
               ? "Welcome back. Sign in to access your dashboard."
               : mode === "register"
-              ? "Spin up a new wallet in a few minutes."
-              : "Use your email and code to reset your password."}
+                ? "Spin up a new wallet in a few minutes."
+                : "Use your email and code to reset your password."}
           </p>
 
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-            <label className="flex flex-col gap-2 text-sm font-medium text-(--foreground)">
-              Email
-              <input
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--foreground)">
+                Email
+              </label>
+              <Input
                 type="email"
                 placeholder="you@wallet.com"
-                className="h-11 rounded-lg border border-(--stroke) bg-(--background) px-3 text-sm"
                 value={email}
                 onChange={(event) => {
                   setEmail(event.target.value);
@@ -287,19 +291,17 @@ export default function AuthPage() {
                     setFieldErrors((prev) => ({ ...prev, email: "" }));
                   }
                 }}
+                error={fieldErrors.email}
               />
-              {fieldErrors.email ? (
-                <span className="text-xs text-red-500">
-                  {fieldErrors.email}
-                </span>
-              ) : null}
-            </label>
-            <label className="flex flex-col gap-2 text-sm font-medium text-(--foreground)">
-              {mode === "forgot" ? "New Password" : "Password"}
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--foreground)">
+                {mode === "forgot" ? "New Password" : "Password"}
+              </label>
               <PasswordInput
                 placeholder="••••••••"
                 className="h-11"
-                inputClassName="h-11 w-full rounded-lg border border-(--stroke) bg-(--background) px-3 text-sm"
+                inputClassName="h-11"
                 value={password}
                 onChange={(event) => {
                   setPassword(event.target.value);
@@ -307,73 +309,111 @@ export default function AuthPage() {
                     setFieldErrors((prev) => ({ ...prev, password: "" }));
                   }
                 }}
+                error={fieldErrors.password}
               />
-              {fieldErrors.password ? (
-                <span className="text-xs text-red-500">
-                  {fieldErrors.password}
-                </span>
-              ) : null}
-            </label>
+            </div>
 
             {(mode === "register" ||
               mode === "forgot" ||
               step === "verify") && (
-              <>
-                {mode === "login" ? (
-                  <>
-                    <div className="flex items-center gap-4 text-sm font-medium text-(--foreground)">
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          checked={verifyType === "email"}
-                          onChange={() => {
-                            setVerifyType("email");
-                            setFieldErrors((prev) => ({
-                              ...prev,
-                              emailCode: "",
-                              googleCode: "",
-                            }));
-                          }}
-                        />
-                        Email code
-                      </label>
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          checked={verifyType === "google"}
-                          onChange={() => {
-                            setVerifyType("google");
-                            setFieldErrors((prev) => ({
-                              ...prev,
-                              emailCode: "",
-                              googleCode: "",
-                            }));
-                          }}
-                        />
-                        Google code
-                      </label>
-                    </div>
-                    {verifyType === "email" ? (
-                      <label className="flex flex-col gap-2 text-sm font-medium text-(--foreground)">
-                        <span className="flex items-center justify-between">
+                <>
+                  {mode === "login" ? (
+                    <>
+                      <div className="flex items-center gap-4 text-sm font-medium text-(--foreground)">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            checked={verifyType === "email"}
+                            onChange={() => {
+                              setVerifyType("email");
+                              setFieldErrors((prev) => ({
+                                ...prev,
+                                emailCode: "",
+                                googleCode: "",
+                              }));
+                            }}
+                          />
                           Email code
-                          <button
-                            type="button"
-                            className="text-xs font-semibold text-(--foreground)"
-                            disabled={
-                              status === "loading" || cooldown > 0 || !email
-                            }
-                            onClick={handleSendCode}
-                          >
-                            {cooldown > 0
-                              ? `Resend in ${cooldown}s`
-                              : "Send code"}
-                          </button>
-                        </span>
-                        <input
-                          type="text"
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            checked={verifyType === "google"}
+                            onChange={() => {
+                              setVerifyType("google");
+                              setFieldErrors((prev) => ({
+                                ...prev,
+                                emailCode: "",
+                                googleCode: "",
+                              }));
+                            }}
+                          />
+                          Google code
+                        </label>
+                      </div>
+                      {verifyType === "email" ? (
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-(--foreground)">
+                            Email code
+                          </label>
+                          <div className="flex items-center gap-3">
+                            <Input
+                              placeholder="Enter the code"
+                              value={emailCode}
+                              onChange={(event) => {
+                                setEmailCode(event.target.value);
+                                if (fieldErrors.emailCode) {
+                                  setFieldErrors((prev) => ({
+                                    ...prev,
+                                    emailCode: "",
+                                  }));
+                                }
+                              }}
+                              error={fieldErrors.emailCode}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="min-w-[120px]"
+                              disabled={status === "loading" || cooldown > 0 || !email}
+                              onClick={handleSendCode}
+                            >
+                              {cooldown > 0 ? `${cooldown}s` : "Send code"}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : null}
+                      {verifyType === "google" ? (
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-(--foreground)">
+                            Google code
+                          </label>
+                          <Input
+                            placeholder="Enter Google code"
+                            value={googleCode}
+                            onChange={(event) => {
+                              setGoogleCode(event.target.value);
+                              if (fieldErrors.googleCode) {
+                                setFieldErrors((prev) => ({
+                                  ...prev,
+                                  googleCode: "",
+                                }));
+                              }
+                            }}
+                            error={fieldErrors.googleCode}
+                          />
+                        </div>
+                      ) : null}
+                    </>
+                  ) : null}
+                  {mode === "register" || mode === "forgot" ? (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-(--foreground)">
+                        {mode === "forgot" ? "Email code" : "Email code"}
+                      </label>
+                      <div className="flex items-center gap-3">
+                        <Input
                           placeholder="Enter the code"
-                          className="h-11 rounded-lg border border-(--stroke) bg-(--background) px-3 text-sm"
                           value={emailCode}
                           onChange={(event) => {
                             setEmailCode(event.target.value);
@@ -384,106 +424,48 @@ export default function AuthPage() {
                               }));
                             }
                           }}
+                          error={fieldErrors.emailCode}
                         />
-                        {fieldErrors.emailCode ? (
-                          <span className="text-xs text-red-500">
-                            {fieldErrors.emailCode}
-                          </span>
-                        ) : null}
-                      </label>
-                    ) : null}
-                    {verifyType === "google" ? (
-                      <label className="flex flex-col gap-2 text-sm font-medium text-(--foreground)">
-                        Google code
-                        <input
-                          type="text"
-                          placeholder="Enter Google code"
-                          className="h-11 rounded-lg border border-(--stroke) bg-(--background) px-3 text-sm"
-                          value={googleCode}
-                          onChange={(event) => {
-                            setGoogleCode(event.target.value);
-                            if (fieldErrors.googleCode) {
-                              setFieldErrors((prev) => ({
-                                ...prev,
-                                googleCode: "",
-                              }));
-                            }
-                          }}
-                        />
-                        {fieldErrors.googleCode ? (
-                          <span className="text-xs text-red-500">
-                            {fieldErrors.googleCode}
-                          </span>
-                        ) : null}
-                      </label>
-                    ) : null}
-                  </>
-                ) : null}
-                {mode === "register" || mode === "forgot" ? (
-                  <label className="flex flex-col gap-2 text-sm font-medium text-(--foreground)">
-                    <span className="flex items-center justify-between">
-                      {mode === "forgot" ? "Email code" : "Email code"}
-                      <button
-                        type="button"
-                        className="text-xs font-semibold text-(--foreground)"
-                        disabled={
-                          status === "loading" || cooldown > 0 || !email
-                        }
-                        onClick={handleSendCode}
-                      >
-                        {cooldown > 0 ? `Resend in ${cooldown}s` : "Send code"}
-                      </button>
-                    </span>
-                    <input
-                      type="text"
-                      placeholder="Enter the code"
-                      className="h-11 rounded-lg border border-(--stroke) bg-(--background) px-3 text-sm"
-                      value={emailCode}
-                      onChange={(event) => {
-                        setEmailCode(event.target.value);
-                        if (fieldErrors.emailCode) {
-                          setFieldErrors((prev) => ({
-                            ...prev,
-                            emailCode: "",
-                          }));
-                        }
-                      }}
-                    />
-                    {fieldErrors.emailCode ? (
-                      <span className="text-xs text-red-500">
-                        {fieldErrors.emailCode}
-                      </span>
-                    ) : null}
-                  </label>
-                ) : null}
-              </>
-            )}
-
-            <button
-              type="submit"
-              className="h-11 w-full rounded-lg bg-(--brand) text-sm font-semibold text-(--background)"
-              disabled={status === "loading"}
-            >
-              {status === "loading" ? (
-                <span className="inline-flex items-center justify-center gap-2">
-                  <Spinner size={16} className="border-(--background)" />
-                  Please wait...
-                </span>
-              ) : mode === "login" ? (
-                step === "credentials" ? (
-                  "Continue"
-                ) : (
-                  "Login"
-                )
-              ) : mode === "register" ? (
-                "Create account"
-              ) : (
-                "Reset password"
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="min-w-[120px]"
+                          disabled={status === "loading" || cooldown > 0 || !email}
+                          onClick={handleSendCode}
+                        >
+                          {cooldown > 0 ? `${cooldown}s` : "Send code"}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null}
+                </>
               )}
-            </button>
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={status === "loading"}
+              loading={status === "loading"}
+              loaderLabel="Please wait..."
+            >
+              {status !== "loading" && (
+                mode === "login" ? (
+                  step === "credentials" ? (
+                    "Continue"
+                  ) : (
+                    "Login"
+                  )
+                ) : mode === "register" ? (
+                  "Create account"
+                ) : (
+                  "Reset password"
+                )
+              )}
+            </Button>
           </form>
           {mode === "login" ? (
-            <button
+            <Button
+              variant="link"
               type="button"
               onClick={() => {
                 setMode("forgot");
@@ -494,17 +476,18 @@ export default function AuthPage() {
                 setFieldErrors({});
                 setStatus("idle");
               }}
-              className="mt-3 text-sm font-medium text-(--paragraph)"
+              className="mt-3 h-auto p-0 text-sm font-medium text-(--paragraph)"
             >
               Forgot password?
-            </button>
+            </Button>
           ) : null}
 
           <div className="mt-6 text-center text-sm text-(--paragraph)">
             <span>
               {mode === "login" ? "New to Vtron?" : "Already have an account?"}
             </span>{" "}
-            <button
+            <Button
+              variant="link"
               type="button"
               onClick={() => {
                 if (mode === "forgot") {
@@ -519,10 +502,10 @@ export default function AuthPage() {
                 setFieldErrors({});
                 setStatus("idle");
               }}
-              className="font-semibold text-(--foreground)"
+              className="h-auto p-0 font-semibold text-(--foreground)"
             >
               {mode === "login" ? "Create one" : "Login"}
-            </button>
+            </Button>
           </div>
         </section>
       </main>

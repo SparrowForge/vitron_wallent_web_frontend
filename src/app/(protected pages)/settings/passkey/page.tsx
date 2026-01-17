@@ -2,6 +2,9 @@
 
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import { Button } from "@/shared/components/ui/Button";
+import { Card, CardContent } from "@/shared/components/ui/Card";
+import { Input } from "@/shared/components/ui/Input";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
 
@@ -226,16 +229,16 @@ export default function PasskeyPage() {
         })),
         authenticatorSelection: options.authenticatorSelection
           ? {
-              authenticatorAttachment: options.authenticatorSelection.authenticatorAttachment as
-                | AuthenticatorAttachment
-                | undefined,
-              residentKey: options.authenticatorSelection.residentKey as
-                | ResidentKeyRequirement
-                | undefined,
-              userVerification: options.authenticatorSelection.userVerification as
-                | UserVerificationRequirement
-                | undefined,
-            }
+            authenticatorAttachment: options.authenticatorSelection.authenticatorAttachment as
+              | AuthenticatorAttachment
+              | undefined,
+            residentKey: options.authenticatorSelection.residentKey as
+              | ResidentKeyRequirement
+              | undefined,
+            userVerification: options.authenticatorSelection.userVerification as
+              | UserVerificationRequirement
+              | undefined,
+          }
           : undefined,
         attestation: options.attestation as AttestationConveyancePreference | undefined,
       };
@@ -354,154 +357,163 @@ export default function PasskeyPage() {
         </p>
       </header>
 
-      <section className="rounded-3xl border border-(--stroke) bg-(--basic-cta) p-6">
-        {passkey ? (
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3">
-              <div className="text-sm font-semibold text-(--double-foreground)">
-                {passkey.displayName || "Passkey"}
+      <Card variant="glass">
+        <CardContent className="space-y-6 p-6">
+          {passkey ? (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3">
+                <div className="text-sm font-semibold text-(--double-foreground)">
+                  {passkey.displayName || "Passkey"}
+                </div>
+                <div className="mt-1 text-xs text-(--paragraph)">
+                  Added {formatDate(passkey.bindTime)}
+                </div>
               </div>
-              <div className="mt-1 text-xs text-(--paragraph)">
-                Added {formatDate(passkey.bindTime)}
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setRenameOpen(true)}
+                >
+                  Rename
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setDeleteOpen(true)}
+                  className="bg-red-500/10 text-red-400 hover:bg-red-500/20 shadow-none border border-red-500/30"
+                >
+                  Delete
+                </Button>
               </div>
             </div>
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                className="rounded-full border border-(--stroke) bg-(--background) px-4 py-2 text-xs font-semibold text-(--paragraph)"
-                onClick={() => setRenameOpen(true)}
+          ) : (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--paragraph)">
+                No passkey yet. Add one to secure your account.
+              </div>
+              <Button
+                onClick={handleAddPasskey}
+                className="w-full"
+                disabled={loading}
+                loading={loading}
               >
-                Rename
-              </button>
-              <button
-                type="button"
-                className="rounded-full border border-red-500/30 bg-red-500/10 px-4 py-2 text-xs font-semibold text-red-400"
-                onClick={() => setDeleteOpen(true)}
-              >
-                Delete
-              </button>
+                Add passkey
+              </Button>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--paragraph)">
-              No passkey yet. Add one to secure your account.
-            </div>
-            <button
-              type="button"
-              onClick={handleAddPasskey}
-              className="h-12 w-full rounded-2xl bg-(--brand) text-sm font-semibold text-(--background)"
-              disabled={loading}
-            >
-              {loading ? "Adding..." : "Add passkey"}
-            </button>
-          </div>
-        )}
+          )}
 
-        <div className="mt-6 space-y-4">
-          {needsGoogle ? (
-            <label className="space-y-2 text-sm font-medium text-(--paragraph)">
-              Verification method
-              <div className="flex items-center gap-3 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    checked={verifyType === "email"}
-                    onChange={() => setVerifyType("email")}
-                  />
-                  Email
+          <div className="mt-6 space-y-4">
+            {needsGoogle ? (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-(--paragraph)">
+                  Verification method
                 </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    checked={verifyType === "google"}
-                    onChange={() => setVerifyType("google")}
-                  />
-                  Google
-                </label>
+                <div className="flex items-center gap-3 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={verifyType === "email"}
+                      onChange={() => setVerifyType("email")}
+                      className="accent-(--brand)"
+                    />
+                    Email
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={verifyType === "google"}
+                      onChange={() => setVerifyType("google")}
+                      className="accent-(--brand)"
+                    />
+                    Google
+                  </label>
+                </div>
               </div>
-            </label>
+            ) : null}
+
+            {verifyType === "email" ? (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-(--paragraph)">
+                  Email code
+                </label>
+                <div className="flex items-center gap-3">
+                  <Input
+                    placeholder="Enter code"
+                    value={emailCode}
+                    onChange={(event) => setEmailCode(event.target.value)}
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      handleSendCode(passkey ? "deletePasskey" : "addPasskey")
+                    }
+                    className="min-w-[120px]"
+                    disabled={cooldown > 0 || loading}
+                  >
+                    {cooldown > 0 ? `${cooldown}s` : "Send code"}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-(--paragraph)">
+                  Google code
+                </label>
+                <Input
+                  placeholder="Enter Google code"
+                  value={googleCode}
+                  onChange={(event) => setGoogleCode(event.target.value)}
+                />
+              </div>
+            )}
+          </div>
+
+          {passkey && deleteOpen ? (
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              className="mt-6 w-full"
+              disabled={loading}
+              loading={loading}
+            >
+              Confirm delete
+            </Button>
           ) : null}
 
-          {verifyType === "email" ? (
-            <label className="space-y-2 text-sm font-medium text-(--paragraph)">
-              Email code
-              <div className="flex items-center gap-3">
-                <input
-                  className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
-                  placeholder="Enter code"
-                  value={emailCode}
-                  onChange={(event) => setEmailCode(event.target.value)}
+          {renameOpen ? (
+            <div className="mt-6 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-(--paragraph)">
+                  Display name
+                </label>
+                <Input
+                  placeholder="Enter name"
+                  value={renameValue}
+                  onChange={(event) => setRenameValue(event.target.value)}
                 />
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleSendCode(passkey ? "deletePasskey" : "addPasskey")
-                  }
-                  className="h-12 min-w-[120px] rounded-2xl border border-(--stroke) bg-(--background) px-4 text-xs font-semibold text-(--foreground)"
-                  disabled={cooldown > 0 || loading}
-                >
-                  {cooldown > 0 ? `${cooldown}s` : "Send code"}
-                </button>
               </div>
-            </label>
-          ) : (
-            <label className="space-y-2 text-sm font-medium text-(--paragraph)">
-              Google code
-              <input
-                className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
-                placeholder="Enter Google code"
-                value={googleCode}
-                onChange={(event) => setGoogleCode(event.target.value)}
-              />
-            </label>
-          )}
-        </div>
-
-        {passkey && deleteOpen ? (
-          <button
-            type="button"
-            onClick={handleDelete}
-            className="mt-6 h-12 w-full rounded-2xl bg-red-500/90 text-sm font-semibold text-white"
-            disabled={loading}
-          >
-            {loading ? "Deleting..." : "Confirm delete"}
-          </button>
-        ) : null}
-
-        {renameOpen ? (
-          <div className="mt-6 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-4">
-            <label className="space-y-2 text-sm font-medium text-(--paragraph)">
-              Display name
-              <input
-                className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--basic-cta) px-4 text-sm text-(--foreground)"
-                placeholder="Enter name"
-                value={renameValue}
-                onChange={(event) => setRenameValue(event.target.value)}
-              />
-            </label>
-            <div className="mt-4 flex gap-3">
-              <button
-                type="button"
-                onClick={handleRename}
-                className="h-10 flex-1 rounded-2xl bg-(--brand) text-sm font-semibold text-(--background)"
-                disabled={loading}
-              >
-                Save
-              </button>
-              <button
-                type="button"
-                onClick={() => setRenameOpen(false)}
-                className="h-10 flex-1 rounded-2xl border border-(--stroke) text-sm font-semibold text-(--paragraph)"
-              >
-                Cancel
-              </button>
+              <div className="mt-4 flex gap-3">
+                <Button
+                  onClick={handleRename}
+                  className="flex-1"
+                  disabled={loading}
+                  loading={loading}
+                >
+                  Save
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setRenameOpen(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
-          </div>
-        ) : null}
-
-        {null}
-      </section>
+          ) : null}
+        </CardContent>
+      </Card>
     </div>
   );
 }

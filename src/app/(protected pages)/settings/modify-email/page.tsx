@@ -1,10 +1,14 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { clearAuthTokens } from "@/lib/auth";
 import { emailSchema } from "@/lib/validationSchemas";
 import { modifyEmailSchema } from "@/lib/validationSchemas";
+import { Button } from "@/shared/components/ui/Button";
+import { Card, CardContent } from "@/shared/components/ui/Card";
+import { Input } from "@/shared/components/ui/Input";
 import PasswordInput from "@/shared/components/ui/PasswordInput";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useRouter } from "next/navigation";
@@ -37,6 +41,12 @@ export default function ModifyEmailPage() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{
+    newEmail?: string;
+    password?: string;
+    emailCode?: string;
+    googleCode?: string;
+  }>({});
 
   useToastMessages({ errorMessage, infoMessage });
 
@@ -94,7 +104,11 @@ export default function ModifyEmailPage() {
     }
     const emailCheck = emailSchema.safeParse(newEmail);
     if (!emailCheck.success) {
-      setErrorMessage(emailCheck.error.message);
+      setFieldErrors((prev) => ({
+        ...prev,
+        newEmail: emailCheck.error.issues[0]?.message ?? "Invalid email",
+      }));
+      setErrorMessage(emailCheck.error.issues[0]?.message ?? "Invalid email");
       return;
     }
     setLoading(true);
@@ -128,12 +142,23 @@ export default function ModifyEmailPage() {
     });
     if (!validation.success) {
       const issue = validation.error.issues[0];
+      const fieldName = issue?.path?.[0] as keyof typeof fieldErrors;
+      if (fieldName) {
+        setFieldErrors((prev) => ({
+          ...prev,
+          [fieldName]: issue.message,
+        }));
+      }
       setErrorMessage(issue?.message ?? "Please complete the required fields.");
       return;
     }
     const emailCheck = emailSchema.safeParse(newEmail);
     if (!emailCheck.success) {
-      setErrorMessage(emailCheck.error.message);
+      setFieldErrors((prev) => ({
+        ...prev,
+        newEmail: emailCheck.error.issues[0]?.message ?? "Invalid email",
+      }));
+      setErrorMessage(emailCheck.error.issues[0]?.message ?? "Invalid email");
       return;
     }
     if (!canSubmit) {
@@ -183,101 +208,143 @@ export default function ModifyEmailPage() {
         </p>
       </header>
 
-      <section className="rounded-3xl border border-(--stroke) bg-(--basic-cta) p-6">
-        <div className="space-y-4">
-          <label className="space-y-2 text-sm font-medium text-(--paragraph)">
-            New email
-            <input
-              className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
-              placeholder="Enter new email"
-              value={newEmail}
-              onChange={(event) => setNewEmail(event.target.value)}
-            />
-          </label>
-
-          <label className="space-y-2 text-sm font-medium text-(--paragraph)">
-            Login password
-            <PasswordInput
-              className="h-12"
-              inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
-              placeholder="Enter login password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-          </label>
-
-          <label className="space-y-2 text-sm font-medium text-(--paragraph)">
-            Verification method
-            <div className="flex items-center gap-4 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--foreground)">
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  checked={verifyType === "email"}
-                  onChange={() => setVerifyType("email")}
-                />
-                Email code
+      <Card variant="glass">
+        <CardContent className="space-y-6 p-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                New email
               </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  checked={verifyType === "google"}
-                  onChange={() => setVerifyType("google")}
-                  disabled={!needsGoogle}
-                />
-                Google code
-              </label>
+              <Input
+                type="email"
+                placeholder="Enter new email"
+                value={newEmail}
+                onChange={(event) => {
+                  setNewEmail(event.target.value);
+                  if (fieldErrors.newEmail) {
+                    setFieldErrors((prev) => ({ ...prev, newEmail: "" }));
+                  }
+                }}
+                onBlur={() => {
+                  if (!newEmail) return;
+                  const validation = emailSchema.safeParse(newEmail);
+                  if (!validation.success) {
+                    setFieldErrors((prev) => ({
+                      ...prev,
+                      newEmail: validation.error.issues[0]?.message ?? "Invalid email",
+                    }));
+                  }
+                }}
+                error={fieldErrors.newEmail}
+              />
             </div>
-          </label>
 
-          {verifyType === "email" ? (
-            <label className="space-y-2 text-sm font-medium text-(--paragraph)">
-              <span className="flex items-center justify-between">
-                Email code
-                <button
-                  type="button"
-                  onClick={handleSendCode}
-                  className="text-xs font-semibold text-(--foreground)"
-                  disabled={cooldown > 0 || loading}
-                >
-                  {cooldown > 0 ? `${cooldown}s` : "Send code"}
-                </button>
-              </span>
-              <input
-                className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
-                placeholder="Enter code"
-                value={emailCode}
-                onChange={(event) => setEmailCode(event.target.value)}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                Login password
+              </label>
+              <PasswordInput
+                placeholder="Enter login password"
+                value={password}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  if (fieldErrors.password) {
+                    setFieldErrors((prev) => ({ ...prev, password: "" }));
+                  }
+                }}
+                error={fieldErrors.password}
               />
-            </label>
-          ) : null}
+            </div>
 
-          {verifyType === "google" ? (
-            <label className="space-y-2 text-sm font-medium text-(--paragraph)">
-              Google code
-              <input
-                className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
-                placeholder="Enter Google code"
-                value={googleCode}
-                onChange={(event) => setGoogleCode(event.target.value)}
-              />
-            </label>
-          ) : null}
-        </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                Verification method
+              </label>
+              <div className="flex items-center gap-4 rounded-xl border border-(--stroke) bg-(--background)/50 px-4 py-3 text-sm text-(--foreground)">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={verifyType === "email"}
+                    onChange={() => setVerifyType("email")}
+                    className="accent-(--brand)"
+                  />
+                  Email code
+                </label>
+                <label className={cn(
+                  "flex items-center gap-2 cursor-pointer",
+                  !needsGoogle && "opacity-50 cursor-not-allowed"
+                )}>
+                  <input
+                    type="radio"
+                    checked={verifyType === "google"}
+                    onChange={() => setVerifyType("google")}
+                    disabled={!needsGoogle}
+                    className="accent-(--brand)"
+                  />
+                  Google code
+                </label>
+              </div>
+            </div>
 
-        <button
-          type="button"
-          onClick={handleSubmit}
-          className={`mt-6 h-12 w-full rounded-2xl text-sm font-semibold ${
-            canSubmit
-              ? "bg-(--brand) text-(--background)"
-              : "bg-(--stroke) text-(--placeholder)"
-          }`}
-          disabled={!canSubmit || loading}
-        >
-          {loading ? "Updating..." : "Update email"}
-        </button>
-        {null}
-      </section>
+            {verifyType === "email" ? (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-(--paragraph)">
+                  Email code
+                </label>
+                <div className="flex items-center gap-3">
+                  <Input
+                    placeholder="Enter code"
+                    value={emailCode}
+                    onChange={(event) => {
+                      setEmailCode(event.target.value);
+                      if (fieldErrors.emailCode) {
+                        setFieldErrors((prev) => ({ ...prev, emailCode: "" }));
+                      }
+                    }}
+                    error={fieldErrors.emailCode}
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={handleSendCode}
+                    className="min-w-[120px]"
+                    disabled={cooldown > 0 || loading}
+                  >
+                    {cooldown > 0 ? `${cooldown}s` : "Send code"}
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+
+            {verifyType === "google" ? (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-(--paragraph)">
+                  Google code
+                </label>
+                <Input
+                  placeholder="Enter Google code"
+                  value={googleCode}
+                  onChange={(event) => {
+                    setGoogleCode(event.target.value);
+                    if (fieldErrors.googleCode) {
+                      setFieldErrors((prev) => ({ ...prev, googleCode: "" }));
+                    }
+                  }}
+                  error={fieldErrors.googleCode}
+                />
+              </div>
+            ) : null}
+          </div>
+
+          <Button
+            onClick={handleSubmit}
+            className="w-full"
+            disabled={!canSubmit || loading}
+            loading={loading}
+          >
+            Update email
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

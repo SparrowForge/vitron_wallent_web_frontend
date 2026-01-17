@@ -2,6 +2,7 @@
 
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import { Button } from "@/shared/components/ui/Button";
 import ModalShell from "@/shared/components/ui/ModalShell";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
@@ -96,10 +97,9 @@ export default function ReceiveModal({
     if (!qrValue) {
       return "";
     }
-    return `${
-      process.env.NEXT_PUBLIC_CLIENT_BASE_URL ??
+    return `${process.env.NEXT_PUBLIC_CLIENT_BASE_URL ??
       "https://vitron-wallent-web-frontend.vercel.app"
-    }/wallet/send?hash=${qrValue}`;
+      }/wallet/send?hash=${qrValue}`;
   }, [qrValue]);
 
   const qrImageSources = useMemo(() => {
@@ -164,13 +164,14 @@ export default function ReceiveModal({
       className="max-w-md"
     >
       <div className="flex items-center justify-between">
-        <button
-          type="button"
+        <Button
+          variant="outline"
+          size="sm"
           onClick={onClose}
-          className="rounded-full border border-(--stroke) bg-(--background) px-3 py-2 text-xs font-semibold text-(--paragraph)"
+          className="rounded-full"
         >
           Back
-        </button>
+        </Button>
         <div className="text-sm font-semibold text-(--foreground)">Receive</div>
         <span className="text-xs text-(--paragraph)">{walletName}</span>
       </div>
@@ -229,22 +230,21 @@ export default function ReceiveModal({
       </p>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <button
-          type="button"
+        <Button
+          variant="outline"
           onClick={handleCopy}
-          className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) text-sm font-semibold text-(--foreground)"
+          className="w-full"
           disabled={!qrLink}
         >
           Copy link
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
           onClick={handleSave}
-          className="h-12 w-full rounded-2xl bg-(--brand) text-sm font-semibold text-(--background)"
+          className="w-full"
           disabled={!qrImageUrl}
         >
           Save QR
-        </button>
+        </Button>
         {infoMessage && (
           <span className="mt-2 w-full text-center text-xs text-(--success)">
             {infoMessage}

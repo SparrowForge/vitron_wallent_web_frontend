@@ -1,8 +1,12 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { transactionPasswordSchema } from "@/lib/validationSchemas";
+import { Button } from "@/shared/components/ui/Button";
+import { Card, CardContent } from "@/shared/components/ui/Card";
+import { Input } from "@/shared/components/ui/Input";
 import PasswordInput from "@/shared/components/ui/PasswordInput";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
@@ -170,101 +174,110 @@ export default function TransactionPasswordPage() {
         </h1>
       </header>
 
-      <section className="rounded-3xl border border-(--stroke) bg-(--basic-cta) p-6">
-        <div className="space-y-4">
-          <label className="space-y-2 text-sm font-medium text-(--paragraph)">
-            Transaction password (6 digits)
-            <PasswordInput
-              inputMode="numeric"
-              pattern="\d*"
-              maxLength={6}
-              className="h-12"
-              inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
-              value={payPassword}
-              onChange={(event) => setPayPassword(event.target.value)}
-            />
-          </label>
-
-          <label className="space-y-2 text-sm font-medium text-(--paragraph)">
-            Confirm password
-            <PasswordInput
-              inputMode="numeric"
-              pattern="\d*"
-              maxLength={6}
-              className="h-12"
-              inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-            />
-          </label>
-
-          <label className="space-y-2 text-sm font-medium text-(--paragraph)">
-            Verification method
-            <div className="flex items-center gap-4 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--foreground)">
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  checked={verifyType === "email"}
-                  onChange={() => setVerifyType("email")}
-                />
-                Email code
+      <Card variant="glass">
+        <CardContent className="space-y-6 p-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                Transaction password (6 digits)
               </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  checked={verifyType === "google"}
-                  onChange={() => setVerifyType("google")}
-                  disabled={!needsGoogle}
-                />
-                Google code
-              </label>
+              <PasswordInput
+                inputMode="numeric"
+                pattern="\d*"
+                maxLength={6}
+                value={payPassword}
+                onChange={(event) => setPayPassword(event.target.value)}
+              />
             </div>
-          </label>
 
-          {verifyType === "email" ? (
-            <label className="space-y-2 text-sm font-medium text-(--paragraph)">
-              <span className="flex items-center justify-between">
-                Email code
-                <button
-                  type="button"
-                  onClick={handleSendCode}
-                  disabled={cooldown > 0 || loading}
-                  className="text-xs font-semibold text-(--foreground)"
-                >
-                  {cooldown > 0 ? `${cooldown}s` : "Send code"}
-                </button>
-              </span>
-              <input
-                className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
-                value={emailCode}
-                onChange={(event) => setEmailCode(event.target.value)}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                Confirm password
+              </label>
+              <PasswordInput
+                inputMode="numeric"
+                pattern="\d*"
+                maxLength={6}
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
               />
-            </label>
-          ) : null}
+            </div>
 
-          {verifyType === "google" ? (
-            <label className="space-y-2 text-sm font-medium text-(--paragraph)">
-              Google code
-              <input
-                className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
-                value={googleCode}
-                onChange={(event) => setGoogleCode(event.target.value)}
-              />
-            </label>
-          ) : null}
-        </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                Verification method
+              </label>
+              <div className="flex items-center gap-4 rounded-xl border border-(--stroke) bg-(--background)/50 px-4 py-3 text-sm text-(--foreground)">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={verifyType === "email"}
+                    onChange={() => setVerifyType("email")}
+                    className="accent-(--brand)"
+                  />
+                  Email code
+                </label>
+                <label className={cn(
+                  "flex items-center gap-2 cursor-pointer",
+                  !needsGoogle && "opacity-50 cursor-not-allowed"
+                )}>
+                  <input
+                    type="radio"
+                    checked={verifyType === "google"}
+                    onChange={() => setVerifyType("google")}
+                    disabled={!needsGoogle}
+                    className="accent-(--brand)"
+                  />
+                  Google code
+                </label>
+              </div>
+            </div>
 
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={loading}
-          className="mt-6 h-12 w-full rounded-2xl bg-(--brand) text-sm font-semibold text-(--background)"
-        >
-          {loading ? "Saving..." : "Save"}
-        </button>
+            {verifyType === "email" ? (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-(--paragraph)">
+                  Email code
+                </label>
+                <div className="flex items-center gap-3">
+                  <Input
+                    value={emailCode}
+                    onChange={(event) => setEmailCode(event.target.value)}
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={handleSendCode}
+                    className="min-w-[120px]"
+                    disabled={cooldown > 0 || loading}
+                  >
+                    {cooldown > 0 ? `${cooldown}s` : "Send code"}
+                  </Button>
+                </div>
+              </div>
+            ) : null}
 
-        {null}
-      </section>
+            {verifyType === "google" ? (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-(--paragraph)">
+                  Google code
+                </label>
+                <Input
+                  value={googleCode}
+                  onChange={(event) => setGoogleCode(event.target.value)}
+                />
+              </div>
+            ) : null}
+          </div>
+
+          <Button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="w-full"
+            loading={loading}
+          >
+            Save
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

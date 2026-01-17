@@ -3,8 +3,11 @@
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { emailSchema, transferSchema } from "@/lib/validationSchemas";
+import { Button } from "@/shared/components/ui/Button";
+import { Input } from "@/shared/components/ui/Input";
 import ModalShell from "@/shared/components/ui/ModalShell";
 import PasswordInput from "@/shared/components/ui/PasswordInput";
+import { Select } from "@/shared/components/ui/Select";
 import Spinner from "@/shared/components/ui/Spinner";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
@@ -295,13 +298,14 @@ export default function SendModal({
       className="max-w-md"
     >
       <div className="flex items-center justify-between">
-        <button
-          type="button"
+        <Button
+          variant="outline"
+          size="sm"
           onClick={onClose}
-          className="rounded-full border border-(--stroke) bg-(--background) px-3 py-2 text-xs font-semibold text-(--paragraph)"
+          className="rounded-full"
         >
           Back
-        </button>
+        </Button>
         <div className="text-sm font-semibold text-(--foreground)">Send</div>
         <span className="text-xs text-(--paragraph)">{walletName}</span>
       </div>
@@ -309,12 +313,8 @@ export default function SendModal({
       <div className="mt-6 space-y-4">
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Receive account
-          <input
-            className={`h-12 w-full rounded-2xl border px-4 text-sm text-(--foreground) placeholder:text-(--placeholder) ${
-              emailError
-                ? "border-red-500 bg-red-500/5"
-                : "border-(--stroke) bg-(--background)"
-            }`}
+          <Input
+            className={emailError ? "border-red-500 bg-red-500/5" : ""}
             placeholder="Please input email"
             value={recipient}
             onChange={(event) => {
@@ -336,28 +336,22 @@ export default function SendModal({
                   : validation.error.issues[0]?.message ?? "Invalid email."
               );
             }}
+            error={emailError}
           />
-          {emailError ? (
-            <p className="text-[11px] text-red-500">{emailError}</p>
-          ) : null}
         </label>
 
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Currency
-          <div className="flex items-center justify-between rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
-            <select
-              value={currency}
-              onChange={(event) => setCurrency(event.target.value)}
-              className="w-full bg-(--background) text-sm text-(--foreground) focus:outline-none"
-            >
-              {balances.map((entry) => (
-                <option key={entry.currency} value={entry.currency}>
-                  {entry.currency}
-                </option>
-              ))}
-            </select>
-            <span className="text-(--placeholder)">▾</span>
-          </div>
+          <Select
+            value={currency}
+            onChange={(event) => setCurrency(event.target.value)}
+          >
+            {balances.map((entry) => (
+              <option key={entry.currency} value={entry.currency}>
+                {entry.currency}
+              </option>
+            ))}
+          </Select>
           <div className="text-xs text-(--paragraph)">
             Available: {balanceForCurrency.toFixed(2)} {currency}
           </div>
@@ -365,9 +359,8 @@ export default function SendModal({
 
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Amount
-          <input
+          <Input
             type="number"
-            className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
             placeholder="Enter amount"
             value={amount}
             onChange={(event) => {
@@ -381,17 +374,14 @@ export default function SendModal({
                 amount: result.success ? "" : result.error.issues[0]?.message,
               }));
             }}
+            error={fieldErrors.amount}
           />
-          {fieldErrors.amount ? (
-            <p className="text-[11px] text-red-500">{fieldErrors.amount}</p>
-          ) : null}
         </label>
 
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Remark (optional)
           <div className="relative">
-            <input
-              className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
+            <Input
               placeholder="Message"
               value={remark}
               maxLength={20}
@@ -474,46 +464,44 @@ export default function SendModal({
           <label className="space-y-2 text-xs font-medium text-(--paragraph)">
             Email code
             <div className="flex items-center gap-3">
-              <input
-                className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
-                placeholder="Enter code"
-                value={verifyCode}
-                onChange={(event) => {
-                  setVerifyCode(event.target.value);
-                  if (fieldErrors.verifyCode) {
-                    setFieldErrors((prev) => ({ ...prev, verifyCode: "" }));
-                  }
-                }}
-              />
-              <button
-                type="button"
-                onClick={handleSendCode}
-                className="h-12 min-w-[120px] rounded-2xl border border-(--stroke) bg-(--background) px-4 text-xs font-semibold text-(--foreground)"
-                disabled={cooldown > 0 || loading}
-              >
-                {loading && cooldown === 0 ? (
-                  <span className="inline-flex items-center gap-2">
-                    <Spinner size={14} />
-                    Sending...
-                  </span>
-                ) : cooldown > 0 ? (
-                  `${cooldown}s`
-                ) : (
-                  "Send code"
-                )}
-              </button>
+              <div className="flex items-center gap-3">
+                <Input
+                  placeholder="Enter code"
+                  value={verifyCode}
+                  onChange={(event) => {
+                    setVerifyCode(event.target.value);
+                    if (fieldErrors.verifyCode) {
+                      setFieldErrors((prev) => ({ ...prev, verifyCode: "" }));
+                    }
+                  }}
+                  error={fieldErrors.verifyCode}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSendCode}
+                  className="min-w-[120px]"
+                  disabled={cooldown > 0 || loading}
+                >
+                  {loading && cooldown === 0 ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Spinner size={14} />
+                      Sending...
+                    </span>
+                  ) : cooldown > 0 ? (
+                    `${cooldown}s`
+                  ) : (
+                    "Send code"
+                  )}
+                </Button>
+              </div>
             </div>
-            {fieldErrors.verifyCode ? (
-              <p className="text-[11px] text-red-500">
-                {fieldErrors.verifyCode}
-              </p>
-            ) : null}
+
           </label>
         ) : (
           <label className="space-y-2 text-xs font-medium text-(--paragraph)">
             Google code
-            <input
-              className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
+            <Input
               placeholder="Enter Google code"
               value={googleCode}
               onChange={(event) => {
@@ -522,35 +510,21 @@ export default function SendModal({
                   setFieldErrors((prev) => ({ ...prev, googleCode: "" }));
                 }
               }}
+              error={fieldErrors.googleCode}
             />
-            {fieldErrors.googleCode ? (
-              <p className="text-[11px] text-red-500">
-                {fieldErrors.googleCode}
-              </p>
-            ) : null}
           </label>
         )}
       </div>
 
-      <button
+      <Button
         type="button"
         onClick={handleTransfer}
-        className={`mt-6 h-12 w-full rounded-2xl text-sm font-semibold ${
-          canSubmit
-            ? "bg-(--brand) text-(--background)"
-            : "bg-(--stroke) text-(--placeholder)"
-        }`}
+        className="mt-6 w-full"
         disabled={!canSubmit || loading}
+        loading={loading}
       >
-        {loading ? (
-          <span className="inline-flex items-center justify-center gap-2">
-            <Spinner size={16} className="border-(--background)" />
-            Submitting...
-          </span>
-        ) : (
-          "Transfer"
-        )}
-      </button>
+        Transfer
+      </Button>
       {null}
     </ModalShell>
   );

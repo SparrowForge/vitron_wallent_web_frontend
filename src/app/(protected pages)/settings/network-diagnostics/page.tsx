@@ -2,6 +2,8 @@
 
 import { apiRequest } from "@/lib/api";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/apiEndpoints";
+import { Button } from "@/shared/components/ui/Button";
+import { Card, CardContent } from "@/shared/components/ui/Card";
 import { useMemo, useState } from "react";
 
 type ApiResponse = {
@@ -127,56 +129,57 @@ export default function NetworkDiagnosticsPage() {
         </p>
       </header>
 
-      <section className="rounded-3xl border border-(--stroke) bg-(--basic-cta) p-6">
-        <div className="space-y-4">
-          {items.map((item) => (
-            <div
-              key={item.key}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm"
-            >
-              <div>
-                <div className="text-sm font-semibold text-(--double-foreground)">
-                  {item.label}
+      <Card variant="glass">
+        <CardContent className="space-y-6 p-6">
+          <div className="space-y-4">
+            {items.map((item) => (
+              <div
+                key={item.key}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm"
+              >
+                <div>
+                  <div className="text-sm font-semibold text-(--double-foreground)">
+                    {item.label}
+                  </div>
+                  <div className="mt-1 text-xs text-(--paragraph)">
+                    {item.detail || "Pending"}
+                  </div>
                 </div>
-                <div className="mt-1 text-xs text-(--paragraph)">
-                  {item.detail || "Pending"}
+                <div className="text-xs text-(--paragraph)">
+                  {item.latency ? `${item.latency} ms` : "--"}
                 </div>
-              </div>
-              <div className="text-xs text-(--paragraph)">
-                {item.latency ? `${item.latency} ms` : "--"}
-              </div>
-              <span
-                className={`rounded-full px-3 py-1 text-xs ${
-                  item.status === "ok"
+                <span
+                  className={`rounded-full px-3 py-1 text-xs ${item.status === "ok"
                     ? "bg-(--brand)/20 text-(--brand)"
                     : item.status === "fail"
-                    ? "bg-red-500/10 text-red-400"
-                    : "bg-(--stroke) text-(--paragraph)"
-                }`}
-              >
-                {item.status === "idle"
-                  ? "Idle"
-                  : item.status === "ok"
-                  ? "OK"
-                  : "Failed"}
-              </span>
-            </div>
-          ))}
-        </div>
+                      ? "bg-red-500/10 text-red-400"
+                      : "bg-(--stroke) text-(--paragraph)"
+                    }`}
+                >
+                  {item.status === "idle"
+                    ? "Idle"
+                    : item.status === "ok"
+                      ? "OK"
+                      : "Failed"}
+                </span>
+              </div>
+            ))}
+          </div>
 
-        <div className="mt-6 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--paragraph)">
-          Device IP: {ipLabel}
-        </div>
+          <div className="rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--paragraph)">
+            Device IP: {ipLabel}
+          </div>
 
-        <button
-          type="button"
-          onClick={runDiagnostics}
-          className="mt-6 h-12 w-full rounded-2xl bg-(--brand) text-sm font-semibold text-(--background)"
-          disabled={running}
-        >
-          {running ? "Running..." : "Run diagnostics"}
-        </button>
-      </section>
+          <Button
+            onClick={runDiagnostics}
+            className="w-full"
+            disabled={running}
+            loading={running}
+          >
+            Run diagnostics
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

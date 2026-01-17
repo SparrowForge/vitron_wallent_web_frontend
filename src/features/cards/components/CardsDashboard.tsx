@@ -10,10 +10,14 @@ import {
   settingSvg,
   viewSvg,
 } from "@/shared/components/Svgs/Svg";
+import DataTable, { type DataTableColumn } from "@/shared/components/DataTable";
+import { Button } from "@/shared/components/ui/Button";
+import { Card, CardContent, CardFooter, CardHeader } from "@/shared/components/ui/Card";
 import Spinner from "@/shared/components/ui/Spinner";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -330,6 +334,25 @@ export default function CardsDashboard() {
     }
   };
 
+  const transactionsColumns: DataTableColumn<any>[] = [
+    { key: "orderId", label: "Order", className: "text-(--double-foreground)" },
+    { key: "typeString", label: "Type" },
+    { key: "amount", label: "Amount", className: "text-(--double-foreground)" },
+    { key: "createTime", label: "Date" },
+  ];
+
+  const formattedRecords = records.map((record) => ({
+    ...record,
+    orderId: formatOrderId(record.orderId ?? record.tradeId),
+    typeString: (
+      <span className="inline-flex items-center justify-center rounded-lg bg-(--brand) px-3 py-1 text-xs font-medium text-(--brand-10) shadow-lg shadow-(--brand)/20">
+        {record.typeString ?? record.type ?? "--"}
+      </span>
+    ),
+    amount: `${record.amount ?? "--"} ${record.currency ?? ""}`,
+    createTime: record.createTime ?? "--",
+  }));
+
   return (
     <div className="space-y-8">
       <header className="flex flex-wrap items-center justify-between gap-4">
@@ -340,20 +363,15 @@ export default function CardsDashboard() {
           <h1 className="text-3xl font-semibold text-(--foreground)">
             Manage your linked cards.
           </h1>
-          {null}
         </div>
-        <button
-          type="button"
-          onClick={() => setApplyOpen(true)}
-          className="inline-flex items-center justify-center rounded-full bg-(--brand) px-5 py-2 text-sm font-semibold text-(--background)"
-        >
-          Apply for Card
-        </button>
+        <Button onClick={() => setApplyOpen(true)}>Apply for Card</Button>
       </header>
 
       {cards.length === 0 ? (
-        <section className="rounded-2xl border border-(--stroke) bg-(--basic-cta) px-6 py-10 text-center text-sm text-(--paragraph)">
-          No cards yet. Apply for a card to get started.
+        <section className="rounded-2xl border border-(--stroke) bg-(--basic-cta)/50 p-10 text-center backdrop-blur-sm">
+          <p className="text-sm text-(--paragraph)">
+            No cards yet. Apply for a card to get started.
+          </p>
         </section>
       ) : (
         <section className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
@@ -366,56 +384,80 @@ export default function CardsDashboard() {
             const actions = isPhysical
               ? physicalActions
               : virtualActions(isFrozen);
+
+            const isSelected = selectedId === cardId;
+
             return (
-              <div
+              <Card
                 key={cardId}
-                role="button"
-                tabIndex={0}
+                variant={isSelected ? "glass" : "solid"}
                 onClick={() => setSelectedId(cardId)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
+                className={cn(
+                  "cursor-pointer transition-all duration-300 hover:scale-[1.02]",
+                  isSelected && "ring-1 ring-(--brand)/50"
+                )}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
                     setSelectedId(cardId);
                   }
                 }}
-                className={`rounded-2xl border bg-(--basic-cta) p-5 transition ${
-                  selectedId === cardId
-                    ? "border-(--brand) shadow-[0_0_0_1px_rgba(132,204,22,0.35)]"
-                    : "border-(--stroke)"
-                }`}
               >
-                <div className="relative overflow-hidden rounded-2xl bg-(--background) p-5">
-                  <div className="text-sm uppercase tracking-[0.3em] text-(--paragraph)">
-                    {card.cardType ?? "Vtron"}
+                <div className="p-5">
+                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-(--foreground) to-gray-600 p-5 text-(--background) shadow-lg">
+                    {/* Visual Card Content */}
+                    <div className="flex justify-between items-start opacity-80">
+                      <div className="text-sm uppercase tracking-[0.3em]">
+                        {card.cardType ?? "Vtron"}
+                      </div>
+                      <div className="font-bold italic opacity-60">VISA</div>
+                    </div>
+
+                    <div className="mt-8 text-xl font-mono tracking-widest">
+                      •••• •••• •••• {last4}
+                    </div>
+
+                    <div className="mt-8 flex justify-between items-end">
+                      <div>
+                        <div className="text-[10px] uppercase opacity-60">Card Holder</div>
+                        <div className="text-sm font-medium">{card.alias ?? "Vtron User"}</div>
+                      </div>
+                      <div className="h-6 w-10 rounded bg-white/20" />
+                    </div>
+
+                    {/* Shine effect */}
+                    <div className="absolute -inset-full animate-[shimmer_3s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12" />
                   </div>
-                  <div className="mt-10 text-lg font-semibold text-(--foreground)">
-                    •••• {last4}
+
+                  <div className="mt-5 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-(--paragraph)">Current Balance</p>
+                      <p className="text-lg font-bold text-(--foreground)">
+                        {balance ? balance.balance : "--"}{" "}
+                        <span className="text-sm font-normal text-(--paragraph)">
+                          {balance ? balance.currency : ""}
+                        </span>
+                      </p>
+                    </div>
+                    {isFrozen && (
+                      <span className="rounded-full bg-red-500/10 px-2 py-1 text-xs font-semibold text-red-500">
+                        Frozen
+                      </span>
+                    )}
                   </div>
-                  <div className="absolute bottom-4 right-5 text-sm font-semibold text-(--double-foreground)">
-                    VISA
-                  </div>
-                  <div className="absolute inset-0 border border-(--stroke) opacity-40" />
                 </div>
-                <div className="mt-3 text-sm font-semibold text-(--foreground)">
-                  {card.alias ?? "Vtron Card"}
-                </div>
-                <div className="mt-1 text-xs text-(--paragraph)">
-                  Balance:{" "}
-                  <span className="text-(--double-foreground)">
-                    {balance ? balance.balance : "--"}{" "}
-                    {balance ? balance.currency : ""}
-                  </span>
-                </div>
-                <div className="mt-4 grid grid-cols-3 gap-2 text-xs text-(--paragraph)">
+
+                <CardFooter className="grid grid-cols-3 gap-2 border-t border-(--stroke) p-3">
                   {actions.map((action) =>
                     action.key === "settings" ? (
                       <Link
                         key={action.key}
                         href={`/cards/settings?card=${cardId}`}
-                        className="flex flex-col items-center gap-2 rounded-xl border border-(--stroke) bg-(--background) px-2 py-3 text-[11px] font-medium transition hover:text-(--foreground)"
+                        className="flex flex-col items-center gap-1 rounded-lg p-2 text-[10px] font-medium text-(--paragraph) transition hover:bg-(--stroke)/10 hover:text-(--foreground)"
                       >
-                        <span className="grid h-9 w-9 place-items-center rounded-full border border-(--stroke) bg-(--basic-cta) text-(--brand)">
+                        <span className="grid h-8 w-8 place-items-center text-(--foreground)">
                           {action.icon ? (
-                            <span className="scale-[0.7]">{action.icon}</span>
+                            <span className="[&_svg]:h-5 [&_svg]:w-5">{action.icon}</span>
                           ) : (
                             action.label[0]
                           )}
@@ -426,14 +468,15 @@ export default function CardsDashboard() {
                       <button
                         key={action.key}
                         type="button"
-                        data-action={action.key}
-                        data-card={cardId}
-                        onClick={() => handleAction(action.key, cardId)}
-                        className="flex flex-col items-center gap-2 rounded-xl border border-(--stroke) bg-(--background) px-2 py-3 text-[11px] font-medium transition hover:text-(--foreground)"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAction(action.key, cardId);
+                        }}
+                        className="flex flex-col items-center gap-1 rounded-lg p-2 text-[10px] font-medium text-(--paragraph) transition hover:bg-(--stroke)/10 hover:text-(--foreground)"
                       >
-                        <span className="grid h-9 w-9 place-items-center rounded-full border border-(--stroke) bg-(--basic-cta) text-(--brand)">
+                        <span className="grid h-8 w-8 place-items-center text-(--foreground)">
                           {action.icon ? (
-                            <span className="scale-[0.7]">{action.icon}</span>
+                            <span className="[&_svg]:h-5 [&_svg]:w-5">{action.icon}</span>
                           ) : (
                             action.label[0]
                           )}
@@ -442,114 +485,60 @@ export default function CardsDashboard() {
                       </button>
                     )
                   )}
-                </div>
-              </div>
+                </CardFooter>
+              </Card>
             );
           })}
         </section>
       )}
 
-      {cards.length > 0 ? (
-        <section className="rounded-2xl border border-(--stroke) bg-(--basic-cta) p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold text-(--foreground)">
-              Transaction history
-            </h2>
-            <p className="text-xs text-(--paragraph)">
-              {recordTotal} records
-            </p>
-          </div>
+      {cards.length > 0 && (
+        <DataTable
+          title={`Transaction history (${recordTotal} records)`}
+          columns={transactionsColumns}
+          data={formattedRecords}
+          emptyMessage={
+            recordLoading ? (
+              <div className="flex items-center justify-center gap-2">
+                <Spinner size={16} /> Loading transactions...
+              </div>
+            ) : recordError ? (
+              <span className="text-red-500">{recordError}</span>
+            ) : (
+              "No transactions yet."
+            )
+          }
+        />
+      )}
 
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[520px] text-left text-xs text-(--paragraph)">
-              <thead>
-                <tr className="text-[11px] uppercase tracking-[0.16em] text-(--placeholder)">
-                  <th className="px-3 py-2">Order</th>
-                  <th className="px-3 py-2">Type</th>
-                  <th className="px-3 py-2">Amount</th>
-                  <th className="px-3 py-2">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recordLoading ? (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="px-3 py-4 text-sm text-(--paragraph)"
-                    >
-                      Loading transactions...
-                    </td>
-                  </tr>
-                ) : recordError ? (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="px-3 py-4 text-sm text-red-500"
-                    >
-                      {recordError}
-                    </td>
-                  </tr>
-                ) : records.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="px-3 py-4 text-sm text-(--paragraph)"
-                    >
-                      No transactions yet.
-                    </td>
-                  </tr>
-                ) : (
-                  records.map((record, index) => (
-                    <tr
-                      key={`${record.orderId ?? record.tradeId ?? "row"}-${index}`}
-                      className="border-t border-(--stroke)"
-                    >
-                      <td className="px-3 py-3 text-(--double-foreground)">
-                        {formatOrderId(record.orderId ?? record.tradeId)}
-                      </td>
-                      <td className="px-3 py-3">
-                        {record.typeString ?? record.type ?? "--"}
-                      </td>
-                      <td className="px-3 py-3 text-(--double-foreground)">
-                        {record.amount ?? "--"} {record.currency ?? ""}
-                      </td>
-                      <td className="px-3 py-3">
-                        {record.createTime ?? "--"}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="mt-4 flex items-center justify-between text-xs text-(--paragraph)">
-            <button
-              type="button"
-              onClick={() => setRecordPage((prev) => Math.max(prev - 1, 1))}
-              className="rounded-full border border-(--stroke) bg-(--background) px-3 py-2 text-[11px] font-semibold text-(--foreground)"
-              disabled={recordPage <= 1 || recordLoading}
-            >
-              Previous
-            </button>
-            <span>
-              Page {recordPage} of {recordPages}
-            </span>
-            <button
-              type="button"
-              onClick={() =>
-                setRecordPage((prev) =>
-                  Math.min(prev + 1, Math.max(recordPages, 1))
-                )
-              }
-              className="rounded-full border border-(--stroke) bg-(--background) px-3 py-2 text-[11px] font-semibold text-(--foreground)"
-              disabled={recordPage >= recordPages || recordLoading}
-            >
-              Next
-            </button>
-          </div>
-        </section>
-      ) : null}
+      {/* Pagination Controls */}
+      {cards.length > 0 && recordPages > 1 && (
+        <div className="flex items-center justify-between text-xs text-(--paragraph)">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setRecordPage((prev) => Math.max(prev - 1, 1))}
+            disabled={recordPage <= 1 || recordLoading}
+          >
+            Previous
+          </Button>
+          <span>
+            Page {recordPage} of {recordPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              setRecordPage((prev) =>
+                Math.min(prev + 1, Math.max(recordPages, 1))
+              )
+            }
+            disabled={recordPage >= recordPages || recordLoading}
+          >
+            Next
+          </Button>
+        </div>
+      )}
 
       <CardViewModal
         open={viewOpen}

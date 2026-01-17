@@ -1,8 +1,12 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { googleAuthSchema } from "@/lib/validationSchemas";
+import { Button } from "@/shared/components/ui/Button";
+import { Card, CardContent } from "@/shared/components/ui/Card";
+import { Input } from "@/shared/components/ui/Input";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
 
@@ -91,10 +95,10 @@ export default function GoogleAuthPage() {
       setLoading(true);
       setErrorMessage("");
       try {
-      const response = await apiRequest<ApiResponse>({
-        path: API_ENDPOINTS.googleQrCode,
-        method: "GET",
-      });
+        const response = await apiRequest<ApiResponse>({
+          path: API_ENDPOINTS.googleQrCode,
+          method: "GET",
+        });
         if (!response.data) {
           setErrorMessage(response.msg || "Unable to load QR code.");
           return;
@@ -208,8 +212,8 @@ export default function GoogleAuthPage() {
 
   const qrImage = qrUrl
     ? `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(
-        qrUrl
-      )}`
+      qrUrl
+    )}`
     : "";
 
   return (
@@ -226,131 +230,114 @@ export default function GoogleAuthPage() {
         </p>
       </header>
 
-      <section className="rounded-3xl border border-(--stroke) bg-(--basic-cta) p-6">
-        <div className="flex flex-wrap gap-3">
-          {googleStatus === 2 ? (
-            <button
-              type="button"
-              className={`rounded-full px-4 py-2 text-xs font-semibold ${
-                mode === "bind"
-                  ? "bg-(--brand) text-(--background)"
-                  : "border border-(--stroke) bg-(--background) text-(--paragraph)"
-              }`}
-              onClick={() => setMode("bind")}
-            >
-              Bind
-            </button>
-          ) : null}
-          {googleStatus === 1 ? (
-            <>
-              <button
-                type="button"
-                className={`rounded-full px-4 py-2 text-xs font-semibold ${
-                  mode === "close"
-                    ? "bg-(--brand) text-(--background)"
-                    : "border border-(--stroke) bg-(--background) text-(--paragraph)"
-                }`}
-                onClick={() => setMode("close")}
+      <Card variant="glass">
+        <CardContent className="space-y-6 p-6">
+          <div className="flex flex-wrap gap-3">
+            {googleStatus === 2 ? (
+              <Button
+                size="sm"
+                onClick={() => setMode("bind")}
+                variant={mode === "bind" ? "default" : "outline"}
               >
-                Disable
-              </button>
-              <button
-                type="button"
-                className={`rounded-full px-4 py-2 text-xs font-semibold ${
-                  mode === "reset"
-                    ? "bg-(--brand) text-(--background)"
-                    : "border border-(--stroke) bg-(--background) text-(--paragraph)"
-                }`}
-                onClick={() => setMode("reset")}
+                Bind
+              </Button>
+            ) : null}
+            {googleStatus === 1 ? (
+              <>
+                <Button
+                  size="sm"
+                  onClick={() => setMode("close")}
+                  variant={mode === "close" ? "default" : "outline"}
+                >
+                  Disable
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setMode("reset")}
+                  variant={mode === "reset" ? "default" : "outline"}
+                >
+                  Reset
+                </Button>
+              </>
+            ) : null}
+            {googleStatus === 0 ? (
+              <Button
+                size="sm"
+                onClick={() => setMode("open")}
+                variant={mode === "open" ? "default" : "outline"}
               >
-                Reset
-              </button>
-            </>
-          ) : null}
-          {googleStatus === 0 ? (
-            <button
-              type="button"
-              className={`rounded-full px-4 py-2 text-xs font-semibold ${
-                mode === "open"
-                  ? "bg-(--brand) text-(--background)"
-                  : "border border-(--stroke) bg-(--background) text-(--paragraph)"
-              }`}
-              onClick={() => setMode("open")}
-            >
-              Enable
-            </button>
-          ) : null}
-        </div>
+                Enable
+              </Button>
+            ) : null}
+          </div>
 
-        {needsQr ? (
-          <div className="mt-6 grid gap-4 sm:grid-cols-[180px_1fr]">
-            <div className="flex items-center justify-center rounded-2xl border border-(--stroke) bg-(--background) p-4">
-              {qrImage ? (
-                <img src={qrImage} alt="Google Auth QR code" />
-              ) : (
-                <span className="text-xs text-(--paragraph)">QR not ready</span>
-              )}
+          {needsQr ? (
+            <div className="mt-6 grid gap-4 sm:grid-cols-[180px_1fr]">
+              <div className="flex items-center justify-center rounded-2xl border border-(--stroke) bg-(--background) p-4">
+                {qrImage ? (
+                  <img src={qrImage} alt="Google Auth QR code" />
+                ) : (
+                  <span className="text-xs text-(--paragraph)">QR not ready</span>
+                )}
+              </div>
+              <div className="space-y-2 text-sm text-(--paragraph)">
+                <div className="text-sm font-semibold text-(--double-foreground)">
+                  Secret key
+                </div>
+                <div className="rounded-xl border border-(--stroke) bg-(--background) px-3 py-2 text-xs text-(--foreground)">
+                  {secret || "—"}
+                </div>
+                <p className="text-xs text-(--paragraph)">
+                  Scan the QR in Google Authenticator or copy the secret.
+                </p>
+              </div>
             </div>
-            <div className="space-y-2 text-sm text-(--paragraph)">
-              <div className="text-sm font-semibold text-(--double-foreground)">
-                Secret key
+          ) : null}
+
+          <div className="mt-6 space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                Email code
+              </label>
+              <div className="flex items-center gap-3">
+                <Input
+                  placeholder="Enter code"
+                  value={emailCode}
+                  onChange={(event) => setEmailCode(event.target.value)}
+                />
+                <Button
+                  variant="outline"
+                  onClick={handleSendCode}
+                  className="min-w-[120px]"
+                  disabled={cooldown > 0 || loading}
+                >
+                  {cooldown > 0 ? `${cooldown}s` : "Send code"}
+                </Button>
               </div>
-              <div className="rounded-xl border border-(--stroke) bg-(--background) px-3 py-2 text-xs text-(--foreground)">
-                {secret || "—"}
-              </div>
-              <p className="text-xs text-(--paragraph)">
-                Scan the QR in Google Authenticator or copy the secret.
-              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-(--paragraph)">
+                Google code
+              </label>
+              <Input
+                placeholder="Enter Google code"
+                value={googleCode}
+                onChange={(event) => setGoogleCode(event.target.value)}
+              />
             </div>
           </div>
-        ) : null}
 
-        <div className="mt-6 space-y-4">
-          <label className="space-y-2 text-sm font-medium text-(--paragraph)">
-            Email code
-            <div className="flex items-center gap-3">
-              <input
-                className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
-                placeholder="Enter code"
-                value={emailCode}
-                onChange={(event) => setEmailCode(event.target.value)}
-              />
-              <button
-                type="button"
-                onClick={handleSendCode}
-                className="h-12 min-w-[120px] rounded-2xl border border-(--stroke) bg-(--background) px-4 text-xs font-semibold text-(--foreground)"
-                disabled={cooldown > 0 || loading}
-              >
-                {cooldown > 0 ? `${cooldown}s` : "Send code"}
-              </button>
-            </div>
-          </label>
-
-          <label className="space-y-2 text-sm font-medium text-(--paragraph)">
-            Google code
-            <input
-              className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground)"
-              placeholder="Enter Google code"
-              value={googleCode}
-              onChange={(event) => setGoogleCode(event.target.value)}
-            />
-          </label>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleSubmit}
-          className={`mt-6 h-12 w-full rounded-2xl text-sm font-semibold ${
-            emailCode && googleCode
-              ? "bg-(--brand) text-(--background)"
-              : "bg-(--stroke) text-(--placeholder)"
-          }`}
-          disabled={!emailCode || !googleCode || loading}
-        >
-          {loading ? "Saving..." : "Submit"}
-        </button>
-        {null}
-      </section>
+          <Button
+            onClick={handleSubmit}
+            className="w-full"
+            disabled={!emailCode || !googleCode || loading}
+            loading={loading}
+          >
+            Submit
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

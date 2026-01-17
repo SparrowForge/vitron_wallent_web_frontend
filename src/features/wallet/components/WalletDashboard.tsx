@@ -12,6 +12,9 @@ import {
   sendSvg,
   withdrawSvg,
 } from "@/shared/components/Svgs/Svg";
+import DataTable, { type DataTableColumn } from "@/shared/components/DataTable";
+import { Button } from "@/shared/components/ui/Button";
+import { Card, CardContent } from "@/shared/components/ui/Card";
 import Spinner from "@/shared/components/ui/Spinner";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -82,7 +85,7 @@ export default function WalletDashboard() {
       order: string;
       amount: string;
       date: string;
-      status: string;
+      status: React.ReactNode;
     }[]
   >([]);
   const [transactionPage, setTransactionPage] = useState(1);
@@ -173,12 +176,16 @@ export default function WalletDashboard() {
         const records = response.data.records ?? [];
         const mapped = records.map((record, index) => ({
           id: String((transactionPage - 1) * 10 + index + 1),
-          order: record.orderId ?? record.tradeId ?? "--",
+          order: maskOrder(record.orderId ?? record.tradeId ?? "--"),
           amount: record.amount
             ? `${record.amount} ${record.currency ?? "USD"}`
             : "--",
-          date: record.createTime ?? "--",
-          status: record.typeString ?? record.type ?? "--",
+          date: record.createTime?.split(" ")[0] ?? "--",
+          status: (
+            <span className="inline-flex items-center justify-center rounded-lg bg-(--brand) px-3 py-1 text-xs font-medium text-(--brand-10) shadow-lg shadow-(--brand)/20">
+              {record.typeString ?? record.type ?? "--"}
+            </span>
+          ),
         }));
         setTransactions(mapped);
         setTransactionPages(response.data.pages ?? 1);
@@ -198,6 +205,19 @@ export default function WalletDashboard() {
     void loadTransactions();
   }, [transactionPage]);
 
+  const walletColumns: DataTableColumn<{
+    id: string;
+    order: string;
+    amount: string;
+    date: string;
+    status: React.ReactNode;
+  }>[] = [
+      { key: "order", label: "Order No", className: "text-(--double-foreground)" },
+      { key: "status", label: "Type" },
+      { key: "amount", label: "Amount", className: "font-medium text-(--double-foreground)" },
+      { key: "date", label: "Date" },
+    ];
+
   if (!selectedWallet) {
     return (
       <div className="rounded-2xl border border-(--stroke) bg-(--basic-cta) p-6 text-sm text-(--paragraph)">
@@ -215,179 +235,115 @@ export default function WalletDashboard() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <section className="grid gap-4 sm:gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-2xl border border-(--stroke) bg-(--basic-cta) p-4 sm:p-6">
-          <div className="flex flex-wrap items-center gap-2 text-xs text-(--paragraph) sm:text-sm">
-            <span className="h-2 w-2 rounded-full bg-(--brand)" />
-            <label className="flex items-center gap-2">
-              <span>Wallet</span>
-              <select
-                value={selectedId ?? ""}
-                onChange={(event) => setSelectedId(Number(event.target.value))}
-                className=" cursor-pointer rounded-lg border border-(--stroke) bg-(--background) px-2 py-1 text-xs text-(--foreground) focus:outline-none sm:text-sm"
-              >
-                {wallets.map((wallet) => (
-                  <option key={wallet.id} value={wallet.id}>
-                    {wallet.currency} Wallet
-                  </option>
-                ))}
-              </select>
-            </label>
-            <span className="text-(--placeholder)">
-              {selectedWallet.currency}
-            </span>
-          </div>
-          <div className="mt-4 text-2xl font-semibold text-(--brand) sm:text-3xl">
-            {formatAmount(selectedWallet.amount, selectedWallet.currency)}
-          </div>
-          <div className="mt-2 text-xs text-(--paragraph)">
-            Available:{" "}
-            {formatAmount(selectedWallet.amount, selectedWallet.currency)} ·
-            Freeze:{" "}
-            {formatAmount(selectedWallet.frozenAmount, selectedWallet.currency)}
-          </div>
-        </div>
+      <section className="flex flex-col gap-6">
+        <Card variant="glass" className="relative overflow-hidden w-[85vw] md:w-auto">
+          <div className="absolute top-0 right-0 -mt-4 -mr-4 h-32 w-32 rounded-full bg-(--brand)/5 blur-3xl" />
+          <CardContent className="p-4 sm:p-6 lg:p-8">
+            <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
+              <div className="space-y-6">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-(--paragraph) sm:text-sm">
+                  <span className="h-2 w-2 rounded-full bg-(--brand) shadow-[0_0_8px_var(--brand)]" />
+                  <label className="flex items-center gap-2">
+                    <span>Wallet</span>
+                    <select
+                      value={selectedId ?? ""}
+                      onChange={(event) => setSelectedId(Number(event.target.value))}
+                      className="cursor-pointer rounded-lg border border-(--white)/10 bg-(--background)/50 px-2 py-1 text-xs text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--brand)/50 sm:text-sm"
+                    >
+                      {wallets.map((wallet) => (
+                        <option key={wallet.id} value={wallet.id} className="bg-(--basic-cta)">
+                          {wallet.currency} Wallet
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <span className="text-(--placeholder)">
+                    {selectedWallet.currency}
+                  </span>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold text-(--brand) sm:text-5xl tracking-tight">
+                    {formatAmount(selectedWallet.amount, selectedWallet.currency)}
+                  </div>
+                  <div className="mt-2 flex items-center gap-3 text-xs text-(--paragraph) sm:text-sm">
+                    <span className="flex items-center gap-1">
+                      Available: <span className="text-(--foreground)">{formatAmount(selectedWallet.amount, selectedWallet.currency)}</span>
+                    </span>
+                    <span className="h-3 w-px bg-(--white)/10" />
+                    <span className="flex items-center gap-1">
+                      Freeze: <span className="text-(--foreground)">{formatAmount(selectedWallet.frozenAmount, selectedWallet.currency)}</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-        <div className="rounded-2xl border border-(--stroke) bg-(--basic-cta) p-4 sm:p-6">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-            {actions.map((action) => (
-              <button
-                key={action.key}
-                type="button"
-                data-action={action.key}
-                data-wallet={selectedWallet.id}
-                onClick={() => {
-                  if (action.key === "deposit") {
-                    setDepositOpen(true);
-                  }
-                  if (action.key === "withdraw") {
-                    setWithdrawOpen(true);
-                  }
-                  if (action.key === "send") {
-                    setSendOpen(true);
-                  }
-                  if (action.key === "receive") {
-                    setReceiveOpen(true);
-                  }
-                }}
-                className="flex flex-col items-center gap-2 text-xs text-(--paragraph) transition hover:text-(--foreground) sm:gap-3 sm:text-sm"
-              >
-                <span className="grid h-10 w-10 place-items-center sm:h-11 sm:w-11">
-                  {action.icon}
-                </span>
-                {action.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="w-[85vw] md:w-auto rounded-2xl border border-(--stroke) bg-(--basic-cta) p-4 sm:p-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-(--foreground)">
-            Transaction History
-          </h2>
-          <button
-            type="button"
-            className="text-xs font-medium text-(--paragraph) hover:text-(--foreground)"
-          >
-            All
-          </button>
-        </div>
-
-        <div className="mt-4 w-full overflow-x-auto">
-          <table className="w-full text-left text-xs sm:text-sm">
-            <thead className="text-(--paragraph)">
-              <tr className="border-b border-(--stroke)">
-                <th className="px-3 py-3 sm:px-4">No</th>
-                <th className="px-3 py-3 sm:px-4">Order No</th>
-                <th className="hidden px-3 py-3 sm:table-cell sm:px-4">
-                  Amount
-                </th>
-                <th className="px-3 py-3 sm:px-4">Date</th>
-                <th className="px-3 py-3 sm:px-4">Type</th>
-              </tr>
-            </thead>
-            <tbody className="text-(--double-foreground)">
-              {transactions.length === 0 ? (
-                <tr className="border-b border-(--stroke)">
-                  <td
-                    colSpan={5}
-                    className="px-3 py-6 text-center text-(--paragraph) sm:px-4"
+              <div className="grid grid-cols-4 gap-3 sm:gap-4 md:flex md:items-center">
+                {actions.map((action) => (
+                  <Button
+                    key={action.key}
+                    variant="ghost"
+                    className="flex flex-col gap-2 h-auto py-3 px-2 sm:px-4 hover:bg-(--white)/5"
+                    onClick={() => {
+                      if (action.key === "deposit") setDepositOpen(true);
+                      if (action.key === "withdraw") setWithdrawOpen(true);
+                      if (action.key === "send") setSendOpen(true);
+                      if (action.key === "receive") setReceiveOpen(true);
+                    }}
                   >
-                    {transactionLoading ? (
-                      <span className="inline-flex items-center justify-center gap-2">
-                        <Spinner size={16} />
-                        Loading transactions...
-                      </span>
-                    ) : (
-                      transactionError || "No transactions available."
-                    )}
-                  </td>
-                </tr>
-              ) : (
-                transactions.map((row) => (
-                  <tr key={row.id} className="border-b border-(--stroke)">
-                    <td className="px-3 py-4 text-(--paragraph) sm:px-4">
-                      {row.id}
-                    </td>
-                    <td className="px-3 py-4 sm:px-4">
-                      <span
-                        className="block max-w-[140px] truncate sm:max-w-none"
-                        title={row.order}
-                      >
-                        {maskOrder(row.order)}
-                      </span>
-                    </td>
-                    <td className="hidden px-3 py-4 sm:table-cell sm:px-4">
-                      {row.amount}
-                    </td>
-                    <td className="px-3 py-4 sm:px-4">
-                      {row.date.split(" ")[0]}
-                    </td>
-                    <td className="px-3 py-4 sm:px-4">
-                      <span className="inline-flex items-center rounded-full bg-(--brand-10) px-3 py-1 text-[10px] text-(--brand) sm:text-xs">
-                        {row.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-(--paragraph)">
-          <span>
-            Page {transactionPage} of {transactionPages}
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="rounded-full border border-(--stroke) bg-(--basic-cta) px-3 py-1 text-(--double-foreground)"
-              onClick={() =>
-                setTransactionPage((prev) => Math.max(prev - 1, 1))
-              }
-              disabled={transactionPage <= 1 || transactionLoading}
-            >
-              Prev
-            </button>
-            <button
-              type="button"
-              className="rounded-full border border-(--stroke) bg-(--basic-cta) px-3 py-1 text-(--double-foreground)"
-              onClick={() =>
-                setTransactionPage((prev) =>
-                  Math.min(prev + 1, transactionPages)
-                )
-              }
-              disabled={
-                transactionPage >= transactionPages || transactionLoading
-              }
-            >
-              Next
-            </button>
-          </div>
-        </div>
+                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-(--brand)/10 text-(--brand) transition-transform group-hover:scale-110 sm:h-12 sm:w-12 sm:rounded-2xl">
+                      {action.icon}
+                    </span>
+                    <span className="text-[10px] font-medium text-(--paragraph) group-hover:text-(--foreground) sm:text-xs">
+                      {action.label}
+                    </span>
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </section>
+
+      <DataTable
+        title="Transaction History"
+        columns={walletColumns}
+        data={transactions}
+        emptyMessage={
+          transactionLoading ? (
+            <div className="flex items-center justify-center gap-2">
+              <Spinner size={16} /> Loading transactions...
+            </div>
+          ) : transactionError ? (
+            <span className="text-red-500">{transactionError}</span>
+          ) : (
+            "No transactions available."
+          )
+        }
+      />
+
+      <div className="flex items-center justify-between text-xs text-(--paragraph)">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setTransactionPage((prev) => Math.max(prev - 1, 1))}
+          disabled={transactionPage <= 1 || transactionLoading}
+        >
+          Previous
+        </Button>
+        <span>
+          Page {transactionPage} of {transactionPages}
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            setTransactionPage((prev) => Math.min(prev + 1, transactionPages))
+          }
+          disabled={transactionPage >= transactionPages || transactionLoading}
+        >
+          Next
+        </Button>
+      </div>
       <DepositModal
         open={depositOpen}
         walletName={selectedWallet.name ?? `${selectedWallet.currency} Wallet`}
@@ -410,6 +366,6 @@ export default function WalletDashboard() {
         onSuccess={loadWallets}
         onClose={() => setWithdrawOpen(false)}
       />
-    </div>
+    </div >
   );
 }

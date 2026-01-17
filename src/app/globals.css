@@ -28,14 +28,28 @@
   * {
     border-color: var(--stroke);
   }
+
   body {
-    background: var(--background);
+    background: radial-gradient(circle at 50% -20%, #182216 0%, var(--background) 80%);
     color: var(--foreground);
+    min-height: 100vh;
   }
+
   button {
     cursor: pointer;
   }
+
   button:disabled {
     cursor: not-allowed;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-(--basic-cta)/60 backdrop-blur-md border border-(--white)/5;
+  }
+
+  .glass-card {
+    @apply bg-(--basic-cta)/80 backdrop-blur-xl border border-(--stroke) shadow-xl;
   }
 }

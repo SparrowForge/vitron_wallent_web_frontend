@@ -1,8 +1,10 @@
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
-import Spinner from "@/shared/components/ui/Spinner";
-import PasswordInput from "@/shared/components/ui/PasswordInput";
+import { Button } from "@/shared/components/ui/Button";
+import { Input } from "@/shared/components/ui/Input";
 import ModalShell from "@/shared/components/ui/ModalShell";
+import PasswordInput from "@/shared/components/ui/PasswordInput";
+import Spinner from "@/shared/components/ui/Spinner";
 import { cardViewSchema } from "@/lib/validationSchemas";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
@@ -197,140 +199,130 @@ export default function CardViewModal({
       ariaLabel="Card view"
       className="max-w-md"
     >
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full border border-(--stroke) bg-(--background) px-3 py-2 text-xs font-semibold text-(--paragraph)"
-          >
-            Back
-          </button>
-          <div className="text-sm font-semibold text-(--foreground)">View</div>
-          <span className="text-xs text-(--paragraph)">{cardLabel}</span>
-        </div>
+      <div className="flex items-center justify-between">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onClose}
+          className="rounded-full"
+        >
+          Back
+        </Button>
+        <div className="text-sm font-semibold text-(--foreground)">View</div>
+        <span className="text-xs text-(--paragraph)">{cardLabel}</span>
+      </div>
 
-        <div className="mt-6 rounded-3xl border border-(--stroke) bg-(--background) p-6">
-          <div className="text-sm uppercase tracking-[0.3em] text-(--paragraph)">
-            Vtron
-          </div>
-          <div className="mt-8 grid grid-cols-4 gap-2 text-lg font-semibold text-(--foreground)">
-            {cardParts.map((part, index) => (
-              <span key={`card-part-${index}`}>{part}</span>
-            ))}
-          </div>
-          <div className="mt-4 text-xs text-(--paragraph)">VALID THRU</div>
-          <div className="text-sm text-(--double-foreground)">
-            {detail?.expireDate ?? "--/--"}
-          </div>
-          <div className="mt-4 text-xs text-(--paragraph)">CVV</div>
-          <div className="text-sm text-(--double-foreground)">
-            {detail?.cvv ?? "•••"}
-          </div>
-          <div className="mt-6 text-right text-sm font-semibold text-(--double-foreground)">
-            {(detail?.cardType ?? "VISA").toUpperCase()}
-          </div>
+      <div className="mt-6 rounded-3xl border border-(--stroke) bg-(--background) p-6">
+        <div className="text-sm uppercase tracking-[0.3em] text-(--paragraph)">
+          Vtron
         </div>
+        <div className="mt-8 grid grid-cols-4 gap-2 text-lg font-semibold text-(--foreground)">
+          {cardParts.map((part, index) => (
+            <span key={`card-part-${index}`}>{part}</span>
+          ))}
+        </div>
+        <div className="mt-4 text-xs text-(--paragraph)">VALID THRU</div>
+        <div className="text-sm text-(--double-foreground)">
+          {detail?.expireDate ?? "--/--"}
+        </div>
+        <div className="mt-4 text-xs text-(--paragraph)">CVV</div>
+        <div className="text-sm text-(--double-foreground)">
+          {detail?.cvv ?? "•••"}
+        </div>
+        <div className="mt-6 text-right text-sm font-semibold text-(--double-foreground)">
+          {(detail?.cardType ?? "VISA").toUpperCase()}
+        </div>
+      </div>
 
-        <div className="mt-6 space-y-3">
+      <div className="mt-6 space-y-3">
+        <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+          Payment password
+          <PasswordInput
+            className="h-12"
+            inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
+            placeholder="Enter payment password"
+            value={payPassword}
+            onChange={(event) => setPayPassword(event.target.value)}
+          />
+        </label>
+
+        {emailCheck ? (
           <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-            Payment password
-            <PasswordInput
-              className="h-12"
-              inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
-              placeholder="Enter payment password"
-              value={payPassword}
-              onChange={(event) => setPayPassword(event.target.value)}
+            Verification method
+            <div className="flex items-center gap-3 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  checked={verifyType === "email"}
+                  onChange={() => setVerifyType("email")}
+                />
+                Email
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  checked={verifyType === "google"}
+                  onChange={() => setVerifyType("google")}
+                />
+                Google
+              </label>
+            </div>
+          </label>
+        ) : null}
+
+        {emailCheck && verifyType === "email" ? (
+          <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+            Email code
+            <div className="flex items-center gap-3">
+              <Input
+                placeholder="Enter code"
+                value={verifyCode}
+                onChange={(event) => setVerifyCode(event.target.value)}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSendCode}
+                className="min-w-[120px]"
+                disabled={cooldown > 0 || loading}
+              >
+                {loading && cooldown === 0 ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Spinner size={14} />
+                    Sending...
+                  </span>
+                ) : cooldown > 0 ? (
+                  `${cooldown}s`
+                ) : (
+                  "Send code"
+                )}
+              </Button>
+            </div>
+          </label>
+        ) : null}
+
+        {emailCheck && verifyType === "google" ? (
+          <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+            Google code
+            <Input
+              placeholder="Enter Google code"
+              value={googleCode}
+              onChange={(event) => setGoogleCode(event.target.value)}
             />
           </label>
+        ) : null}
+      </div>
 
-          {emailCheck ? (
-            <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-              Verification method
-              <div className="flex items-center gap-3 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    checked={verifyType === "email"}
-                    onChange={() => setVerifyType("email")}
-                  />
-                  Email
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    checked={verifyType === "google"}
-                    onChange={() => setVerifyType("google")}
-                  />
-                  Google
-                </label>
-              </div>
-            </label>
-          ) : null}
-
-          {emailCheck && verifyType === "email" ? (
-            <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-              Email code
-              <div className="flex items-center gap-3">
-                <input
-                  className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
-                  placeholder="Enter code"
-                  value={verifyCode}
-                  onChange={(event) => setVerifyCode(event.target.value)}
-                />
-                <button
-                  type="button"
-                  onClick={handleSendCode}
-                  className="h-12 min-w-[120px] rounded-2xl border border-(--stroke) bg-(--background) px-4 text-xs font-semibold text-(--foreground)"
-                  disabled={cooldown > 0 || loading}
-                >
-                  {loading && cooldown === 0 ? (
-                    <span className="inline-flex items-center gap-2">
-                      <Spinner size={14} />
-                      Sending...
-                    </span>
-                  ) : cooldown > 0 ? (
-                    `${cooldown}s`
-                  ) : (
-                    "Send code"
-                  )}
-                </button>
-              </div>
-            </label>
-          ) : null}
-
-          {emailCheck && verifyType === "google" ? (
-            <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-              Google code
-              <input
-                className="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
-                placeholder="Enter Google code"
-                value={googleCode}
-                onChange={(event) => setGoogleCode(event.target.value)}
-              />
-            </label>
-          ) : null}
-        </div>
-
-        <button
-          type="button"
-          onClick={handleReveal}
-          className={`mt-6 h-12 w-full rounded-2xl text-sm font-semibold ${
-            canSubmit
-              ? "bg-(--brand) text-(--background)"
-              : "bg-(--stroke) text-(--placeholder)"
-          }`}
-          disabled={!canSubmit || loading}
-        >
-          {loading ? (
-            <span className="inline-flex items-center justify-center gap-2">
-              <Spinner size={16} className="border-(--background)" />
-              Loading...
-            </span>
-          ) : (
-            "Reveal card"
-          )}
-        </button>
-        {null}
+      <Button
+        type="button"
+        onClick={handleReveal}
+        className="mt-6 w-full"
+        disabled={!canSubmit || loading}
+        loading={loading}
+      >
+        Reveal card
+      </Button>
+      {null}
     </ModalShell>
   );
 }

@@ -5,8 +5,11 @@ import CardLogisticsModal from "@/features/cards/components/CardLogisticsModal";
 import CardPinModal from "@/features/cards/components/CardPinModal";
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import { Button } from "@/shared/components/ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/Card";
 import Spinner from "@/shared/components/ui/Spinner";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
+import { ChevronRight, CreditCard, Box, KeyRound, ShieldCheck } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 
@@ -82,91 +85,94 @@ export function CardSettingsPage() {
         </h1>
       </header>
 
-      <section className="rounded-2xl border border-(--stroke) bg-(--basic-cta) p-6">
-        <div className="flex items-center gap-4">
-          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-(--background) text-(--foreground)">
-            {cardLabel.slice(0, 2).toUpperCase()}
+      <Card variant="glass">
+        <CardContent className="flex items-center gap-6 p-6">
+          <div className="relative grid h-20 w-32 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-(--foreground) to-gray-600 shadow-lg">
+            <div className="text-xl font-bold italic text-(--background) opacity-80">
+              VISA
+            </div>
+            {/* Shine effect */}
+            <div className="absolute -inset-full animate-[shimmer_3s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12" />
           </div>
-          <div>
-            <div className="text-sm font-semibold text-(--foreground)">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold text-(--foreground)">
               {cardLabel}
+            </h2>
+            <div className="font-mono text-sm tracking-widest text-(--paragraph)">
+              {maskedNumber}
             </div>
-            <div className="text-xs text-(--paragraph)">{maskedNumber}</div>
-            {selectedCard?.status ? (
-              <div className="mt-1 text-[11px] text-(--paragraph)">
-                Status: {selectedCard.status}
-              </div>
-            ) : null}
+            {selectedCard?.status && (
+              <span className="inline-flex items-center rounded-full bg-(--brand)/10 px-2.5 py-0.5 text-xs font-medium text-(--brand)">
+                {selectedCard.status}
+              </span>
+            )}
           </div>
-        </div>
-        {loading ? (
-          <p className="mt-4 text-xs text-(--paragraph)">
-            <span className="inline-flex items-center gap-2">
-              <Spinner size={14} />
-              Loading card details...
-            </span>
-          </p>
-        ) : null}
-        {null}
-        {selectedCard && !isPhysical ? (
-          <p className="mt-4 text-xs text-(--paragraph)">
+        </CardContent>
+        {loading && (
+          <div className="border-t border-(--stroke) p-3 text-center text-xs text-(--paragraph)">
+            <Spinner size={14} className="inline mr-2" />
+            Loading card details...
+          </div>
+        )}
+        {selectedCard && !isPhysical && (
+          <div className="border-t border-(--stroke) bg-yellow-500/10 p-3 text-center text-xs text-yellow-500">
             Card settings are available only for physical cards.
-          </p>
-        ) : null}
-      </section>
-
-      <section className="space-y-3">
-        <button
-          type="button"
-          onClick={() => setActiveModal("pin")}
-          className="flex w-full items-center justify-between rounded-2xl border border-(--stroke) bg-(--basic-cta) px-5 py-4 text-left"
-          disabled={!selectedCard || !isPhysical}
-        >
-          <div>
-            <div className="text-sm font-semibold text-(--double-foreground)">
-              Set PIN
-            </div>
-            <div className="mt-1 text-xs text-(--paragraph)">
-              Create or update your card PIN.
-            </div>
           </div>
-          <span className="text-(--paragraph)">›</span>
-        </button>
+        )}
+      </Card>
 
-        <button
-          type="button"
-          onClick={() => setActiveModal("activate")}
-          className="flex w-full items-center justify-between rounded-2xl border border-(--stroke) bg-(--basic-cta) px-5 py-4 text-left"
-          disabled={!selectedCard || !isPhysical}
-        >
-          <div>
-            <div className="text-sm font-semibold text-(--double-foreground)">
-              Activate card
-            </div>
-            <div className="mt-1 text-xs text-(--paragraph)">
-              Enter activation code to enable the physical card.
-            </div>
-          </div>
-          <span className="text-(--paragraph)">›</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveModal("logistics")}
-          className="flex w-full items-center justify-between rounded-2xl border border-(--stroke) bg-(--basic-cta) px-5 py-4 text-left"
-          disabled={!selectedCard || !isPhysical}
-        >
-          <div>
-            <div className="text-sm font-semibold text-(--double-foreground)">
-              Logistics
-            </div>
-            <div className="mt-1 text-xs text-(--paragraph)">
-              Shipping and delivery status.
-            </div>
-          </div>
-          <span className="text-(--paragraph)">›</span>
-        </button>
-      </section>
+      <div className="space-y-4">
+        {[
+          {
+            key: "pin",
+            title: "Set PIN",
+            description: "Create or update your card PIN.",
+            icon: <KeyRound className="h-5 w-5" />,
+          },
+          {
+            key: "activate",
+            title: "Activate card",
+            description: "Enter activation code to enable the physical card.",
+            icon: <ShieldCheck className="h-5 w-5" />,
+          },
+          {
+            key: "logistics",
+            title: "Logistics",
+            description: "Shipping and delivery status.",
+            icon: <Box className="h-5 w-5" />,
+          },
+        ].map((item) => (
+          <Card
+            key={item.key}
+            variant="glass"
+            className={`transition-all duration-200 ${!selectedCard || !isPhysical
+                ? "opacity-50"
+                : "hover:bg-(--stroke)/10 cursor-pointer"
+              }`}
+            onClick={() =>
+              isPhysical &&
+              setActiveModal(item.key as "pin" | "activate" | "logistics")
+            }
+          >
+            <CardContent className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-4">
+                <div className="grid h-10 w-10 place-items-center rounded-full bg-(--background) text-(--foreground) ring-1 ring-(--stroke)">
+                  {item.icon}
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-(--foreground)">
+                    {item.title}
+                  </div>
+                  <div className="text-xs text-(--paragraph)">
+                    {item.description}
+                  </div>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-(--paragraph) opacity-50" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
       {selectedCard && isPhysical ? (
         <>

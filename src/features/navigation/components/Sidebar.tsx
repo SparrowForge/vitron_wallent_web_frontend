@@ -53,15 +53,13 @@ export default function Sidebar({
       <button
         type="button"
         onClick={onClose}
-        className={`fixed inset-0 z-30 bg-black/50 transition lg:hidden ${
-          isOpen ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
+        className={`fixed inset-0 z-30 bg-black/50 transition lg:hidden ${isOpen ? "opacity-100" : "pointer-events-none opacity-0"
+          }`}
         aria-label="Close sidebar overlay"
       />
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col bg-(--background) text-(--foreground) transition-transform lg:static lg:translate-x-0 ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        } ${isCollapsed ? "lg:w-20" : "lg:w-72"}`}
+        className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col glass border-r border-(--white)/5 transition-transform duration-300 lg:static lg:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"
+          } ${isCollapsed ? "lg:w-20" : "lg:w-72"}`}
       >
         <div className="flex h-16 items-center justify-between gap-3 px-6 lg:justify-start">
           <div className="flex items-center gap-3 mt-6">
@@ -69,9 +67,8 @@ export default function Sidebar({
               <span className="text-lg font-semibold">V</span>
             </div>
             <div
-              className={`text-base font-semibold tracking-tight ${
-                isCollapsed ? "lg:hidden" : ""
-              }`}
+              className={`text-base font-semibold tracking-tight ${isCollapsed ? "lg:hidden" : ""
+                }`}
             >
               Vtron <span className="text-(--paragraph)">Card</span>
             </div>
@@ -94,20 +91,24 @@ export default function Sidebar({
                 key={item.label}
                 href={item.href}
                 onClick={onClose}
-                className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                  active
-                    ? "bg-(--basic-cta) text-(--foreground)"
-                    : "text-(--paragraph) hover:bg-(--stroke-high) hover:text-(--foreground)"
-                }`}
-              >
-                <span
-                  className={`grid h-8 w-8 place-items-center rounded-lg border border-(--stroke) ${
-                    active
-                      ? "bg-(--brand-10) text-(--brand)"
-                      : "bg-(--basic-cta) text-(--icon-color) group-hover:text-(--double-foreground)"
+                className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300 hover:pl-4 ${active
+                    ? "text-(--foreground)"
+                    : "text-(--paragraph) hover:text-(--foreground)"
                   }`}
+              >
+                {active && (
+                  <div className="absolute inset-0 rounded-xl bg-(--brand)/5" />
+                )}
+                {active && (
+                  <div className="absolute left-0 h-8 w-1 rounded-r-full bg-(--brand) shadow-[0_0_12px_var(--brand)]" />
+                )}
+                <span
+                  className={`grid h-9 w-9 place-items-center rounded-lg transition-all duration-300 ${active
+                      ? "bg-(--brand)/20 text-(--brand)"
+                      : "bg-(--white)/5 text-(--icon-color) group-hover:bg-(--white)/10 group-hover:text-(--foreground)"
+                    }`}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className="h-4.5 w-4.5" />
                 </span>
                 <span className={isCollapsed ? "lg:hidden" : ""}>
                   {item.label}
