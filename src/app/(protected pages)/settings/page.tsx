@@ -20,12 +20,7 @@ export default function SettingsPage() {
       action: "Edit",
       href: "/settings/modify-email",
     },
-    {
-      title: "Passkey",
-      action: "Manage",
-      href: "/settings/passkey",
-      hidden: true,
-    },
+
     {
       title: "Google authentication",
       action: "Open",
@@ -105,8 +100,8 @@ export default function SettingsPage() {
                     <div className="flex items-center gap-3">
                       <span
                         className={`text-xs font-medium ${item.accent
-                            ? "rounded-full bg-(--brand)/10 px-2 py-1 text-(--brand)"
-                            : "text-(--paragraph)"
+                          ? "rounded-full bg-(--brand)/10 px-2 py-1 text-(--brand)"
+                          : "text-(--paragraph)"
                           }`}
                       >
                         {item.action}

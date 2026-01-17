@@ -53,11 +53,5 @@ export const API_ENDPOINTS = {
   googleIsSecret: "/merchant-server/google/isGoogleSecret",
   googleQrCode: "/merchant-server/google/getQrcode",
   googleVerifySave: "/merchant-server/googleVerify/save",
-  passkeyList: "/merchant-server/passkey/list",
-  passkeyRename: "/merchant-server/passkey/rename",
-  passkeyDelete: "/merchant-server/passkey/delete",
-  passkeyRegisterStart: "/merchant-server/passkey/register/start",
-  passkeyRegisterFinish: "/merchant-server/passkey/register/finish",
-  passkeyCheck: "/merchant-server/login/check/passkey",
-  passkeyLoginStart: "/merchant-server/login/passkey/start",
+
 };
