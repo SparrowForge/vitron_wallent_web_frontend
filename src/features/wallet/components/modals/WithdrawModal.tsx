@@ -308,7 +308,10 @@ export default function WithdrawModal({
         <span className="text-xs text-(--paragraph)">{walletName}</span>
       </div>
 
-      <div className="mt-6 space-y-4">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="mt-6 space-y-4"
+      >
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Currency
           <div className="rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
@@ -367,111 +370,110 @@ export default function WithdrawModal({
             Available: {safeAvailable.toFixed(2)} USD
           </div>
         </label>
-      </div>
 
-      <div className="mt-6 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-xs text-(--paragraph)">
-        <div className="flex items-center justify-between">
-          <span>Fee</span>
-          <span className="text-(--double-foreground)">
-            {feeValue.toFixed(2)} USD
-          </span>
-        </div>
-        <div className="mt-2 flex items-center justify-between">
-          <span>Received amount</span>
-          <span className="text-(--double-foreground)">
-            {estimateValue.toFixed(2)} USDT
-          </span>
-        </div>
-      </div>
-
-      <div className="mt-4 space-y-3">
-        <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-          Payment password
-          <Controller
-            control={control}
-            name="payPassword"
-            render={({ field }) => (
-              <PasswordInput
-                className="h-12"
-                inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
-                placeholder="Enter payment password"
-                value={field.value}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
-              />
-            )}
-          />
-          {errors.payPassword ? (
-            <p className="text-[11px] text-red-500">
-              {errors.payPassword.message}
-            </p>
-          ) : null}
-        </label>
-
-        <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-          Verification method
-          <div className="flex items-center gap-3 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
-            <label className="flex items-center gap-2">
-              <input type="radio" value="email" {...register("verifyType")} />
-              Email
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="radio" value="google" {...register("verifyType")} />
-              Google
-            </label>
+        <div className="mt-6 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-xs text-(--paragraph)">
+          <div className="flex items-center justify-between">
+            <span>Fee</span>
+            <span className="text-(--double-foreground)">
+              {feeValue.toFixed(2)} USD
+            </span>
           </div>
-        </label>
+          <div className="mt-2 flex items-center justify-between">
+            <span>Received amount</span>
+            <span className="text-(--double-foreground)">
+              {estimateValue.toFixed(2)} USDT
+            </span>
+          </div>
+        </div>
 
-        {verifyType === "email" ? (
+        <div className="mt-4 space-y-3">
           <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-            Email code
-            <div className="flex items-center gap-3">
-              <Input
-                placeholder="Enter code"
-                {...register("verifyCode")}
-                error={errors.verifyCode?.message}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleSendCode}
-                className="min-w-[120px]"
-                disabled={cooldown > 0 || loading}
-              >
-                {loading && cooldown === 0 ? (
-                  <span className="inline-flex items-center gap-2">
-                    <Spinner size={14} />
-                    Sending...
-                  </span>
-                ) : cooldown > 0 ? (
-                  `${cooldown}s`
-                ) : (
-                  "Send code"
-                )}
-              </Button>
+            Payment password
+            <Controller
+              control={control}
+              name="payPassword"
+              render={({ field }) => (
+                <PasswordInput
+                  className="h-12"
+                  inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
+                  placeholder="Enter payment password"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                />
+              )}
+            />
+            {errors.payPassword ? (
+              <p className="text-[11px] text-red-500">
+                {errors.payPassword.message}
+              </p>
+            ) : null}
+          </label>
+
+          <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+            Verification method
+            <div className="flex items-center gap-3 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
+              <label className="flex items-center gap-2">
+                <input type="radio" value="email" {...register("verifyType")} />
+                Email
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="radio" value="google" {...register("verifyType")} />
+                Google
+              </label>
             </div>
           </label>
-        ) : (
-          <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-            Google code
-            <Input
-              placeholder="Enter Google code"
-              {...register("googleCode")}
-              error={errors.googleCode?.message}
-            />
-          </label>
-        )}
-      </div>
 
-      <Button
-        type="button"
-        onClick={handleSubmit(onSubmit)}
-        className="mt-6 w-full"
-        disabled={!canSubmit || loading}
-        loading={loading}
-      >
-        Withdrawal
-      </Button>
+          {verifyType === "email" ? (
+            <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+              Email code
+              <div className="flex items-center gap-3">
+                <Input
+                  placeholder="Enter code"
+                  {...register("verifyCode")}
+                  error={errors.verifyCode?.message}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSendCode}
+                  className="min-w-[120px]"
+                  disabled={cooldown > 0 || loading}
+                >
+                  {loading && cooldown === 0 ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Spinner size={14} />
+                      Sending...
+                    </span>
+                  ) : cooldown > 0 ? (
+                    `${cooldown}s`
+                  ) : (
+                    "Send code"
+                  )}
+                </Button>
+              </div>
+            </label>
+          ) : (
+            <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+              Google code
+              <Input
+                placeholder="Enter Google code"
+                {...register("googleCode")}
+                error={errors.googleCode?.message}
+              />
+            </label>
+          )}
+
+        </div>
+        <Button
+          type="submit"
+          className="w-full mt-4"
+          disabled={!canSubmit || loading}
+          loading={loading}
+        >
+          Withdrawal
+        </Button>
+      </form>
       {null}
     </ModalShell>
   );

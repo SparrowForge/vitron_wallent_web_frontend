@@ -169,28 +169,8 @@ export default function CardsDashboard() {
   };
 
   const refreshCards = async () => {
-    setErrorMessage("");
-    try {
-      const response = await apiRequest<CardListResponse>({
-        path: API_ENDPOINTS.cardList,
-        method: "POST",
-        body: JSON.stringify({}),
-      });
-      if (!Array.isArray(response.data)) {
-        throw new Error(response.msg || "Unable to load cards.");
-      }
-      setCards(response.data);
-      const nextSelected =
-        response.data.find((card) => getCardId(card) === selectedId) ??
-        response.data[0] ??
-        null;
-      setSelectedId(nextSelected ? getCardId(nextSelected) : "");
-      await refreshBalances(response.data);
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "Unable to load cards."
-      );
-    }
+    // Force a full browser reload to get updated data from server
+    window.location.reload();
   };
 
   useEffect(() => {
@@ -494,7 +474,7 @@ export default function CardsDashboard() {
 
       {cards.length > 0 && (
         <DataTable
-          title={`Transaction history (${recordTotal} records)`}
+          title={`Transaction history`}
           columns={transactionsColumns}
           data={formattedRecords}
           emptyMessage={

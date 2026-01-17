@@ -41,6 +41,12 @@ export default function TransactionPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{
+    payPassword?: string;
+    confirmPassword?: string;
+    emailCode?: string;
+    googleCode?: string;
+  }>({});
 
   useToastMessages({ errorMessage, infoMessage });
   const [isPayPasswordSet, setIsPayPasswordSet] = useState(false);
@@ -94,9 +100,15 @@ export default function TransactionPasswordPage() {
     });
     if (!validation.success) {
       const issue = validation.error.issues[0];
+      const fieldName = issue.path[0] as keyof typeof fieldErrors;
+      setFieldErrors((prev) => ({
+        ...prev,
+        [fieldName]: issue.message,
+      }));
       setErrorMessage(issue?.message ?? "Please complete the required fields.");
       return false;
     }
+    setFieldErrors({});
     return true;
   };
 
@@ -176,7 +188,13 @@ export default function TransactionPasswordPage() {
 
       <Card variant="glass">
         <CardContent className="space-y-6 p-6">
-          <div className="space-y-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit();
+            }}
+            className="space-y-4"
+          >
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
                 Transaction password (6 digits)
@@ -186,7 +204,14 @@ export default function TransactionPasswordPage() {
                 pattern="\d*"
                 maxLength={6}
                 value={payPassword}
-                onChange={(event) => setPayPassword(event.target.value)}
+                onChange={(event) => {
+                  setPayPassword(event.target.value);
+                  if (fieldErrors.payPassword) {
+                    setFieldErrors((prev) => ({ ...prev, payPassword: "" }));
+                  }
+                }}
+                placeholder="6-digit password"
+                error={fieldErrors.payPassword}
               />
             </div>
 
@@ -199,7 +224,14 @@ export default function TransactionPasswordPage() {
                 pattern="\d*"
                 maxLength={6}
                 value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
+                onChange={(event) => {
+                  setConfirmPassword(event.target.value);
+                  if (fieldErrors.confirmPassword) {
+                    setFieldErrors((prev) => ({ ...prev, confirmPassword: "" }));
+                  }
+                }}
+                placeholder="Confirm password"
+                error={fieldErrors.confirmPassword}
               />
             </div>
 
@@ -241,9 +273,16 @@ export default function TransactionPasswordPage() {
                 <div className="flex items-center gap-3">
                   <Input
                     value={emailCode}
-                    onChange={(event) => setEmailCode(event.target.value)}
+                    onChange={(event) => {
+                      setEmailCode(event.target.value);
+                      if (fieldErrors.emailCode) {
+                        setFieldErrors((prev) => ({ ...prev, emailCode: "" }));
+                      }
+                    }}
+                    error={fieldErrors.emailCode}
                   />
                   <Button
+                    type="button"
                     variant="outline"
                     onClick={handleSendCode}
                     className="min-w-[120px]"
@@ -262,20 +301,26 @@ export default function TransactionPasswordPage() {
                 </label>
                 <Input
                   value={googleCode}
-                  onChange={(event) => setGoogleCode(event.target.value)}
+                  onChange={(event) => {
+                    setGoogleCode(event.target.value);
+                    if (fieldErrors.googleCode) {
+                      setFieldErrors((prev) => ({ ...prev, googleCode: "" }));
+                    }
+                  }}
+                  error={fieldErrors.googleCode}
                 />
               </div>
             ) : null}
-          </div>
 
-          <Button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="w-full"
-            loading={loading}
-          >
-            Save
-          </Button>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading}
+              loading={loading}
+            >
+              Update transaction password
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </div>

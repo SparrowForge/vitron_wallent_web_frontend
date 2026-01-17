@@ -101,11 +101,6 @@ export function CardSettingsPage() {
             <div className="font-mono text-sm tracking-widest text-(--paragraph)">
               {maskedNumber}
             </div>
-            {selectedCard?.status && (
-              <span className="inline-flex items-center rounded-full bg-(--brand)/10 px-2.5 py-0.5 text-xs font-medium text-(--brand)">
-                {selectedCard.status}
-              </span>
-            )}
           </div>
         </CardContent>
         {loading && (
@@ -146,8 +141,8 @@ export function CardSettingsPage() {
             key={item.key}
             variant="glass"
             className={`transition-all duration-200 ${!selectedCard || !isPhysical
-                ? "opacity-50"
-                : "hover:bg-(--stroke)/10 cursor-pointer"
+              ? "opacity-50"
+              : "hover:bg-(--stroke)/10 cursor-pointer"
               }`}
             onClick={() =>
               isPhysical &&
@@ -173,7 +168,6 @@ export function CardSettingsPage() {
           </Card>
         ))}
       </div>
-
       {selectedCard && isPhysical ? (
         <>
           <CardPinModal

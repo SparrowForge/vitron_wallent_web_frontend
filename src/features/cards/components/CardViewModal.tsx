@@ -234,7 +234,13 @@ export default function CardViewModal({
         </div>
       </div>
 
-      <div className="mt-6 space-y-3">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleReveal();
+        }}
+        className="mt-6 space-y-3"
+      >
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Payment password
           <PasswordInput
@@ -283,7 +289,7 @@ export default function CardViewModal({
                 type="button"
                 variant="outline"
                 onClick={handleSendCode}
-                className="min-w-[120px]"
+                className="text-xs font-semibold"
                 disabled={cooldown > 0 || loading}
               >
                 {loading && cooldown === 0 ? (
@@ -311,17 +317,16 @@ export default function CardViewModal({
             />
           </label>
         ) : null}
-      </div>
 
-      <Button
-        type="button"
-        onClick={handleReveal}
-        className="mt-6 w-full"
-        disabled={!canSubmit || loading}
-        loading={loading}
-      >
-        Reveal card
-      </Button>
+        <Button
+          type="submit"
+          className="w-full mt-4"
+          disabled={!canSubmit || loading}
+          loading={loading}
+        >
+          Reveal card
+        </Button>
+      </form>
       {null}
     </ModalShell>
   );

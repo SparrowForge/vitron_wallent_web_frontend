@@ -310,7 +310,13 @@ export default function SendModal({
         <span className="text-xs text-(--paragraph)">{walletName}</span>
       </div>
 
-      <div className="mt-6 space-y-4">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleTransfer();
+        }}
+        className="mt-6 space-y-4"
+      >
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Receive account
           <Input
@@ -392,7 +398,7 @@ export default function SendModal({
             </span>
           </div>
         </label>
-      </div>
+      </form>
 
       <div className="mt-6 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-xs text-(--paragraph)">
         <div className="flex items-center justify-between">
@@ -409,7 +415,13 @@ export default function SendModal({
         </div>
       </div>
 
-      <div className="mt-4 space-y-3">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleTransfer();
+        }}
+        className="mt-4 space-y-3"
+      >
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Payment password
           <PasswordInput
@@ -514,17 +526,15 @@ export default function SendModal({
             />
           </label>
         )}
-      </div>
-
-      <Button
-        type="button"
-        onClick={handleTransfer}
-        className="mt-6 w-full"
-        disabled={!canSubmit || loading}
-        loading={loading}
-      >
-        Transfer
-      </Button>
+        <Button
+          type="submit"
+          className="w-full mt-4"
+          disabled={!canSubmit || loading}
+          loading={loading}
+        >
+          Transfer
+        </Button>
+      </form>
       {null}
     </ModalShell>
   );

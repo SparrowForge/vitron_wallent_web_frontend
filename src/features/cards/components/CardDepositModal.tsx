@@ -316,7 +316,13 @@ export default function CardDepositModal({
         </div>
       </div>
 
-      <div className="mt-4 space-y-3">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleRecharge();
+        }}
+        className="mt-4 space-y-3"
+      >
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Payment password
           <PasswordInput
@@ -393,17 +399,16 @@ export default function CardDepositModal({
             />
           </label>
         ) : null}
-      </div>
 
-      <Button
-        type="button"
-        onClick={handleRecharge}
-        className="mt-6 w-full"
-        disabled={!canSubmit || loading}
-        loading={loading}
-      >
-        Recharge
-      </Button>
+        <Button
+          type="submit"
+          className="w-full mt-4"
+          disabled={!canSubmit || loading}
+          loading={loading}
+        >
+          Recharge
+        </Button>
+      </form>
       {null}
     </ModalShell>
   );

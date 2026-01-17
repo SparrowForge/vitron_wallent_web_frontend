@@ -203,7 +203,13 @@ export default function LoginPasswordPage() {
 
       <Card variant="glass">
         <CardContent className="space-y-6 p-6">
-          <div className="space-y-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit();
+            }}
+            className="space-y-4"
+          >
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
                 New password
@@ -276,21 +282,41 @@ export default function LoginPasswordPage() {
 
             {verifyType === "email" ? (
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
+                {/* <div className="flex items-center justify-between">
                   <label className="text-sm font-medium text-(--paragraph)">
                     Email code
                   </label>
                   <Button
-                    variant="link"
-                    size="sm"
+                    variant="outline"
                     onClick={handleSendCode}
-                    className="h-auto p-0 text-xs font-semibold text-(--brand)"
+                    className="min-w-[120px]"
                     disabled={cooldown > 0 || loading}
                   >
                     {cooldown > 0 ? `${cooldown}s` : "Send code"}
                   </Button>
+                </div> */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-(--paragraph)">
+                    Email code
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      placeholder="Enter code"
+                      value={emailCode}
+                      onChange={(event) => setEmailCode(event.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleSendCode}
+                      className="min-w-[120px]"
+                      disabled={cooldown > 0 || loading}
+                    >
+                      {cooldown > 0 ? `${cooldown}s` : "Send code"}
+                    </Button>
+                  </div>
                 </div>
-                <Input
+                {/* <Input
                   placeholder="Enter code"
                   value={emailCode}
                   onChange={(event) => {
@@ -302,7 +328,7 @@ export default function LoginPasswordPage() {
                 />
                 {fieldErrors.emailCode ? (
                   <p className="text-xs text-red-500">{fieldErrors.emailCode}</p>
-                ) : null}
+                ) : null} */}
               </div>
             ) : null}
 
@@ -326,16 +352,16 @@ export default function LoginPasswordPage() {
                 ) : null}
               </div>
             ) : null}
-          </div>
 
-          <Button
-            onClick={handleSubmit}
-            className="w-full"
-            disabled={!canSubmit || loading}
-            loading={loading}
-          >
-            Update password
-          </Button>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={!canSubmit || loading}
+              loading={loading}
+            >
+              Update password
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </div>

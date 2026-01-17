@@ -210,7 +210,13 @@ export default function ModifyEmailPage() {
 
       <Card variant="glass">
         <CardContent className="space-y-6 p-6">
-          <div className="space-y-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit();
+            }}
+            className="space-y-4"
+          >
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
                 New email
@@ -333,16 +339,16 @@ export default function ModifyEmailPage() {
                 />
               </div>
             ) : null}
-          </div>
 
-          <Button
-            onClick={handleSubmit}
-            className="w-full"
-            disabled={!canSubmit || loading}
-            loading={loading}
-          >
-            Update email
-          </Button>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={!canSubmit || loading}
+              loading={loading}
+            >
+              Update email
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </div>

@@ -575,73 +575,82 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
                   </div>
                 </div>
               )}
-              <PasswordInput
-                value={payPassword}
-                onChange={(event) => setPayPassword(event.target.value)}
-                placeholder="Transaction password"
-                disabled={!kycOk || !payPasswordOk}
-              />
-              {emailCheck ? (
-                <>
-                  <div className="mt-3 flex items-center justify-between">
-                    <Button
-                      variant="link"
-                      size="sm"
-                      onClick={() =>
-                        setVerifyType(verifyType === "email" ? "google" : "email")
-                      }
-                      className="h-auto p-0 text-xs font-semibold text-(--brand)"
-                    >
-                      Switch to {verifyType === "email" ? "Google" : "Email"}
-                    </Button>
-                    {verifyType === "email" ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleSendCode}
-                        className="text-xs font-semibold"
-                        disabled={cooldown > 0 || loading}
-                      >
-                        {loading && cooldown === 0 ? (
-                          <span className="inline-flex items-center gap-2">
-                            <Spinner size={12} />
-                            Sending...
-                          </span>
-                        ) : cooldown > 0 ? (
-                          `${cooldown}s`
-                        ) : (
-                          "Send code"
-                        )}
-                      </Button>
-                    ) : null}
-                  </div>
-                  {verifyType === "email" ? (
-                    <Input
-                      value={verifyCode}
-                      onChange={(event) => setVerifyCode(event.target.value)}
-                      placeholder="Email code"
-                      className="mt-3"
-                      disabled={!kycOk || !payPasswordOk}
-                    />
-                  ) : (
-                    <Input
-                      value={googleCode}
-                      onChange={(event) => setGoogleCode(event.target.value)}
-                      placeholder="Google code"
-                      className="mt-3"
-                      disabled={!kycOk || !payPasswordOk}
-                    />
-                  )}
-                </>
-              ) : null}
-              <Button
-                onClick={handleApply}
-                disabled={!canSubmit || loading}
-                loading={loading}
-                className="mt-4 w-full"
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleApply();
+                }}
+                className="space-y-3"
               >
-                Apply card
-              </Button>
+                <PasswordInput
+                  value={payPassword}
+                  onChange={(event) => setPayPassword(event.target.value)}
+                  placeholder="Transaction password"
+                  disabled={!kycOk || !payPasswordOk}
+                />
+                {emailCheck ? (
+                  <>
+                    <div className="mt-3 flex items-center justify-between">
+                      <Button
+                        variant="link"
+                        size="sm"
+                        onClick={() =>
+                          setVerifyType(verifyType === "email" ? "google" : "email")
+                        }
+                        className="h-auto p-0 text-xs font-semibold text-(--brand)"
+                      >
+                        Switch to {verifyType === "email" ? "Google" : "Email"}
+                      </Button>
+                      {verifyType === "email" ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleSendCode}
+                          className="text-xs font-semibold"
+                          disabled={cooldown > 0 || loading}
+                        >
+                          {loading && cooldown === 0 ? (
+                            <span className="inline-flex items-center gap-2">
+                              <Spinner size={12} />
+                              Sending...
+                            </span>
+                          ) : cooldown > 0 ? (
+                            `${cooldown}s`
+                          ) : (
+                            "Send code"
+                          )}
+                        </Button>
+                      ) : null}
+                    </div>
+                    {verifyType === "email" ? (
+                      <Input
+                        value={verifyCode}
+                        onChange={(event) => setVerifyCode(event.target.value)}
+                        placeholder="Email code"
+                        className="mt-3"
+                        disabled={!kycOk || !payPasswordOk}
+                      />
+                    ) : (
+                      <Input
+                        value={googleCode}
+                        onChange={(event) => setGoogleCode(event.target.value)}
+                        placeholder="Google code"
+                        className="mt-3"
+                        disabled={!kycOk || !payPasswordOk}
+                      />
+                    )}
+                  </>
+                ) : null}
+                <Button
+                  type="submit"
+                  disabled={!canSubmit || loading}
+                  loading={loading}
+                  className="mt-4 w-full"
+                >
+                  Apply card
+                </Button>
+              </form>
             </CardContent>
           </Card>
         </section>

@@ -92,8 +92,8 @@ export default function Sidebar({
                 href={item.href}
                 onClick={onClose}
                 className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300 hover:pl-4 ${active
-                    ? "text-(--foreground)"
-                    : "text-(--paragraph) hover:text-(--foreground)"
+                  ? "text-(--foreground)"
+                  : "text-(--paragraph) hover:text-(--foreground)"
                   }`}
               >
                 {active && (
@@ -104,8 +104,8 @@ export default function Sidebar({
                 )}
                 <span
                   className={`grid h-9 w-9 place-items-center rounded-lg transition-all duration-300 ${active
-                      ? "bg-(--brand)/20 text-(--brand)"
-                      : "bg-(--white)/5 text-(--icon-color) group-hover:bg-(--white)/10 group-hover:text-(--foreground)"
+                    ? "bg-(--brand)/20 text-(--brand)"
+                    : "bg-(--white)/5 text-(--icon-color) group-hover:bg-(--white)/10 group-hover:text-(--foreground)"
                     }`}
                 >
                   <Icon className="h-4.5 w-4.5" />
@@ -127,23 +127,24 @@ export default function Sidebar({
             </span>
             <span className={isCollapsed ? "lg:hidden" : ""}>Logout</span>
           </div>
+          <div className="mt-2">
+            <button
+              type="button"
+              onClick={onToggleCollapse}
+              className="mt-4 hidden w-full items-center justify-center gap-2 rounded-lg border border-(--stroke) bg-(--basic-cta) px-3 py-2 text-xs font-medium text-(--paragraph) transition hover:text-(--foreground) lg:flex"
+            >
+              {isCollapsed ? (
+                <PanelLeftOpen className="h-4 w-4" />
+              ) : (
+                <PanelLeftClose className="h-4 w-4" />
+              )}
+              <span className={isCollapsed ? "lg:hidden" : ""}>
+                {isCollapsed ? "Expand" : "Collapse"}
+              </span>
+            </button>
+          </div>
         </nav>
-        <div className="mt-auto px-3 pb-6">
-          <button
-            type="button"
-            onClick={onToggleCollapse}
-            className="mt-4 hidden w-full items-center justify-center gap-2 rounded-lg border border-(--stroke) bg-(--basic-cta) px-3 py-2 text-xs font-medium text-(--paragraph) transition hover:text-(--foreground) lg:flex"
-          >
-            {isCollapsed ? (
-              <PanelLeftOpen className="h-4 w-4" />
-            ) : (
-              <PanelLeftClose className="h-4 w-4" />
-            )}
-            <span className={isCollapsed ? "lg:hidden" : ""}>
-              {isCollapsed ? "Expand" : "Collapse"}
-            </span>
-          </button>
-        </div>
+
       </aside>
     </>
   );

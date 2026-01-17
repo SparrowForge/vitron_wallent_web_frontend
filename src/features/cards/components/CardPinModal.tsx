@@ -195,7 +195,13 @@ export default function CardPinModal({
         <span className="text-xs text-(--paragraph)">{maskedNumber}</span>
       </div>
 
-      <div className="mt-6 space-y-4">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit();
+        }}
+        className="mt-6 space-y-4"
+      >
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           New PIN
           <PasswordInput
@@ -226,9 +232,7 @@ export default function CardPinModal({
         {pin && !isSixDigitPin(pin) ? (
           <p className="text-xs text-red-500">PIN must be 6 digits.</p>
         ) : null}
-      </div>
 
-      <div className="mt-4 space-y-3">
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Payment password
           <PasswordInput
@@ -304,18 +308,17 @@ export default function CardPinModal({
             )}
           </>
         ) : null}
-      </div>
 
-      <Button
-        type="button"
-        onClick={handleSubmit}
-        className="mt-6 w-full"
-        disabled={!canSubmit || loading}
-        loading={loading}
-      >
-        Save PIN
-      </Button>
+        <Button
+          type="submit"
+          className="w-full mt-4"
+          disabled={!canSubmit || loading}
+          loading={loading}
+        >
+          Save PIN
+        </Button>
+      </form>
       {null}
-    </ModalShell>
+    </ModalShell >
   );
 }

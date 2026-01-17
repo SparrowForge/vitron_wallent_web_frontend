@@ -239,7 +239,13 @@ export default function CardActivateModal({
         <span className="text-xs text-(--paragraph)">{maskedNumber}</span>
       </div>
 
-      <div className="mt-6 space-y-4">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleActivate();
+        }}
+        className="mt-6 space-y-4"
+      >
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Activation code
           <div className="flex items-center gap-3">
@@ -269,105 +275,104 @@ export default function CardActivateModal({
             onChange={(event) => setPayPassword(event.target.value)}
           />
         </label>
-      </div>
 
-      {emailCheck ? (
-        <div className="mt-4 space-y-3">
-          <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-            Verification purpose
-            <div className="flex items-center gap-3 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  checked={verificationPurpose === "activate"}
-                  onChange={() => setVerificationPurpose("activate")}
-                />
-                Activate
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  checked={verificationPurpose === "getCode"}
-                  onChange={() => setVerificationPurpose("getCode")}
-                />
-                Get code
-              </label>
-            </div>
-          </label>
-          <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-            Verification method
-            <div className="flex items-center gap-3 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  checked={verifyType === "email"}
-                  onChange={() => setVerifyType("email")}
-                />
-                Email
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  checked={verifyType === "google"}
-                  onChange={() => setVerifyType("google")}
-                />
-                Google
-              </label>
-            </div>
-          </label>
-
-          {verifyType === "email" ? (
+        {emailCheck ? (
+          <div className="mt-4 space-y-3">
             <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-              Email code
-              <div className="flex items-center gap-3">
-                <Input
-                  placeholder="Enter code"
-                  value={verifyCode}
-                  onChange={(event) => setVerifyCode(event.target.value)}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleSendCode}
-                  className="min-w-[120px]"
-                  disabled={cooldown > 0 || loading}
-                >
-                  {loading && cooldown === 0 ? (
-                    <span className="inline-flex items-center gap-2">
-                      <Spinner size={14} />
-                      Sending...
-                    </span>
-                  ) : cooldown > 0 ? (
-                    `${cooldown}s`
-                  ) : (
-                    "Send code"
-                  )}
-                </Button>
+              Verification purpose
+              <div className="flex items-center gap-3 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={verificationPurpose === "activate"}
+                    onChange={() => setVerificationPurpose("activate")}
+                  />
+                  Activate
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={verificationPurpose === "getCode"}
+                    onChange={() => setVerificationPurpose("getCode")}
+                  />
+                  Get code
+                </label>
               </div>
             </label>
-          ) : (
             <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-              Google code
-              <Input
-                placeholder="Enter Google code"
-                value={googleCode}
-                onChange={(event) => setGoogleCode(event.target.value)}
-              />
+              Verification method
+              <div className="flex items-center gap-3 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={verifyType === "email"}
+                    onChange={() => setVerifyType("email")}
+                  />
+                  Email
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={verifyType === "google"}
+                    onChange={() => setVerifyType("google")}
+                  />
+                  Google
+                </label>
+              </div>
             </label>
-          )}
-        </div>
-      ) : null}
 
-      <Button
-        type="button"
-        onClick={handleActivate}
-        className="mt-6 w-full"
-        disabled={!canSubmit || loading}
-        loading={loading}
-      >
-        Activate
-      </Button>
+            {verifyType === "email" ? (
+              <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+                Email code
+                <div className="flex items-center gap-3">
+                  <Input
+                    placeholder="Enter code"
+                    value={verifyCode}
+                    onChange={(event) => setVerifyCode(event.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleSendCode}
+                    className="min-w-[120px]"
+                    disabled={cooldown > 0 || loading}
+                  >
+                    {loading && cooldown === 0 ? (
+                      <span className="inline-flex items-center gap-2">
+                        <Spinner size={14} />
+                        Sending...
+                      </span>
+                    ) : cooldown > 0 ? (
+                      `${cooldown}s`
+                    ) : (
+                      "Send code"
+                    )}
+                  </Button>
+                </div>
+              </label>
+            ) : (
+              <label className="space-y-2 text-xs font-medium text-(--paragraph)">
+                Google code
+                <Input
+                  placeholder="Enter Google code"
+                  value={googleCode}
+                  onChange={(event) => setGoogleCode(event.target.value)}
+                />
+              </label>
+            )}
+          </div>
+        ) : null}
+
+        <Button
+          type="submit"
+          className="w-full mt-4"
+          disabled={!canSubmit || loading}
+          loading={loading}
+        >
+          Activate
+        </Button>
+      </form>
       {null}
-    </ModalShell>
+    </ModalShell >
   );
 }

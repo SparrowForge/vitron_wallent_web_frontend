@@ -46,18 +46,7 @@ export default function Header({
         >
           <Menu className="h-4 w-4" />
         </button>
-        <button
-          type="button"
-          onClick={onToggleCollapse}
-          className="hidden h-9 w-9 place-items-center rounded-full border border-(--stroke) bg-(--basic-cta) text-(--icon-color) transition hover:text-(--double-foreground) lg:grid"
-          aria-label="Toggle sidebar collapse"
-        >
-          {isSidebarCollapsed ? (
-            <PanelLeftOpen className="h-4 w-4" />
-          ) : (
-            <PanelLeftClose className="h-4 w-4" />
-          )}
-        </button>
+
         <div className="text-base font-semibold text-(--foreground)">
           <HeaderTitle />
         </div>
