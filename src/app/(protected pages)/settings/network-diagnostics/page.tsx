@@ -174,7 +174,6 @@ export default function NetworkDiagnosticsPage() {
             onClick={runDiagnostics}
             className="w-full"
             disabled={running}
-            loading={running}
           >
             Run diagnostics
           </Button>

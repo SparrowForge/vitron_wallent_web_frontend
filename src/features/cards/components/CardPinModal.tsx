@@ -3,6 +3,7 @@
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { Button } from "@/shared/components/ui/Button";
+import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import { Input } from "@/shared/components/ui/Input";
 import ModalShell from "@/shared/components/ui/ModalShell";
 import PasswordInput from "@/shared/components/ui/PasswordInput";
@@ -180,8 +181,9 @@ export default function CardPinModal({
       open={open}
       onClose={onClose}
       ariaLabel="Set PIN"
-      className="max-w-md"
+      className="max-w-md relative overflow-hidden"
     >
+      <LoadingOverlay loading={loading} />
       <div className="flex items-center justify-between">
         <Button
           variant="outline"
@@ -283,16 +285,7 @@ export default function CardPinModal({
                     className="min-w-[120px]"
                     disabled={cooldown > 0 || loading}
                   >
-                    {loading && cooldown === 0 ? (
-                      <span className="inline-flex items-center gap-2">
-                        <Spinner size={14} />
-                        Sending...
-                      </span>
-                    ) : cooldown > 0 ? (
-                      `${cooldown}s`
-                    ) : (
-                      "Send code"
-                    )}
+                    {cooldown > 0 ? `${cooldown}s` : "Send code"}
                   </Button>
                 </div>
               </label>
@@ -313,7 +306,7 @@ export default function CardPinModal({
           type="submit"
           className="w-full mt-4"
           disabled={!canSubmit || loading}
-          loading={loading}
+
         >
           Save PIN
         </Button>

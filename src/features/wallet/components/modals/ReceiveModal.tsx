@@ -4,6 +4,7 @@ import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { Button } from "@/shared/components/ui/Button";
 import ModalShell from "@/shared/components/ui/ModalShell";
+import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
 
@@ -161,8 +162,9 @@ export default function ReceiveModal({
       open={open}
       onClose={onClose}
       ariaLabel="Receive"
-      className="max-w-md"
+      className="max-w-md relative overflow-hidden"
     >
+      <LoadingOverlay loading={loading} />
       <div className="flex items-center justify-between">
         <Button
           variant="outline"

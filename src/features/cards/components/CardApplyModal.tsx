@@ -5,6 +5,7 @@ import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { cardApplySchema } from "@/lib/validationSchemas";
 import { Button } from "@/shared/components/ui/Button";
+import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/Card";
 import { Input } from "@/shared/components/ui/Input";
 import ModalShell from "@/shared/components/ui/ModalShell";
@@ -364,8 +365,9 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
       open={open}
       onClose={onClose}
       ariaLabel="Apply card"
-      className="max-w-3xl"
+      className="max-w-3xl relative overflow-hidden"
     >
+      <LoadingOverlay loading={loading} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="text-sm uppercase tracking-[0.2em] text-(--paragraph)">
@@ -610,16 +612,7 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
                           className="text-xs font-semibold"
                           disabled={cooldown > 0 || loading}
                         >
-                          {loading && cooldown === 0 ? (
-                            <span className="inline-flex items-center gap-2">
-                              <Spinner size={12} />
-                              Sending...
-                            </span>
-                          ) : cooldown > 0 ? (
-                            `${cooldown}s`
-                          ) : (
-                            "Send code"
-                          )}
+                          {cooldown > 0 ? `${cooldown}s` : "Send code"}
                         </Button>
                       ) : null}
                     </div>
@@ -645,7 +638,7 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
                 <Button
                   type="submit"
                   disabled={!canSubmit || loading}
-                  loading={loading}
+
                   className="mt-4 w-full"
                 >
                   Apply card

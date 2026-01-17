@@ -1,6 +1,7 @@
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { Button } from "@/shared/components/ui/Button";
+import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import { Input } from "@/shared/components/ui/Input";
 import ModalShell from "@/shared/components/ui/ModalShell";
 import PasswordInput from "@/shared/components/ui/PasswordInput";
@@ -180,8 +181,9 @@ export default function CardFreezeModal({
       open={open}
       onClose={onClose}
       ariaLabel="Freeze card"
-      className="max-w-md"
+      className="max-w-md relative overflow-hidden"
     >
+      <LoadingOverlay loading={loading} />
       <div className="flex items-center justify-between">
         <Button
           variant="outline"
@@ -301,7 +303,7 @@ export default function CardFreezeModal({
           type="submit"
           className="w-full"
           disabled={!canSubmit || loading}
-          loading={loading}
+
         >
           {isFrozen ? "Unfreeze card" : "Freeze card"}
         </Button>

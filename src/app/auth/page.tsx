@@ -23,6 +23,7 @@ import Spinner from "@/shared/components/ui/Spinner";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 
 export default function AuthPage() {
   const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
@@ -248,8 +249,9 @@ export default function AuthPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <LandingHeader />
-      <main className="flex flex-1 items-center justify-center px-6 py-12">
-        <section className="w-full max-w-md rounded-2xl border border-(--stroke) bg-(--basic-cta) p-8 shadow-sm">
+      <main className="flex flex-1 items-center justify-center px-6 py-12 relative">
+        <section className="relative w-full max-w-md rounded-2xl border border-(--stroke) bg-(--basic-cta) p-8 shadow-sm overflow-hidden">
+          <LoadingOverlay loading={status === "loading"} />
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold text-(--foreground)">
               {mode === "login"
@@ -445,7 +447,6 @@ export default function AuthPage() {
               type="submit"
               className="w-full"
               disabled={status === "loading"}
-              loading={status === "loading"}
             >
               {status !== "loading" && (
                 mode === "login" ? (

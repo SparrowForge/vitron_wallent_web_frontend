@@ -14,6 +14,7 @@ import { Input } from "@/shared/components/ui/Input";
 import { Select } from "@/shared/components/ui/Select";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import Spinner from "@/shared/components/ui/Spinner";
+import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 
 type Country = {
   id?: string | number;
@@ -406,7 +407,8 @@ export default function AuthenticationForm() {
 
 
   return (
-    <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+    <form className="space-y-6 relative" onSubmit={handleSubmit(onSubmit)}>
+      <LoadingOverlay loading={submitLoading} />
       <div className="rounded-xl border border-(--brand)/20 bg-(--brand)/5 px-4 py-3 text-sm font-medium text-(--brand)">
         KYC status: {getKycStatusLabel(kycStatus)}
         {kycRemark ? (
@@ -855,7 +857,6 @@ export default function AuthenticationForm() {
         size="lg"
         disabled={pageLoading || submitLoading}
         className="w-full"
-        loading={submitLoading}
       >
         {submitLoading ? "Submitting..." : "Submit KYC Application"}
       </Button>

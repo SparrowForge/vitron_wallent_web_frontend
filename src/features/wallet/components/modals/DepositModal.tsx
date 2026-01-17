@@ -6,6 +6,7 @@ import { Button } from "@/shared/components/ui/Button";
 import ModalShell from "@/shared/components/ui/ModalShell";
 import { Select } from "@/shared/components/ui/Select";
 import Spinner from "@/shared/components/ui/Spinner";
+import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
 
@@ -223,8 +224,9 @@ export default function DepositModal({
       open={open}
       onClose={onClose}
       ariaLabel="Deposit crypto"
-      className="max-w-md"
+      className="max-w-md relative overflow-hidden"
     >
+      <LoadingOverlay loading={loading} />
       <div className="flex items-center justify-between">
         <Button
           variant="outline"

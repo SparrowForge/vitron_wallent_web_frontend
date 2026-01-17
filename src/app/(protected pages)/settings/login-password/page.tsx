@@ -7,6 +7,7 @@ import { loginPasswordSchema } from "@/lib/validationSchemas";
 import { Button } from "@/shared/components/ui/Button";
 import { Card, CardContent } from "@/shared/components/ui/Card";
 import { Input } from "@/shared/components/ui/Input";
+import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import PasswordInput from "@/shared/components/ui/PasswordInput";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
@@ -202,7 +203,8 @@ export default function LoginPasswordPage() {
       </header>
 
       <Card variant="glass">
-        <CardContent className="space-y-6 p-6">
+        <CardContent className="space-y-6 p-6 relative overflow-hidden">
+          <LoadingOverlay loading={loading} />
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -282,11 +284,17 @@ export default function LoginPasswordPage() {
 
             {verifyType === "email" ? (
               <div className="space-y-2">
-                {/* <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-(--paragraph)">
-                    Email code
-                  </label>
+                <label className="text-sm font-medium text-(--paragraph)">
+                  Email code
+                </label>
+                <div className="flex items-center gap-3">
+                  <Input
+                    placeholder="Enter code"
+                    value={emailCode}
+                    onChange={(event) => setEmailCode(event.target.value)}
+                  />
                   <Button
+                    type="button"
                     variant="outline"
                     onClick={handleSendCode}
                     className="min-w-[120px]"
@@ -294,76 +302,44 @@ export default function LoginPasswordPage() {
                   >
                     {cooldown > 0 ? `${cooldown}s` : "Send code"}
                   </Button>
-                </div> */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-(--paragraph)">
-                    Email code
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <Input
-                      placeholder="Enter code"
-                      value={emailCode}
-                      onChange={(event) => setEmailCode(event.target.value)}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleSendCode}
-                      className="min-w-[120px]"
-                      disabled={cooldown > 0 || loading}
-                    >
-                      {cooldown > 0 ? `${cooldown}s` : "Send code"}
-                    </Button>
-                  </div>
                 </div>
-                {/* <Input
-                  placeholder="Enter code"
-                  value={emailCode}
-                  onChange={(event) => {
-                    setEmailCode(event.target.value);
-                    if (fieldErrors.emailCode) {
-                      setFieldErrors((prev) => ({ ...prev, emailCode: "" }));
-                    }
-                  }}
-                />
-                {fieldErrors.emailCode ? (
-                  <p className="text-xs text-red-500">{fieldErrors.emailCode}</p>
-                ) : null} */}
               </div>
             ) : null}
 
-            {verifyType === "google" ? (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-(--paragraph)">
-                  Google code
-                </label>
-                <Input
-                  placeholder="Enter Google code"
-                  value={googleCode}
-                  onChange={(event) => {
-                    setGoogleCode(event.target.value);
-                    if (fieldErrors.googleCode) {
-                      setFieldErrors((prev) => ({ ...prev, googleCode: "" }));
-                    }
-                  }}
-                />
-                {fieldErrors.googleCode ? (
-                  <p className="text-xs text-red-500">{fieldErrors.googleCode}</p>
-                ) : null}
-              </div>
-            ) : null}
+            {
+              verifyType === "google" ? (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-(--paragraph)">
+                    Google code
+                  </label>
+                  <Input
+                    placeholder="Enter Google code"
+                    value={googleCode}
+                    onChange={(event) => {
+                      setGoogleCode(event.target.value);
+                      if (fieldErrors.googleCode) {
+                        setFieldErrors((prev) => ({ ...prev, googleCode: "" }));
+                      }
+                    }}
+                  />
+                  {fieldErrors.googleCode ? (
+                    <p className="text-xs text-red-500">{fieldErrors.googleCode}</p>
+                  ) : null}
+                </div>
+              ) : null
+            }
 
             <Button
               type="submit"
               className="w-full"
               disabled={!canSubmit || loading}
-              loading={loading}
+
             >
               Update password
             </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+          </form >
+        </CardContent >
+      </Card >
+    </div >
   );
 }

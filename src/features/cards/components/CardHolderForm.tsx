@@ -15,6 +15,7 @@ import { Input } from "@/shared/components/ui/Input";
 import { Select } from "@/shared/components/ui/Select";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import Spinner from "@/shared/components/ui/Spinner";
+import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 
 type Country = {
   id?: string | number;
@@ -442,8 +443,9 @@ export default function CardHolderForm({
   }
 
   return (
-    <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-      <div className="rounded-xl border border-(--brand)/20 bg-(--brand)/5 px-4 py-3 text-sm font-medium text-(--brand)">
+    <form className="space-y-6 relative" onSubmit={handleSubmit(onSubmit)}>
+      <LoadingOverlay loading={submitLoading} />
+      <div className="text-sm font-medium text-(--foreground)">
         Holder status: {getHolderStatusLabel(holderStatus)}
       </div>
 
@@ -856,7 +858,6 @@ export default function CardHolderForm({
       <Button
         type="submit"
         disabled={pageLoading || submitLoading}
-        loading={submitLoading}
         className="w-full"
       >
         {isEdit ? "Update holder" : "Submit holder"}

@@ -7,6 +7,7 @@ import { transactionPasswordSchema } from "@/lib/validationSchemas";
 import { Button } from "@/shared/components/ui/Button";
 import { Card, CardContent } from "@/shared/components/ui/Card";
 import { Input } from "@/shared/components/ui/Input";
+import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import PasswordInput from "@/shared/components/ui/PasswordInput";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
@@ -187,7 +188,8 @@ export default function TransactionPasswordPage() {
       </header>
 
       <Card variant="glass">
-        <CardContent className="space-y-6 p-6">
+        <CardContent className="space-y-6 p-6 relative overflow-hidden">
+          <LoadingOverlay loading={loading} />
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -316,7 +318,7 @@ export default function TransactionPasswordPage() {
               type="submit"
               className="w-full"
               disabled={loading}
-              loading={loading}
+
             >
               Update transaction password
             </Button>

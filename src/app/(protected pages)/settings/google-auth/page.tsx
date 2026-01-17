@@ -7,6 +7,7 @@ import { googleAuthSchema } from "@/lib/validationSchemas";
 import { Button } from "@/shared/components/ui/Button";
 import { Card, CardContent } from "@/shared/components/ui/Card";
 import { Input } from "@/shared/components/ui/Input";
+import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
 
@@ -231,120 +232,123 @@ export default function GoogleAuthPage() {
       </header>
 
       <Card variant="glass">
-        <CardContent className="space-y-6 p-6">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSubmit();
-            }}
-            className="space-y-6"
-          >
-            <div className="flex flex-wrap gap-3">
-              {googleStatus === 2 ? (
-                <Button
-                  size="sm"
-                  onClick={() => setMode("bind")}
-                  variant={mode === "bind" ? "default" : "outline"}
-                >
-                  Bind
-                </Button>
-              ) : null}
-              {googleStatus === 1 ? (
-                <>
+        <CardContent className="p-4 sm:p-6 lg:p-8 relative">
+          <LoadingOverlay loading={loading} />
+          <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSubmit();
+              }}
+              className="space-y-6"
+            >
+              <div className="flex flex-wrap gap-3">
+                {googleStatus === 2 ? (
                   <Button
                     size="sm"
-                    onClick={() => setMode("close")}
-                    variant={mode === "close" ? "default" : "outline"}
+                    onClick={() => setMode("bind")}
+                    variant={mode === "bind" ? "default" : "outline"}
                   >
-                    Disable
+                    Bind
                   </Button>
+                ) : null}
+                {googleStatus === 1 ? (
+                  <>
+                    <Button
+                      size="sm"
+                      onClick={() => setMode("close")}
+                      variant={mode === "close" ? "default" : "outline"}
+                    >
+                      Disable
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => setMode("reset")}
+                      variant={mode === "reset" ? "default" : "outline"}
+                    >
+                      Reset
+                    </Button>
+                  </>
+                ) : null}
+                {googleStatus === 0 ? (
                   <Button
                     size="sm"
-                    onClick={() => setMode("reset")}
-                    variant={mode === "reset" ? "default" : "outline"}
+                    onClick={() => setMode("open")}
+                    variant={mode === "open" ? "default" : "outline"}
                   >
-                    Reset
+                    Enable
                   </Button>
-                </>
-              ) : null}
-              {googleStatus === 0 ? (
-                <Button
-                  size="sm"
-                  onClick={() => setMode("open")}
-                  variant={mode === "open" ? "default" : "outline"}
-                >
-                  Enable
-                </Button>
-              ) : null}
-            </div>
-
-            {needsQr ? (
-              <div className="mt-6 grid gap-4 sm:grid-cols-[180px_1fr]">
-                <div className="flex items-center justify-center rounded-2xl border border-(--stroke) bg-(--background) p-4">
-                  {qrImage ? (
-                    <img src={qrImage} alt="Google Auth QR code" />
-                  ) : (
-                    <span className="text-xs text-(--paragraph)">QR not ready</span>
-                  )}
-                </div>
-                <div className="space-y-2 text-sm text-(--paragraph)">
-                  <div className="text-sm font-semibold text-(--double-foreground)">
-                    Secret key
-                  </div>
-                  <div className="rounded-xl border border-(--stroke) bg-(--background) px-3 py-2 text-xs text-(--foreground)">
-                    {secret || "—"}
-                  </div>
-                  <p className="text-xs text-(--paragraph)">
-                    Scan the QR in Google Authenticator or copy the secret.
-                  </p>
-                </div>
+                ) : null}
               </div>
-            ) : null}
 
-            <div className="mt-6 space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-(--paragraph)">
-                  Email code
-                </label>
-                <div className="flex items-center gap-3">
+              {needsQr ? (
+                <div className="mt-6 grid gap-4 sm:grid-cols-[180px_1fr]">
+                  <div className="flex items-center justify-center rounded-2xl border border-(--stroke) bg-(--background) p-4">
+                    {qrImage ? (
+                      <img src={qrImage} alt="Google Auth QR code" />
+                    ) : (
+                      <span className="text-xs text-(--paragraph)">QR not ready</span>
+                    )}
+                  </div>
+                  <div className="space-y-2 text-sm text-(--paragraph)">
+                    <div className="text-sm font-semibold text-(--double-foreground)">
+                      Secret key
+                    </div>
+                    <div className="rounded-xl border border-(--stroke) bg-(--background) px-3 py-2 text-xs text-(--foreground)">
+                      {secret || "—"}
+                    </div>
+                    <p className="text-xs text-(--paragraph)">
+                      Scan the QR in Google Authenticator or copy the secret.
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="mt-6 space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-(--paragraph)">
+                    Email code
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      placeholder="Enter code"
+                      value={emailCode}
+                      onChange={(event) => setEmailCode(event.target.value)}
+                    />
+                    <Button
+                      variant="outline"
+                      type="button"
+                      onClick={handleSendCode}
+                      className="min-w-[120px]"
+                      disabled={cooldown > 0 || loading}
+                    >
+                      {cooldown > 0 ? `${cooldown}s` : "Send code"}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-(--paragraph)">
+                    Google code
+                  </label>
                   <Input
-                    placeholder="Enter code"
-                    value={emailCode}
-                    onChange={(event) => setEmailCode(event.target.value)}
+                    placeholder="Enter Google code"
+                    value={googleCode}
+                    onChange={(event) => setGoogleCode(event.target.value)}
                   />
-                  <Button
-                    variant="outline"
-                    type="button"
-                    onClick={handleSendCode}
-                    className="min-w-[120px]"
-                    disabled={cooldown > 0 || loading}
-                  >
-                    {cooldown > 0 ? `${cooldown}s` : "Send code"}
-                  </Button>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-(--paragraph)">
-                  Google code
-                </label>
-                <Input
-                  placeholder="Enter Google code"
-                  value={googleCode}
-                  onChange={(event) => setGoogleCode(event.target.value)}
-                />
-              </div>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={!emailCode || !googleCode || loading}
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={!emailCode || !googleCode || loading}
-                loading={loading}
-              >
-                Submit
-              </Button>
-            </div>
-          </form>
+                >
+                  Submit
+                </Button>
+              </div>
+            </form>
+          </div>
         </CardContent>
       </Card>
     </div>

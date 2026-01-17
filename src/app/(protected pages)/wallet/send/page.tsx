@@ -6,6 +6,7 @@ import { emailSchema, transferSchema } from "@/lib/validationSchemas";
 import { Button } from "@/shared/components/ui/Button";
 import { Card, CardContent } from "@/shared/components/ui/Card";
 import { Input } from "@/shared/components/ui/Input";
+import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import PasswordInput from "@/shared/components/ui/PasswordInput";
 import { Select } from "@/shared/components/ui/Select";
 import Spinner from "@/shared/components/ui/Spinner";
@@ -329,95 +330,96 @@ export default function WalletSendPage() {
       </header>
 
       <Card variant="glass">
-        <CardContent className="space-y-6 p-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-(--paragraph)">
-                Receive account
-              </label>
+        <CardContent className="space-y-6 p-6 relative">
+          <LoadingOverlay loading={loading} />
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-(--paragraph)">
+              Receive account
+            </label>
+            <Input
+              className={emailError ? "border-red-500 bg-red-500/5" : ""}
+              placeholder="Please input email"
+              value={recipient}
+              onChange={(event) => {
+                const value = event.target.value;
+                setRecipient(value);
+                if (emailError) {
+                  setEmailError("");
+                }
+                emailSchema.safeParse(value);
+              }}
+              onBlur={() => {
+                if (!recipient) {
+                  return;
+                }
+                const validation = emailSchema.safeParse(recipient);
+                setEmailError(
+                  validation.success
+                    ? ""
+                    : validation.error.issues[0]?.message ?? "Invalid email."
+                );
+              }}
+              error={emailError}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-(--paragraph)">
+              Currency
+            </label>
+            <Select
+              value={currency}
+              onChange={(event) => setCurrency(event.target.value)}
+            >
+              {balances.map((entry) => (
+                <option key={entry.currency} value={entry.currency}>
+                  {entry.currency}
+                </option>
+              ))}
+            </Select>
+            <div className="text-xs text-(--paragraph)">
+              Available: {balanceForCurrency.toFixed(2)} {currency}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-(--paragraph)">
+              Amount
+            </label>
+            <Input
+              type="number"
+              placeholder="Enter amount"
+              value={amount}
+              onChange={(event) => {
+                const value = event.target.value;
+                setAmount(value);
+                const result = transferSchema
+                  .pick({ amount: true })
+                  .safeParse({ amount: value });
+                setFieldErrors((prev) => ({
+                  ...prev,
+                  amount: result.success ? "" : result.error.issues[0]?.message,
+                }));
+              }}
+              error={fieldErrors.amount}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-(--paragraph)">
+              Remark (optional)
+            </label>
+            <div className="relative">
               <Input
-                placeholder="Please input email"
-                value={recipient}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  setRecipient(value);
-                  if (emailError) {
-                    setEmailError("");
-                  }
-                  emailSchema.safeParse(value);
-                }}
-                onBlur={() => {
-                  if (!recipient) {
-                    return;
-                  }
-                  const validation = emailSchema.safeParse(recipient);
-                  setEmailError(
-                    validation.success
-                      ? ""
-                      : validation.error.issues[0]?.message ?? "Invalid email."
-                  );
-                }}
-                error={emailError}
+                placeholder="Message"
+                value={remark}
+                maxLength={20}
+                onChange={(event) => setRemark(event.target.value)}
+                className="pr-12"
               />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-(--paragraph)">
-                Currency
-              </label>
-              <Select
-                value={currency}
-                onChange={(value) => setCurrency(value)}
-                options={balances.map((entry) => ({
-                  label: entry.currency,
-                  value: entry.currency,
-                }))}
-                placeholder="Select currency"
-              />
-              <div className="text-xs text-(--paragraph)">
-                Available: {balanceForCurrency.toFixed(2)} {currency}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-(--paragraph)">
-                Amount
-              </label>
-              <Input
-                type="number"
-                placeholder="Enter amount"
-                value={amount}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  setAmount(value);
-                  const result = transferSchema
-                    .pick({ amount: true })
-                    .safeParse({ amount: value });
-                  setFieldErrors((prev) => ({
-                    ...prev,
-                    amount: result.success ? "" : result.error.issues[0]?.message,
-                  }));
-                }}
-                error={fieldErrors.amount}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-(--paragraph)">
-                Remark (optional)
-              </label>
-              <div className="relative">
-                <Input
-                  placeholder="Message"
-                  value={remark}
-                  maxLength={20}
-                  onChange={(event) => setRemark(event.target.value)}
-                  className="pr-12"
-                />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-(--placeholder)">
-                  {remark.length}/20
-                </span>
-              </div>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-(--placeholder)">
+                {remark.length}/20
+              </span>
             </div>
           </div>
 
@@ -511,16 +513,7 @@ export default function WalletSendPage() {
                     className="min-w-[120px]"
                     disabled={cooldown > 0 || loading}
                   >
-                    {loading && cooldown === 0 ? (
-                      <span className="inline-flex items-center gap-2">
-                        <Spinner size={14} />
-                        Sending...
-                      </span>
-                    ) : cooldown > 0 ? (
-                      `${cooldown}s`
-                    ) : (
-                      "Send code"
-                    )}
+                    {cooldown > 0 ? `${cooldown}s` : "Send code"}
                   </Button>
                 </div>
               </div>
@@ -549,12 +542,12 @@ export default function WalletSendPage() {
             onClick={handleTransfer}
             className="w-full"
             disabled={!canSubmit || loading}
-            loading={loading}
+
           >
             Transfer
           </Button>
-        </CardContent>
-      </Card>
-    </div>
+        </CardContent >
+      </Card >
+    </div >
   );
 }
