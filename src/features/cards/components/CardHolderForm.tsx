@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui
 import { Input } from "@/shared/components/ui/Input";
 import { Select } from "@/shared/components/ui/Select";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
+import Spinner from "@/shared/components/ui/Spinner";
 
 type Country = {
   id?: string | number;
@@ -428,14 +429,22 @@ export default function CardHolderForm({
       setSubmitLoading(false);
     }
   };
+  if (pageLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-2 text-sm text-(--paragraph)">
+          <Spinner size={16} />
+          Loading Card Holder Details...
+        </div>
+        <div className="h-16 rounded-2xl border border-(--stroke) bg-(--basic-cta)" />
+      </div>
+    );
+  }
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
       <div className="rounded-xl border border-(--brand)/20 bg-(--brand)/5 px-4 py-3 text-sm font-medium text-(--brand)">
         Holder status: {getHolderStatusLabel(holderStatus)}
-        {pageLoading ? (
-          <span className="ml-2 text-xs opacity-70">(loading...)</span>
-        ) : null}
       </div>
 
       <Card>

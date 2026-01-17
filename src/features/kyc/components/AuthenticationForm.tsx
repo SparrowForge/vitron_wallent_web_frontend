@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui
 import { Input } from "@/shared/components/ui/Input";
 import { Select } from "@/shared/components/ui/Select";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
+import Spinner from "@/shared/components/ui/Spinner";
 
 type Country = {
   id?: string | number;
@@ -392,6 +393,16 @@ export default function AuthenticationForm() {
     }
   };
 
+  if (pageLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-2 text-sm text-(--paragraph)">
+          <Spinner size={16} />
+          Loading Authentication Details...
+        </div>
+      </div>
+    );
+  }
 
 
   return (
@@ -402,9 +413,6 @@ export default function AuthenticationForm() {
           <span className="block mt-1 text-xs text-(--brand)/80">
             {kycRemark}
           </span>
-        ) : null}
-        {pageLoading ? (
-          <span className="ml-2 text-xs opacity-70">(loading...)</span>
         ) : null}
       </div>
 

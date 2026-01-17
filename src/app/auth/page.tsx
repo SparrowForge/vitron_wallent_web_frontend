@@ -446,7 +446,6 @@ export default function AuthPage() {
               className="w-full"
               disabled={status === "loading"}
               loading={status === "loading"}
-              loaderLabel="Please wait..."
             >
               {status !== "loading" && (
                 mode === "login" ? (
