@@ -16,16 +16,12 @@ export const loginPasswordSchema = z
   .object({
     password: strongPasswordSchema,
     confirmPassword: z.string().trim().min(1, "Confirm password is required."),
-    emailCode: z.string().trim().optional().or(z.literal("")),
+    emailCode: z.string().trim().min(1, "Email code is required."),
     googleCode: z.string().trim().optional().or(z.literal("")),
   })
   .refine((data) => data.password === data.confirmPassword, {
     path: ["confirmPassword"],
     message: "Passwords do not match.",
-  })
-  .refine((data) => data.emailCode || data.googleCode, {
-    path: ["emailCode"],
-    message: "Provide either an email code or a Google code.",
   });
 
 export const transactionPasswordSchema = z

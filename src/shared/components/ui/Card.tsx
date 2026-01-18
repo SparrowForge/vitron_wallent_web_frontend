@@ -16,7 +16,7 @@ const Card = React.forwardRef<
         <div
             ref={ref}
             className={cn(
-                "rounded-2xl p-6 text-(--foreground) transition-all duration-300 hover:shadow-2xl hover:-translate-y-1",
+                "rounded-2xl p-1 text-(--foreground) transition-all duration-300 hover:shadow-2xl",
                 variantStyles[variant],
                 className
             )}
@@ -75,13 +75,20 @@ CardContent.displayName = "CardContent";
 
 const CardFooter = React.forwardRef<
     HTMLDivElement,
-    React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
+    React.HTMLAttributes<HTMLDivElement> & { icon?: React.ElementType }
+>(({ className, icon: Icon, children, ...props }, ref) => (
     <div
         ref={ref}
-        className={cn("flex items-center p-6 pt-0", className)}
+        className={cn("flex items-center justify-between", className)}
         {...props}
-    />
+    >
+        {children}
+        {Icon && (
+            <div className="grid h-10 w-10 place-items-center rounded-full bg-(--brand)/10 text-(--brand)">
+                <Icon className="h-5 w-5" />
+            </div>
+        )}
+    </div>
 ));
 CardFooter.displayName = "CardFooter";
 

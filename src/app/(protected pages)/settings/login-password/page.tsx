@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import { clearAuthTokens } from "@/lib/auth";
 import { loginPasswordSchema } from "@/lib/validationSchemas";
 import { Button } from "@/shared/components/ui/Button";
 import { Card, CardContent } from "@/shared/components/ui/Card";
@@ -10,6 +11,7 @@ import { Input } from "@/shared/components/ui/Input";
 import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import PasswordInput from "@/shared/components/ui/PasswordInput";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 type MerchantInfoResponse = {
@@ -26,11 +28,11 @@ type ApiResponse = {
 };
 
 export default function LoginPasswordPage() {
+  const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [emailCode, setEmailCode] = useState("");
   const [googleCode, setGoogleCode] = useState("");
-  const [verifyType, setVerifyType] = useState<"email" | "google">("email");
   const [needsGoogle, setNeedsGoogle] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -61,14 +63,14 @@ export default function LoginPasswordPage() {
     if (!password || !confirmPassword) {
       return false;
     }
-    if (verifyType === "email" && !emailCode) {
+    if (!emailCode) {
       return false;
     }
-    if (verifyType === "google" && !googleCode) {
+    if (needsGoogle && !googleCode) {
       return false;
     }
     return true;
-  }, [password, confirmPassword, emailCode, googleCode, verifyType]);
+  }, [password, confirmPassword, emailCode, googleCode, needsGoogle]);
 
   useEffect(() => {
     const loadInfo = async () => {
@@ -80,9 +82,6 @@ export default function LoginPasswordPage() {
         });
         if (response.data) {
           setNeedsGoogle(Number(response.data.googleStatus) === 1);
-          if (Number(response.data.googleStatus) !== 1) {
-            setVerifyType("email");
-          }
         }
       } catch {
         return;
@@ -132,8 +131,8 @@ export default function LoginPasswordPage() {
     const validation = loginPasswordSchema.safeParse({
       password,
       confirmPassword,
-      emailCode: verifyType === "email" ? emailCode : "",
-      googleCode: verifyType === "google" ? googleCode : "",
+      emailCode,
+      googleCode: needsGoogle ? googleCode : undefined,
     });
     if (!validation.success) {
       const issue = validation.error.issues[0];
@@ -149,10 +148,8 @@ export default function LoginPasswordPage() {
         ...(confirmPassword
           ? {}
           : { confirmPassword: "Confirm password is required." }),
-        ...(verifyType === "email" && !emailCode
-          ? { emailCode: "Email code is required." }
-          : {}),
-        ...(verifyType === "google" && !googleCode
+        ...(!emailCode ? { emailCode: "Email code is required." } : {}),
+        ...(needsGoogle && !googleCode
           ? { googleCode: "Google code is required." }
           : {}),
       });
@@ -163,10 +160,9 @@ export default function LoginPasswordPage() {
       const payload: Record<string, string> = {
         type: "updatePassword",
         password,
+        code: emailCode,
       };
-      if (verifyType === "email") {
-        payload.code = emailCode;
-      } else {
+      if (needsGoogle && googleCode) {
         payload.googleCode = googleCode;
       }
       const response = await apiRequest<ApiResponse>({
@@ -174,16 +170,15 @@ export default function LoginPasswordPage() {
         method: "POST",
         body: JSON.stringify(payload),
       });
-      setInfoMessage("Login password updated.");
-      setPassword("");
-      setConfirmPassword("");
-      setEmailCode("");
-      setGoogleCode("");
+      setInfoMessage("Login password updated. Logging out...");
+
+      // Force logout
+      await clearAuthTokens();
+      router.replace("/auth");
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "Unable to update password."
       );
-    } finally {
       setLoading(false);
     }
   };
@@ -254,86 +249,54 @@ export default function LoginPasswordPage() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Verification method
+                Email code
               </label>
-              <div className="flex items-center gap-4 rounded-xl border border-(--stroke) bg-(--background)/50 px-4 py-3 text-sm text-(--foreground)">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    checked={verifyType === "email"}
-                    onChange={() => setVerifyType("email")}
-                    className="accent-(--brand)"
-                  />
-                  Email code
-                </label>
-                <label className={cn(
-                  "flex items-center gap-2 cursor-pointer",
-                  !needsGoogle && "opacity-50 cursor-not-allowed"
-                )}>
-                  <input
-                    type="radio"
-                    checked={verifyType === "google"}
-                    onChange={() => setVerifyType("google")}
-                    disabled={!needsGoogle}
-                    className="accent-(--brand)"
-                  />
-                  Google code
-                </label>
+              <div className="flex items-center gap-3">
+                <Input
+                  placeholder="Enter code"
+                  value={emailCode}
+                  onChange={(event) => setEmailCode(event.target.value)}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSendCode}
+                  className="min-w-[120px]"
+                  disabled={cooldown > 0 || loading}
+                >
+                  {cooldown > 0 ? `${cooldown}s` : "Send code"}
+                </Button>
               </div>
+              {fieldErrors.emailCode ? (
+                <p className="text-xs text-red-500">{fieldErrors.emailCode}</p>
+              ) : null}
             </div>
 
-            {verifyType === "email" ? (
+            {needsGoogle && (
               <div className="space-y-2">
                 <label className="text-sm font-medium text-(--paragraph)">
-                  Email code
+                  Google code
                 </label>
-                <div className="flex items-center gap-3">
-                  <Input
-                    placeholder="Enter code"
-                    value={emailCode}
-                    onChange={(event) => setEmailCode(event.target.value)}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleSendCode}
-                    className="min-w-[120px]"
-                    disabled={cooldown > 0 || loading}
-                  >
-                    {cooldown > 0 ? `${cooldown}s` : "Send code"}
-                  </Button>
-                </div>
+                <Input
+                  placeholder="Enter Google code"
+                  value={googleCode}
+                  onChange={(event) => {
+                    setGoogleCode(event.target.value);
+                    if (fieldErrors.googleCode) {
+                      setFieldErrors((prev) => ({ ...prev, googleCode: "" }));
+                    }
+                  }}
+                />
+                {fieldErrors.googleCode ? (
+                  <p className="text-xs text-red-500">{fieldErrors.googleCode}</p>
+                ) : null}
               </div>
-            ) : null}
-
-            {
-              verifyType === "google" ? (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-(--paragraph)">
-                    Google code
-                  </label>
-                  <Input
-                    placeholder="Enter Google code"
-                    value={googleCode}
-                    onChange={(event) => {
-                      setGoogleCode(event.target.value);
-                      if (fieldErrors.googleCode) {
-                        setFieldErrors((prev) => ({ ...prev, googleCode: "" }));
-                      }
-                    }}
-                  />
-                  {fieldErrors.googleCode ? (
-                    <p className="text-xs text-red-500">{fieldErrors.googleCode}</p>
-                  ) : null}
-                </div>
-              ) : null
-            }
+            )}
 
             <Button
               type="submit"
               className="w-full"
               disabled={!canSubmit || loading}
-
             >
               Update password
             </Button>

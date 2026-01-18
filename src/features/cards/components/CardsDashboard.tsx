@@ -15,6 +15,7 @@ import { Button } from "@/shared/components/ui/Button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/shared/components/ui/Card";
 import Spinner from "@/shared/components/ui/Spinner";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
+import { toast } from "react-toastify";
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { cn } from "@/lib/utils";
@@ -315,15 +316,35 @@ export default function CardsDashboard() {
   };
 
   const transactionsColumns: DataTableColumn<any>[] = [
-    { key: "orderId", label: "Order", className: "text-(--double-foreground)" },
-    { key: "typeString", label: "Type" },
+    { key: "orderId", label: "Order No", className: "text-(--double-foreground)" },
     { key: "amount", label: "Amount", className: "text-(--double-foreground)" },
     { key: "createTime", label: "Date" },
+    { key: "typeString", label: "Type" },
   ];
 
   const formattedRecords = records.map((record) => ({
     ...record,
-    orderId: formatOrderId(record.orderId ?? record.tradeId),
+    orderId: (
+      <div
+        className="cursor-pointer hover:border-(--brand) hover:text-(--brand)"
+        title={record.orderId ?? record.tradeId ?? "--"}
+        onClick={async (e) => {
+          e.stopPropagation();
+          const text = record.orderId ?? record.tradeId ?? "";
+          if (text) {
+            await navigator.clipboard.writeText(text);
+            toast.success("Order ID copied!", {
+              autoClose: 2000,
+              position: "top-center",
+              hideProgressBar: true,
+              className: "!bg-(--background) !text-(--foreground) border border-(--stroke)",
+            });
+          }
+        }}
+      >
+        {formatOrderId(record.orderId ?? record.tradeId)}
+      </div>
+    ),
     typeString: (
       <span className="inline-flex items-center justify-center rounded-lg bg-(--brand) px-3 py-1 text-xs font-medium text-(--brand-10) shadow-lg shadow-(--brand)/20">
         {record.typeString ?? record.type ?? "--"}
@@ -383,7 +404,7 @@ export default function CardsDashboard() {
                   }
                 }}
               >
-                <div className="p-5">
+                <div className="p-1">
                   <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-(--foreground) to-gray-600 p-5 text-(--background) shadow-lg">
                     {/* Visual Card Content */}
                     <div className="flex justify-between items-start opacity-80">
@@ -393,11 +414,11 @@ export default function CardsDashboard() {
                       <div className="font-bold italic opacity-60">VISA</div>
                     </div>
 
-                    <div className="mt-8 text-xl font-mono tracking-widest">
+                    <div className="text-xl font-mono tracking-widest">
                       •••• •••• •••• {last4}
                     </div>
 
-                    <div className="mt-8 flex justify-between items-end">
+                    <div className="flex justify-between items-end">
                       <div>
                         <div className="text-[10px] uppercase opacity-60">Card Holder</div>
                         <div className="text-sm font-medium">{card.alias ?? "Vtron User"}</div>
@@ -409,35 +430,41 @@ export default function CardsDashboard() {
                     <div className="absolute -inset-full animate-[shimmer_3s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12" />
                   </div>
 
-                  <div className="mt-5 flex items-center justify-between">
+                  <div className="mt-2 flex items-center justify-between">
                     <div>
-                      <p className="text-xs text-(--paragraph)">Current Balance</p>
-                      <p className="text-lg font-bold text-(--foreground)">
-                        {balance ? balance.balance : "--"}{" "}
-                        <span className="text-sm font-normal text-(--paragraph)">
-                          {balance ? balance.currency : ""}
+                      <p className="text-xs text-(--paragraph)">Balance: {" "}
+                        <span className="text-lg font-bold text-(--foreground)">
+                          {balance ? balance.balance : "--"}{" "}
+                          <span className="text-sm font-normal text-(--paragraph)">
+                            {balance ? balance.currency : ""}
+                          </span>
                         </span>
                       </p>
                     </div>
-                    {isFrozen && (
+                    {isFrozen ? (
                       <span className="rounded-full bg-red-500/10 px-2 py-1 text-xs font-semibold text-red-500">
                         Frozen
                       </span>
-                    )}
+                    ) : (
+                      <span className="rounded-full bg-(--brand)/10 px-2 py-1 text-xs font-semibold text-(--brand)">
+                        Active
+                      </span>
+                    )
+                    }
                   </div>
                 </div>
 
-                <CardFooter className="grid grid-cols-3 gap-2 border-t border-(--stroke) p-3">
+                <CardFooter className="mt-2 grid grid-cols-3 gap-2 border-t border-(--stroke) p-1">
                   {actions.map((action) =>
                     action.key === "settings" ? (
                       <Link
                         key={action.key}
                         href={`/cards/settings?card=${cardId}`}
-                        className="flex flex-col items-center gap-1 rounded-lg p-2 text-[10px] font-medium text-(--paragraph) transition hover:bg-(--stroke)/10 hover:text-(--foreground)"
+                        className="flex flex-col items-center gap-1 rounded-lg p-1 text-[10px] font-medium text-(--paragraph) transition hover:bg-(--stroke)/10 hover:text-(--foreground)"
                       >
-                        <span className="grid h-8 w-8 place-items-center text-(--foreground)">
+                        <span className="grid h-10 w-10 place-items-center text-(--foreground)">
                           {action.icon ? (
-                            <span className="[&_svg]:h-5 [&_svg]:w-5">{action.icon}</span>
+                            <>{action.icon}</>
                           ) : (
                             action.label[0]
                           )}
@@ -452,11 +479,11 @@ export default function CardsDashboard() {
                           e.stopPropagation();
                           handleAction(action.key, cardId);
                         }}
-                        className="flex flex-col items-center gap-1 rounded-lg p-2 text-[10px] font-medium text-(--paragraph) transition hover:bg-(--stroke)/10 hover:text-(--foreground)"
+                        className="flex flex-col items-center gap-1 rounded-lg p-1 text-[10px] font-medium text-(--paragraph) transition hover:bg-(--stroke)/10 hover:text-(--foreground)"
                       >
-                        <span className="grid h-8 w-8 place-items-center text-(--foreground)">
+                        <span className="grid h-10 w-10 place-items-center text-(--foreground)">
                           {action.icon ? (
-                            <span className="[&_svg]:h-5 [&_svg]:w-5">{action.icon}</span>
+                            <>{action.icon}</>
                           ) : (
                             action.label[0]
                           )}

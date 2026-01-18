@@ -17,6 +17,7 @@ import { Button } from "@/shared/components/ui/Button";
 import { Card, CardContent } from "@/shared/components/ui/Card";
 import Spinner from "@/shared/components/ui/Spinner";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
+import { toast } from "react-toastify";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Wallet = {
@@ -75,7 +76,7 @@ export default function WalletDashboard() {
   const [transactions, setTransactions] = useState<
     {
       id: string;
-      order: string;
+      order: React.ReactNode;
       amount: string;
       date: string;
       status: React.ReactNode;
@@ -164,7 +165,28 @@ export default function WalletDashboard() {
         const records = response.data.records ?? [];
         const mapped = records.map((record, index) => ({
           id: String((transactionPage - 1) * 10 + index + 1),
-          order: maskOrder(record.orderId ?? record.tradeId ?? "--"),
+          order: (
+            <div
+              className="cursor-pointer hover:border-(--brand) hover:text-(--brand)"
+              title={record.orderId ?? record.tradeId ?? "--"}
+              onClick={async (e) => {
+                e.stopPropagation();
+                const text = record.orderId ?? record.tradeId ?? "";
+                if (text) {
+                  await navigator.clipboard.writeText(text);
+                  toast.success("Order ID copied!", {
+                    autoClose: 2000,
+                    position: "top-center",
+                    hideProgressBar: true,
+                    className: "!bg-(--background) !text-(--foreground) border border-(--stroke)",
+                  });
+                }
+              }}
+            >
+              {maskOrder(record.orderId ?? record.tradeId ?? "--")}
+            </div>
+          ),
+          orderFull: record.orderId ?? record.tradeId ?? "--",
           amount: record.amount
             ? `${record.amount} ${record.currency ?? "USD"}`
             : "--",
@@ -195,15 +217,15 @@ export default function WalletDashboard() {
 
   const walletColumns: DataTableColumn<{
     id: string;
-    order: string;
+    order: React.ReactNode;
     amount: string;
     date: string;
     status: React.ReactNode;
   }>[] = [
       { key: "order", label: "Order No", className: "text-(--double-foreground)" },
-      { key: "status", label: "Type" },
       { key: "amount", label: "Amount", className: "font-medium text-(--double-foreground)" },
       { key: "date", label: "Date" },
+      { key: "status", label: "Type" },
     ];
 
   if (!selectedWallet) {
@@ -225,7 +247,6 @@ export default function WalletDashboard() {
     <div className="space-y-4 sm:space-y-6">
       <section className="flex flex-col gap-6">
         <Card variant="glass" className="relative overflow-hidden w-[85vw] md:w-auto">
-          <div className="absolute top-0 right-0 -mt-4 -mr-4 h-32 w-32 rounded-full bg-(--brand)/5 blur-3xl" />
           <CardContent className="p-4 sm:p-6 lg:p-8">
             <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
               <div className="space-y-6">

@@ -19,6 +19,7 @@ export default function SettingsPage() {
       title: "Modify email",
       action: "Edit",
       href: "/settings/modify-email",
+      hidden: false,
     },
 
     {
@@ -35,8 +36,7 @@ export default function SettingsPage() {
     {
       title: "Login password",
       action: "Edit",
-      href: "/settings/login-password",
-      hidden: true,
+      href: "/settings/login-password"
     },
     {
       title: "Network diagnostics",
