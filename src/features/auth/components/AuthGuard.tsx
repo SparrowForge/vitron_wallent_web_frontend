@@ -1,15 +1,15 @@
 "use client";
 
-import { apiRequest } from "@/lib/api";
+import { apiRequest, refreshToken } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import { clearAuthTokens } from "@/lib/auth";
 import Spinner from "@/shared/components/ui/Spinner";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [isChecking, setIsChecking] = useState(true);
   const [isAuthed, setIsAuthed] = useState(false);
 
@@ -34,8 +34,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       // Middleware handles initial protection.
       // We double check logic here via API if needed, or just let it pass.
       // For now, we perform the check to ensure token validity beyond just cookie existence.
-      try {
-        const response = await apiRequest<{
+      const fetchMerchantInfo = async () =>
+        apiRequest<{
           code?: number | string;
           data?: unknown;
         }>({
@@ -43,18 +43,31 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
           method: "POST",
           body: JSON.stringify({}),
         });
+
+      const handleAuthFailure = async () => {
+        await clearAuthTokens();
+        router.replace("/");
+        if (active) {
+          setIsChecking(false);
+          setIsAuthed(false);
+        }
+      };
+
+      try {
+        const response = await fetchMerchantInfo();
         if (!response.data) {
-          // ... (rest of logic)
-          if (typeof window !== "undefined") {
-            const search = searchParams.toString();
-            const returnTo = search ? `${pathname}?${search}` : pathname;
-            sessionStorage.setItem("vtron_return_to", returnTo);
+          const refreshed = await refreshToken();
+          if (refreshed) {
+            const retryResponse = await fetchMerchantInfo();
+            if (retryResponse.data) {
+              if (active) {
+                setIsAuthed(true);
+                setIsChecking(false);
+              }
+              return;
+            }
           }
-          router.replace("/");
-          if (active) {
-            setIsChecking(false);
-            setIsAuthed(false);
-          }
+          await handleAuthFailure();
           return;
         }
         if (active) {
@@ -62,16 +75,22 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
           setIsChecking(false);
         }
       } catch (err) {
-        if (typeof window !== "undefined") {
-          const search = searchParams.toString();
-          const returnTo = search ? `${pathname}?${search}` : pathname;
-          sessionStorage.setItem("vtron_return_to", returnTo);
+        const refreshed = await refreshToken();
+        if (refreshed) {
+          try {
+            const retryResponse = await fetchMerchantInfo();
+            if (retryResponse.data) {
+              if (active) {
+                setIsAuthed(true);
+                setIsChecking(false);
+              }
+              return;
+            }
+          } catch {
+            // Fall through to failure handling.
+          }
         }
-        router.replace("/");
-        if (active) {
-          setIsChecking(false);
-          setIsAuthed(false);
-        }
+        await handleAuthFailure();
       }
     };
 
@@ -79,7 +98,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     return () => {
       active = false;
     };
-  }, [router, pathname, searchParams]);
+  }, [router, pathname]);
 
   if (isChecking) {
     return (

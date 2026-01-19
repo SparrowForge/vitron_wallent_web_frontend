@@ -155,7 +155,7 @@ export function apiGet<T>(path: string, init?: RequestInit) {
   return apiRequest<T>({ path, method: "GET", ...init });
 }
 
-async function refreshToken() {
+export async function refreshToken() {
   if (typeof window === "undefined") {
     return false;
   }
