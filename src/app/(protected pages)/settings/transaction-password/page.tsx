@@ -1,8 +1,8 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import { cn } from "@/lib/utils";
 import { transactionPasswordSchema } from "@/lib/validationSchemas";
 import { Button } from "@/shared/components/ui/Button";
 import { Card, CardContent } from "@/shared/components/ui/Card";
@@ -55,7 +55,7 @@ export default function TransactionPasswordPage() {
 
   const payPasswordType = useMemo(
     () => (isPayPasswordSet ? "updatePayPassword" : "createPayPassword"),
-    [isPayPasswordSet]
+    [isPayPasswordSet],
   );
 
   useEffect(() => {
@@ -129,7 +129,7 @@ export default function TransactionPasswordPage() {
       setInfoMessage("Code sent to your email.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Failed to send code."
+        error instanceof Error ? error.message : "Failed to send code.",
       );
     } finally {
       setLoading(false);
@@ -161,7 +161,7 @@ export default function TransactionPasswordPage() {
       setInfoMessage(
         isPayPasswordSet
           ? "Transaction password updated."
-          : "Transaction password created."
+          : "Transaction password created.",
       );
       setPayPassword("");
       setConfirmPassword("");
@@ -169,7 +169,7 @@ export default function TransactionPasswordPage() {
       setGoogleCode("");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to update password."
+        error instanceof Error ? error.message : "Unable to update password.",
       );
     } finally {
       setLoading(false);
@@ -183,7 +183,9 @@ export default function TransactionPasswordPage() {
           Settings
         </p>
         <h1 className="text-3xl font-semibold text-(--foreground)">
-          {isPayPasswordSet ? "Update Transaction Password" : "Set Transaction Password"}
+          {isPayPasswordSet
+            ? "Update Transaction Password"
+            : "Set Transaction Password"}
         </h1>
       </header>
 
@@ -200,6 +202,11 @@ export default function TransactionPasswordPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
                 Transaction password (6 digits)
+                {!payPassword && (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                )}
               </label>
               <PasswordInput
                 inputMode="numeric"
@@ -220,6 +227,11 @@ export default function TransactionPasswordPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
                 Confirm password
+                {!confirmPassword && (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                )}
               </label>
               <PasswordInput
                 inputMode="numeric"
@@ -229,7 +241,10 @@ export default function TransactionPasswordPage() {
                 onChange={(event) => {
                   setConfirmPassword(event.target.value);
                   if (fieldErrors.confirmPassword) {
-                    setFieldErrors((prev) => ({ ...prev, confirmPassword: "" }));
+                    setFieldErrors((prev) => ({
+                      ...prev,
+                      confirmPassword: "",
+                    }));
                   }
                 }}
                 placeholder="Confirm password"
@@ -251,10 +266,12 @@ export default function TransactionPasswordPage() {
                   />
                   Email code
                 </label>
-                <label className={cn(
-                  "flex items-center gap-2 cursor-pointer",
-                  !needsGoogle && "opacity-50 cursor-not-allowed"
-                )}>
+                <label
+                  className={cn(
+                    "flex items-center gap-2 cursor-pointer",
+                    !needsGoogle && "opacity-50 cursor-not-allowed",
+                  )}
+                >
                   <input
                     type="radio"
                     checked={verifyType === "google"}
@@ -271,6 +288,11 @@ export default function TransactionPasswordPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-(--paragraph)">
                   Email code
+                  {!emailCode && (
+                    <span className="text-red-500">
+                      <sup>*required</sup>
+                    </span>
+                  )}
                 </label>
                 <div className="flex items-center gap-3">
                   <Input
@@ -300,6 +322,11 @@ export default function TransactionPasswordPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-(--paragraph)">
                   Google code
+                  {!googleCode && (
+                    <span className="text-red-500">
+                      <sup>*required</sup>
+                    </span>
+                  )}
                 </label>
                 <Input
                   value={googleCode}
@@ -314,14 +341,12 @@ export default function TransactionPasswordPage() {
               </div>
             ) : null}
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading}
-
-            >
+            <Button type="submit" className="w-full" disabled={loading}>
               Update transaction password
             </Button>
+            {/* <span className="text-xs text-red-500">
+              * Input Field is required
+            </span> */}
           </form>
         </CardContent>
       </Card>

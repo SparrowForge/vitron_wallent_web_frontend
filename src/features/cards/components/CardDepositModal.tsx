@@ -2,13 +2,12 @@
 
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import { cardDepositSchema } from "@/lib/validationSchemas";
 import { Button } from "@/shared/components/ui/Button";
-import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import { Input } from "@/shared/components/ui/Input";
+import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import ModalShell from "@/shared/components/ui/ModalShell";
 import PasswordInput from "@/shared/components/ui/PasswordInput";
-import Spinner from "@/shared/components/ui/Spinner";
-import { cardDepositSchema } from "@/lib/validationSchemas";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
 
@@ -52,7 +51,7 @@ const calculateFee = (
   baseRate: number,
   inWay: number,
   inFee: number,
-  inRate: number
+  inRate: number,
 ) => {
   const calcCharge = (way: number, fee: number, rate: number) => {
     if (!amount) {
@@ -67,8 +66,7 @@ const calculateFee = (
     return fee + (rate * amount) / 100;
   };
   return (
-    calcCharge(baseWay, baseFee, baseRate) +
-    calcCharge(inWay, inFee, inRate)
+    calcCharge(baseWay, baseFee, baseRate) + calcCharge(inWay, inFee, inRate)
   );
 };
 
@@ -81,9 +79,9 @@ export default function CardDepositModal({
   onSuccess,
 }: CardDepositModalProps) {
   const [amount, setAmount] = useState("");
-  const [config, setConfig] = useState<CardRechargeConfigResponse["data"] | null>(
-    null
-  );
+  const [config, setConfig] = useState<
+    CardRechargeConfigResponse["data"] | null
+  >(null);
   const [payPassword, setPayPassword] = useState("");
   const [verifyType, setVerifyType] = useState<"email" | "google">("email");
   const [verifyCode, setVerifyCode] = useState("");
@@ -110,7 +108,7 @@ export default function CardDepositModal({
       Number(config.baseRechargeFeeRate ?? 0),
       Number(config.inCardFeeWay ?? 0),
       Number(config.inCardFee ?? 0),
-      Number(config.inCardFeeRate ?? 0)
+      Number(config.inCardFeeRate ?? 0),
     );
   }, [config, safeAmount]);
 
@@ -159,7 +157,7 @@ export default function CardDepositModal({
         ]);
         if (!configResponse.data) {
           setErrorMessage(
-            configResponse.msg || "Unable to load recharge config."
+            configResponse.msg || "Unable to load recharge config.",
           );
         }
         setConfig(configResponse.data ?? null);
@@ -168,7 +166,7 @@ export default function CardDepositModal({
         setErrorMessage(
           error instanceof Error
             ? error.message
-            : "Unable to load recharge config."
+            : "Unable to load recharge config.",
         );
       } finally {
         setLoading(false);
@@ -203,7 +201,7 @@ export default function CardDepositModal({
       setInfoMessage("Code sent to your email.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Failed to send code."
+        error instanceof Error ? error.message : "Failed to send code.",
       );
     } finally {
       setLoading(false);
@@ -250,7 +248,7 @@ export default function CardDepositModal({
       onClose();
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Recharge failed."
+        error instanceof Error ? error.message : "Recharge failed.",
       );
     } finally {
       setLoading(false);
@@ -294,6 +292,11 @@ export default function CardDepositModal({
 
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Amount
+          {!amount && (
+            <span className="text-red-500">
+              <sup>*required</sup>
+            </span>
+          )}
           <Input
             type="number"
             placeholder="Enter amount"
@@ -327,6 +330,11 @@ export default function CardDepositModal({
       >
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Payment password
+          {!payPassword && (
+            <span className="text-red-500">
+              <sup>*required</sup>
+            </span>
+          )}
           <PasswordInput
             className="h-12"
             inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
@@ -397,10 +405,10 @@ export default function CardDepositModal({
           type="submit"
           className="w-full mt-4"
           disabled={!canSubmit || loading}
-
         >
           Recharge
         </Button>
+        <span className="text-xs text-red-500">* Input Field is required</span>
       </form>
       {null}
     </ModalShell>

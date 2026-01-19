@@ -5,11 +5,9 @@ import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { withdrawSchema } from "@/lib/validationSchemas";
 import { Button } from "@/shared/components/ui/Button";
 import { Input } from "@/shared/components/ui/Input";
+import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import ModalShell from "@/shared/components/ui/ModalShell";
 import PasswordInput from "@/shared/components/ui/PasswordInput";
-import { Select } from "@/shared/components/ui/Select";
-import Spinner from "@/shared/components/ui/Spinner";
-import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo, useState } from "react";
@@ -181,7 +179,7 @@ export default function WithdrawModal({
         setErrorMessage(
           error instanceof Error
             ? error.message
-            : "Unable to load withdraw config."
+            : "Unable to load withdraw config.",
         );
       } finally {
         setLoading(false);
@@ -257,7 +255,7 @@ export default function WithdrawModal({
       resetForm();
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Withdraw request failed."
+        error instanceof Error ? error.message : "Withdraw request failed.",
       );
     } finally {
       setLoading(false);
@@ -280,7 +278,7 @@ export default function WithdrawModal({
       setInfoMessage("Code sent to your email.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Failed to send code."
+        error instanceof Error ? error.message : "Failed to send code.",
       );
     } finally {
       setLoading(false);
@@ -310,10 +308,7 @@ export default function WithdrawModal({
         <span className="text-xs text-(--paragraph)">{walletName}</span>
       </div>
 
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="mt-6 space-y-4"
-      >
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Currency
           <div className="rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
@@ -322,7 +317,12 @@ export default function WithdrawModal({
         </label>
 
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-          Network
+          Network{" "}
+          {!networkValue && (
+            <span className="text-red-500">
+              <sup>*required</sup>
+            </span>
+          )}
           <div className="flex items-center justify-between rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-sm text-(--double-foreground)">
             <select
               {...register("network")}
@@ -340,7 +340,12 @@ export default function WithdrawModal({
         </label>
 
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-          Payment address
+          Payment address{" "}
+          {!addressValue && (
+            <span className="text-red-500">
+              <sup>*required</sup>
+            </span>
+          )}
           <Input
             placeholder="Please input"
             {...register("address")}
@@ -349,7 +354,12 @@ export default function WithdrawModal({
         </label>
 
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-          Withdrawal amount
+          Withdrawal amount{" "}
+          {!amountValue && (
+            <span className="text-red-500">
+              <sup>*required</sup>
+            </span>
+          )}
           <div className="flex items-center gap-2">
             <Input
               type="number"
@@ -390,7 +400,12 @@ export default function WithdrawModal({
 
         <div className="mt-4 space-y-3">
           <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-            Payment password
+            Payment password{" "}
+            {!payPasswordValue && (
+              <span className="text-red-500">
+                <sup>*required</sup>
+              </span>
+            )}
             <Controller
               control={control}
               name="payPassword"
@@ -420,7 +435,11 @@ export default function WithdrawModal({
                 Email
               </label>
               <label className="flex items-center gap-2">
-                <input type="radio" value="google" {...register("verifyType")} />
+                <input
+                  type="radio"
+                  value="google"
+                  {...register("verifyType")}
+                />
                 Google
               </label>
             </div>
@@ -428,7 +447,12 @@ export default function WithdrawModal({
 
           {verifyType === "email" ? (
             <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-              Email code
+              Email code{" "}
+              {!verifyCodeValue && (
+                <span className="text-red-500">
+                  <sup>*required</sup>
+                </span>
+              )}
               <div className="flex items-center gap-3">
                 <Input
                   placeholder="Enter code"
@@ -448,7 +472,12 @@ export default function WithdrawModal({
             </label>
           ) : (
             <label className="space-y-2 text-xs font-medium text-(--paragraph)">
-              Google code
+              Google code{" "}
+              {!googleCodeValue && (
+                <span className="text-red-500">
+                  <sup>*required</sup>
+                </span>
+              )}
               <Input
                 placeholder="Enter Google code"
                 {...register("googleCode")}
@@ -456,16 +485,15 @@ export default function WithdrawModal({
               />
             </label>
           )}
-
         </div>
         <Button
           type="submit"
           className="w-full mt-4"
           disabled={!canSubmit || loading}
-
         >
           Withdrawal
         </Button>
+        <span className="text-xs text-red-500">* Input Field is required</span>
       </form>
       {null}
     </ModalShell>

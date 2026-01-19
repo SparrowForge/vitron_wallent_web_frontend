@@ -2,13 +2,12 @@
 
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import { cardPinSchema } from "@/lib/validationSchemas";
 import { Button } from "@/shared/components/ui/Button";
-import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import { Input } from "@/shared/components/ui/Input";
+import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import ModalShell from "@/shared/components/ui/ModalShell";
 import PasswordInput from "@/shared/components/ui/PasswordInput";
-import Spinner from "@/shared/components/ui/Spinner";
-import { cardPinSchema } from "@/lib/validationSchemas";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
 
@@ -63,7 +62,15 @@ export default function CardPinModal({
       return Boolean(verifyCode);
     }
     return Boolean(googleCode);
-  }, [pin, confirmPin, payPassword, emailCheck, verifyType, verifyCode, googleCode]);
+  }, [
+    pin,
+    confirmPin,
+    payPassword,
+    emailCheck,
+    verifyType,
+    verifyCode,
+    googleCode,
+  ]);
 
   useEffect(() => {
     if (!open) {
@@ -117,7 +124,7 @@ export default function CardPinModal({
       setInfoMessage("Code sent to your email.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Failed to send code."
+        error instanceof Error ? error.message : "Failed to send code.",
       );
     } finally {
       setLoading(false);
@@ -165,7 +172,7 @@ export default function CardPinModal({
       onClose();
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Failed to update PIN."
+        error instanceof Error ? error.message : "Failed to update PIN.",
       );
     } finally {
       setLoading(false);
@@ -206,6 +213,11 @@ export default function CardPinModal({
       >
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           New PIN
+          {!pin && (
+            <span className="text-red-500">
+              <sup>*required</sup>
+            </span>
+          )}
           <PasswordInput
             inputMode="numeric"
             maxLength={6}
@@ -218,6 +230,11 @@ export default function CardPinModal({
         </label>
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Confirm PIN
+          {!confirmPin && (
+            <span className="text-red-500">
+              <sup>*required</sup>
+            </span>
+          )}
           <PasswordInput
             inputMode="numeric"
             maxLength={6}
@@ -237,6 +254,11 @@ export default function CardPinModal({
 
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Payment password
+          {!payPassword && (
+            <span className="text-red-500">
+              <sup>*required</sup>
+            </span>
+          )}
           <PasswordInput
             className="h-12"
             inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
@@ -273,6 +295,11 @@ export default function CardPinModal({
             {verifyType === "email" ? (
               <label className="space-y-2 text-xs font-medium text-(--paragraph)">
                 Email code
+                {!verifyCode && (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                )}
                 <div className="flex items-center gap-3">
                   <Input
                     placeholder="Enter code"
@@ -292,6 +319,11 @@ export default function CardPinModal({
             ) : (
               <label className="space-y-2 text-xs font-medium text-(--paragraph)">
                 Google code
+                {!googleCode && (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                )}
                 <Input
                   placeholder="Enter Google code"
                   value={googleCode}
@@ -306,12 +338,12 @@ export default function CardPinModal({
           type="submit"
           className="w-full mt-4"
           disabled={!canSubmit || loading}
-
         >
           Save PIN
         </Button>
+        <span className="text-xs text-red-500">* Input Field is required</span>
       </form>
       {null}
-    </ModalShell >
+    </ModalShell>
   );
 }

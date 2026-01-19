@@ -2,13 +2,12 @@
 
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import { cardActivateSchema } from "@/lib/validationSchemas";
 import { Button } from "@/shared/components/ui/Button";
-import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import { Input } from "@/shared/components/ui/Input";
+import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import ModalShell from "@/shared/components/ui/ModalShell";
 import PasswordInput from "@/shared/components/ui/PasswordInput";
-import Spinner from "@/shared/components/ui/Spinner";
-import { cardActivateSchema } from "@/lib/validationSchemas";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
 
@@ -107,15 +106,16 @@ export default function CardActivateModal({
     setInfoMessage("");
     try {
       const response = await apiRequest<ApiResponse>({
-        path: `${API_ENDPOINTS.sendVerifyCode}?type=${verificationPurpose === "getCode" ? "activeCodeCheck" : "activeCard"
-          }`,
+        path: `${API_ENDPOINTS.sendVerifyCode}?type=${
+          verificationPurpose === "getCode" ? "activeCodeCheck" : "activeCard"
+        }`,
         method: "GET",
       });
       setCooldown(60);
       setInfoMessage("Verification code sent to your email.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Failed to send code."
+        error instanceof Error ? error.message : "Failed to send code.",
       );
     } finally {
       setLoading(false);
@@ -160,7 +160,9 @@ export default function CardActivateModal({
       setInfoMessage("Activation code sent to your email.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Failed to get activation code."
+        error instanceof Error
+          ? error.message
+          : "Failed to get activation code.",
       );
     } finally {
       setLoading(false);
@@ -207,7 +209,7 @@ export default function CardActivateModal({
       onClose();
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Activation failed."
+        error instanceof Error ? error.message : "Activation failed.",
       );
     } finally {
       setLoading(false);
@@ -250,6 +252,11 @@ export default function CardActivateModal({
       >
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Activation code
+          {!activeCode && (
+            <span className="text-red-500">
+              <sup>*required</sup>
+            </span>
+          )}
           <div className="flex items-center gap-3">
             <Input
               placeholder="Enter activation code"
@@ -269,6 +276,11 @@ export default function CardActivateModal({
 
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Payment password
+          {!payPassword && (
+            <span className="text-red-500">
+              <sup>*required</sup>
+            </span>
+          )}
           <PasswordInput
             className="h-12"
             inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
@@ -326,6 +338,11 @@ export default function CardActivateModal({
             {verifyType === "email" ? (
               <label className="space-y-2 text-xs font-medium text-(--paragraph)">
                 Email code
+                {!verifyCode && (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                )}
                 <div className="flex items-center gap-3">
                   <Input
                     placeholder="Enter code"
@@ -346,6 +363,11 @@ export default function CardActivateModal({
             ) : (
               <label className="space-y-2 text-xs font-medium text-(--paragraph)">
                 Google code
+                {!googleCode && (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                )}
                 <Input
                   placeholder="Enter Google code"
                   value={googleCode}
@@ -360,12 +382,12 @@ export default function CardActivateModal({
           type="submit"
           className="w-full mt-4"
           disabled={!canSubmit || loading}
-
         >
           Activate
         </Button>
+        <span className="text-xs text-red-500">* Input Field is required</span>
       </form>
       {null}
-    </ModalShell >
+    </ModalShell>
   );
 }

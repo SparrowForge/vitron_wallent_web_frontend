@@ -1,16 +1,20 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import { cn } from "@/lib/utils";
 import { cardApplySchema } from "@/lib/validationSchemas";
 import { Button } from "@/shared/components/ui/Button";
-import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/Card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/shared/components/ui/Card";
 import { Input } from "@/shared/components/ui/Input";
+import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import ModalShell from "@/shared/components/ui/ModalShell";
 import PasswordInput from "@/shared/components/ui/PasswordInput";
-import Spinner from "@/shared/components/ui/Spinner";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -71,7 +75,7 @@ const getBinValue = (bin: BinModel) => String(bin.bin ?? "");
 
 const getCardFee = (
   bin: BinModel,
-  cardType: "VIRTUAL_CARD" | "PHYSICAL_CARD"
+  cardType: "VIRTUAL_CARD" | "PHYSICAL_CARD",
 ) =>
   cardType === "PHYSICAL_CARD"
     ? Number(bin.basePhysicalCardFee ?? 0) + Number(bin.applyCard ?? 0)
@@ -79,25 +83,39 @@ const getCardFee = (
 
 const getKycStatusLabel = (status?: number | string) => {
   switch (Number(status)) {
-    case 0: return "In review";
-    case 1: return "Review completed";
-    case 2: return "Face verification required";
-    case 3: return "Awaiting review";
-    case 4: return "Rejected";
-    case 5: return "Verified";
-    case 7: return "Not submitted";
-    default: return "Unverified";
+    case 0:
+      return "In review";
+    case 1:
+      return "Review completed";
+    case 2:
+      return "Face verification required";
+    case 3:
+      return "Awaiting review";
+    case 4:
+      return "Rejected";
+    case 5:
+      return "Verified";
+    case 7:
+      return "Not submitted";
+    default:
+      return "Unverified";
   }
 };
 
 const getHolderStatusLabel = (status?: string) => {
   switch (status) {
-    case "ACTIVE": return "Active";
-    case "PENDING": return "Pending";
-    case "INACTIVE": return "Inactive";
-    case "REJECTED": return "Rejected";
-    case "FROZEN": return "Frozen";
-    default: return "Not Created";
+    case "ACTIVE":
+      return "Active";
+    case "PENDING":
+      return "Pending";
+    case "INACTIVE":
+      return "Inactive";
+    case "REJECTED":
+      return "Rejected";
+    case "FROZEN":
+      return "Frozen";
+    default:
+      return "Not Created";
   }
 };
 
@@ -107,7 +125,7 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
   const [pendingCount, setPendingCount] = useState(0);
   const [merchantInfo, setMerchantInfo] = useState<MerchantInfo | null>(null);
   const [cardType, setCardType] = useState<"VIRTUAL_CARD" | "PHYSICAL_CARD">(
-    "VIRTUAL_CARD"
+    "VIRTUAL_CARD",
   );
   const [alias, setAlias] = useState("");
   const [payPassword, setPayPassword] = useState("");
@@ -123,7 +141,7 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
 
   const selectedBin = useMemo(
     () => bins.find((bin) => getBinId(bin) === selectedBinId) ?? null,
-    [bins, selectedBinId]
+    [bins, selectedBinId],
   );
 
   const supportsPhysical = Number(selectedBin?.supportPhysicalCard ?? 0) === 1;
@@ -201,7 +219,7 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
 
         const binsData = Array.isArray(binsResponse.data)
           ? binsResponse.data
-          : binsResponse.data?.bin ?? [];
+          : (binsResponse.data?.bin ?? []);
 
         setBins(binsData);
         const firstBinId = binsData.length > 0 ? getBinId(binsData[0]) : "";
@@ -212,7 +230,7 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
           pendingRes.status === "rejected" || merchantRes.status === "rejected";
         if (anyFailed) {
           setErrorMessage(
-            "Some data couldn't be loaded, but bins are available."
+            "Some data couldn't be loaded, but bins are available.",
           );
         }
       } catch (error) {
@@ -220,7 +238,7 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
         setErrorMessage(
           error instanceof Error
             ? error.message
-            : "Unable to load card apply data."
+            : "Unable to load card apply data.",
         );
       } finally {
         if (mounted) {
@@ -276,7 +294,7 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
       setInfoMessage("Code sent to your email.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Failed to send code."
+        error instanceof Error ? error.message : "Failed to send code.",
       );
     } finally {
       setLoading(false);
@@ -419,10 +437,11 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
                         key={id}
                         type="button"
                         onClick={() => setSelectedBinId(id)}
-                        className={`rounded-2xl border px-4 py-3 text-left transition-all duration-200 ${active
-                          ? "border-(--brand) bg-(--basic-cta) shadow-[0_0_20px_-5px_rgba(var(--brand-rgb),0.3)]"
-                          : "border-(--stroke) bg-(--basic-cta) hover:border-(--brand)/50 hover:bg-(--basic-cta)/80"
-                          }`}
+                        className={`rounded-2xl border px-4 py-3 text-left transition-all duration-200 ${
+                          active
+                            ? "border-(--brand) bg-(--basic-cta) shadow-[0_0_20px_-5px_rgba(var(--brand-rgb),0.3)]"
+                            : "border-(--stroke) bg-(--basic-cta) hover:border-(--brand)/50 hover:bg-(--basic-cta)/80"
+                        }`}
                       >
                         <div className="text-sm font-semibold text-(--foreground)">
                           {bin.cardType ?? "Card"}
@@ -483,7 +502,9 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
             <CardContent className="p-4 pt-2">
               <div className="flex items-center justify-between text-xs text-(--paragraph)">
                 <span>Apply fee</span>
-                <span className="text-(--foreground)">{fee.toFixed(2)} USD</span>
+                <span className="text-(--foreground)">
+                  {fee.toFixed(2)} USD
+                </span>
               </div>
               <div className="mt-2 text-xs text-(--paragraph)">
                 Top up range {Number(minAmount).toFixed(2)} -{" "}
@@ -502,6 +523,11 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
             <CardHeader className="p-4 pb-2">
               <CardTitle className="text-sm font-semibold text-(--foreground)">
                 Security verification
+                {!payPassword && (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-2">
@@ -520,10 +546,12 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
                   >
                     {kycOk ? "View Authentication" : "Go to Authentication"}
                   </Link>
-                  <span className={cn(
-                    "font-medium",
-                    kycOk ? "text-green-500" : "text-amber-500"
-                  )}>
+                  <span
+                    className={cn(
+                      "font-medium",
+                      kycOk ? "text-green-500" : "text-amber-500",
+                    )}
+                  >
                     {getKycStatusLabel(merchantInfo?.kycStatus)}
                   </span>
                 </div>
@@ -557,7 +585,7 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
                   <div className="flex items-center justify-between">
                     <Link
                       href={`/cards/holder?bin=${encodeURIComponent(
-                        getBinValue(selectedBin ?? {})
+                        getBinValue(selectedBin ?? {}),
                       )}&status=${encodeURIComponent(holderStatus)}`}
                       className="font-medium text-(--brand) hover:underline"
                       onClick={onClose}
@@ -568,10 +596,14 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
                           ? "Update Holder Info"
                           : "Create Holder Info"}
                     </Link>
-                    <span className={cn(
-                      "font-medium",
-                      holderStatus === "ACTIVE" ? "text-green-500" : "text-amber-500"
-                    )}>
+                    <span
+                      className={cn(
+                        "font-medium",
+                        holderStatus === "ACTIVE"
+                          ? "text-green-500"
+                          : "text-amber-500",
+                      )}
+                    >
                       {getHolderStatusLabel(holderStatus)}
                     </span>
                   </div>
@@ -597,7 +629,9 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
                         variant="link"
                         size="sm"
                         onClick={() =>
-                          setVerifyType(verifyType === "email" ? "google" : "email")
+                          setVerifyType(
+                            verifyType === "email" ? "google" : "email",
+                          )
                         }
                         className="h-auto p-0 text-xs font-semibold text-(--brand)"
                       >
@@ -638,11 +672,13 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
                 <Button
                   type="submit"
                   disabled={!canSubmit || loading}
-
                   className="mt-4 w-full"
                 >
                   Apply card
                 </Button>
+                {/* <span className="text-xs text-red-500">
+                  * Input Field is required
+                </span> */}
               </form>
             </CardContent>
           </Card>

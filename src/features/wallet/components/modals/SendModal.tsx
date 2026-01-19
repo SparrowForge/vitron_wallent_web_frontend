@@ -5,11 +5,10 @@ import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { emailSchema, transferSchema } from "@/lib/validationSchemas";
 import { Button } from "@/shared/components/ui/Button";
 import { Input } from "@/shared/components/ui/Input";
+import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import ModalShell from "@/shared/components/ui/ModalShell";
 import PasswordInput from "@/shared/components/ui/PasswordInput";
 import { Select } from "@/shared/components/ui/Select";
-import Spinner from "@/shared/components/ui/Spinner";
-import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
 
@@ -133,7 +132,7 @@ export default function SendModal({
           amounts.map((entry) => ({
             currency: entry.currency ?? "USD",
             amount: entry.amount ?? "0",
-          }))
+          })),
         );
         setFeeRate(Number(response.data.fee ?? 0));
         if (amounts[0]?.currency) {
@@ -145,7 +144,7 @@ export default function SendModal({
         setErrorMessage(
           error instanceof Error
             ? error.message
-            : "Unable to load transfer config."
+            : "Unable to load transfer config.",
         );
       } finally {
         setLoading(false);
@@ -186,7 +185,7 @@ export default function SendModal({
       setInfoMessage("Code sent to your email.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Failed to send code."
+        error instanceof Error ? error.message : "Failed to send code.",
       );
     } finally {
       setLoading(false);
@@ -280,7 +279,7 @@ export default function SendModal({
       resetForm();
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Transfer failed."
+        error instanceof Error ? error.message : "Transfer failed.",
       );
     } finally {
       setLoading(false);
@@ -321,6 +320,11 @@ export default function SendModal({
       >
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Receive account
+          {!recipient && (
+            <span className="text-red-500">
+              <sup>*required</sup>
+            </span>
+          )}
           <Input
             className={emailError ? "border-red-500 bg-red-500/5" : ""}
             placeholder="Please input email"
@@ -341,7 +345,7 @@ export default function SendModal({
               setEmailError(
                 validation.success
                   ? ""
-                  : validation.error.issues[0]?.message ?? "Invalid email."
+                  : (validation.error.issues[0]?.message ?? "Invalid email."),
               );
             }}
             error={emailError}
@@ -350,6 +354,11 @@ export default function SendModal({
 
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Currency
+          {!currency && (
+            <span className="text-red-500">
+              <sup>*required</sup>
+            </span>
+          )}
           <Select
             value={currency}
             onChange={(event) => setCurrency(event.target.value)}
@@ -367,6 +376,11 @@ export default function SendModal({
 
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Amount
+          {!amount && (
+            <span className="text-red-500">
+              <sup>*required</sup>
+            </span>
+          )}
           <Input
             type="number"
             placeholder="Enter amount"
@@ -400,32 +414,29 @@ export default function SendModal({
             </span>
           </div>
         </label>
-      </form>
 
-      <div className="mt-6 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-xs text-(--paragraph)">
-        <div className="flex items-center justify-between">
-          <span>Fee</span>
-          <span className="text-(--double-foreground)">
-            {feeValue.toFixed(2)} {currency}
-          </span>
+        <div className="mt-6 rounded-2xl border border-(--stroke) bg-(--background) px-4 py-3 text-xs text-(--paragraph)">
+          <div className="flex items-center justify-between">
+            <span>Fee</span>
+            <span className="text-(--double-foreground)">
+              {feeValue.toFixed(2)} {currency}
+            </span>
+          </div>
+          <div className="mt-2 flex items-center justify-between">
+            <span>Total</span>
+            <span className="text-(--double-foreground)">
+              {totalValue.toFixed(2)} {currency}
+            </span>
+          </div>
         </div>
-        <div className="mt-2 flex items-center justify-between">
-          <span>Total</span>
-          <span className="text-(--double-foreground)">
-            {totalValue.toFixed(2)} {currency}
-          </span>
-        </div>
-      </div>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleTransfer();
-        }}
-        className="mt-4 space-y-3"
-      >
         <label className="space-y-2 text-xs font-medium text-(--paragraph)">
           Payment password
+          {!payPassword && (
+            <span className="text-red-500">
+              <sup>*required</sup>
+            </span>
+          )}
           <PasswordInput
             className="h-12"
             inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
@@ -477,6 +488,11 @@ export default function SendModal({
         {verifyType === "email" ? (
           <label className="space-y-2 text-xs font-medium text-(--paragraph)">
             Email code
+            {!verifyCode && (
+              <span className="text-red-500">
+                <sup>*required</sup>
+              </span>
+            )}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-3">
                 <Input
@@ -501,11 +517,15 @@ export default function SendModal({
                 </Button>
               </div>
             </div>
-
           </label>
         ) : (
           <label className="space-y-2 text-xs font-medium text-(--paragraph)">
             Google code
+            {!googleCode && (
+              <span className="text-red-500">
+                <sup>*required</sup>
+              </span>
+            )}
             <Input
               placeholder="Enter Google code"
               value={googleCode}
@@ -523,10 +543,10 @@ export default function SendModal({
           type="submit"
           className="w-full mt-4"
           disabled={!canSubmit || loading}
-
         >
           Transfer
         </Button>
+        <span className="text-xs text-red-500">* Input Field is required</span>
       </form>
       {null}
     </ModalShell>

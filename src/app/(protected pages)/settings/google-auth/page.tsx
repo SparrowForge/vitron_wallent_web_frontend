@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { googleAuthSchema } from "@/lib/validationSchemas";
@@ -108,7 +107,7 @@ export default function GoogleAuthPage() {
         setQrUrl(response.data.url ?? "");
       } catch (error) {
         setErrorMessage(
-          error instanceof Error ? error.message : "Unable to load QR code."
+          error instanceof Error ? error.message : "Unable to load QR code.",
         );
       } finally {
         setLoading(false);
@@ -144,7 +143,7 @@ export default function GoogleAuthPage() {
       setInfoMessage(`Code sent to ${email || "your email"}.`);
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Failed to send code."
+        error instanceof Error ? error.message : "Failed to send code.",
       );
     } finally {
       setLoading(false);
@@ -192,8 +191,7 @@ export default function GoogleAuthPage() {
         body: JSON.stringify(payload),
       });
       setInfoMessage("Google Authenticator updated.");
-      const nextStatus =
-        mode === "close" ? 0 : 1;
+      const nextStatus = mode === "close" ? 0 : 1;
       setGoogleStatus(nextStatus);
       if (nextStatus === 0) {
         setMode("open");
@@ -204,7 +202,9 @@ export default function GoogleAuthPage() {
       setGoogleCode("");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to update Google Auth."
+        error instanceof Error
+          ? error.message
+          : "Unable to update Google Auth.",
       );
     } finally {
       setLoading(false);
@@ -213,8 +213,8 @@ export default function GoogleAuthPage() {
 
   const qrImage = qrUrl
     ? `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(
-      qrUrl
-    )}`
+        qrUrl,
+      )}`
     : "";
 
   return (
@@ -280,14 +280,15 @@ export default function GoogleAuthPage() {
                   </Button>
                 ) : null}
               </div>
-
               {needsQr ? (
                 <div className="mt-6 grid gap-4 sm:grid-cols-[180px_1fr]">
                   <div className="flex items-center justify-center rounded-2xl border border-(--stroke) bg-(--background) p-4">
                     {qrImage ? (
                       <img src={qrImage} alt="Google Auth QR code" />
                     ) : (
-                      <span className="text-xs text-(--paragraph)">QR not ready</span>
+                      <span className="text-xs text-(--paragraph)">
+                        QR not ready
+                      </span>
                     )}
                   </div>
                   <div className="space-y-2 text-sm text-(--paragraph)">
@@ -303,11 +304,15 @@ export default function GoogleAuthPage() {
                   </div>
                 </div>
               ) : null}
-
               <div className="mt-6 space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-(--paragraph)">
                     Email code
+                    {!emailCode && (
+                      <span className="text-red-500">
+                        <sup>*required</sup>
+                      </span>
+                    )}
                   </label>
                   <div className="flex items-center gap-3">
                     <Input
@@ -330,6 +335,11 @@ export default function GoogleAuthPage() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-(--paragraph)">
                     Google code
+                    {!googleCode && (
+                      <span className="text-red-500">
+                        <sup>*required</sup>
+                      </span>
+                    )}
                   </label>
                   <Input
                     placeholder="Enter Google code"
@@ -342,11 +352,14 @@ export default function GoogleAuthPage() {
                   type="submit"
                   className="w-full"
                   disabled={!emailCode || !googleCode || loading}
-
                 >
                   Submit
                 </Button>
               </div>
+
+              {/* <span className="text-xs text-red-500">
+                * Input Field is required
+              </span> */}
             </form>
           </div>
         </CardContent>

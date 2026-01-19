@@ -9,7 +9,6 @@ import {
   sendRegisterCodeAction,
 } from "@/app/auth/actions";
 import LandingHeader from "@/features/navigation/components/LandingHeader";
-import { persistTokens } from "@/lib/auth";
 import {
   emailSchema,
   forgotPasswordSchema,
@@ -18,12 +17,11 @@ import {
 } from "@/lib/validationSchemas";
 import { Button } from "@/shared/components/ui/Button";
 import { Input } from "@/shared/components/ui/Input";
+import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import PasswordInput from "@/shared/components/ui/PasswordInput";
-import Spinner from "@/shared/components/ui/Spinner";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 
 export default function AuthPage() {
   const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
@@ -52,7 +50,7 @@ export default function AuthPage() {
 
   const setValidationErrors = (
     message: string,
-    field?: keyof typeof fieldErrors
+    field?: keyof typeof fieldErrors,
   ) => {
     if (field) {
       setFieldErrors((prev) => ({ ...prev, [field]: message }));
@@ -72,7 +70,7 @@ export default function AuthPage() {
             const issue = result.error.issues[0];
             setValidationErrors(
               issue?.message ?? getFirstError(result.error),
-              issue?.path?.[0] as keyof typeof fieldErrors
+              issue?.path?.[0] as keyof typeof fieldErrors,
             );
             setStatus("idle");
             return;
@@ -86,7 +84,7 @@ export default function AuthPage() {
           const issue = baseCheck.error.issues[0];
           setValidationErrors(
             issue?.message ?? getFirstError(baseCheck.error),
-            issue?.path?.[0] as keyof typeof fieldErrors
+            issue?.path?.[0] as keyof typeof fieldErrors,
           );
           setStatus("idle");
           return;
@@ -128,7 +126,7 @@ export default function AuthPage() {
           const issue = result.error.issues[0];
           setValidationErrors(
             issue?.message ?? getFirstError(result.error),
-            issue?.path?.[0] as keyof typeof fieldErrors
+            issue?.path?.[0] as keyof typeof fieldErrors,
           );
           setStatus("idle");
           return;
@@ -159,7 +157,7 @@ export default function AuthPage() {
           const issue = result.error.issues[0];
           setValidationErrors(
             issue?.message ?? getFirstError(result.error),
-            issue?.path?.[0] as keyof typeof fieldErrors
+            issue?.path?.[0] as keyof typeof fieldErrors,
           );
           setStatus("idle");
           return;
@@ -181,7 +179,7 @@ export default function AuthPage() {
       setStatus("error");
       setInfoMessage("");
       setErrorMessage(
-        error instanceof Error ? error.message : "Something went wrong."
+        error instanceof Error ? error.message : "Something went wrong.",
       );
     }
   };
@@ -199,7 +197,7 @@ export default function AuthPage() {
         const issue = result.error?.issues[0];
         setValidationErrors(
           issue?.message ?? getFirstError(result.error),
-          "email"
+          "email",
         );
         setStatus("idle");
         return;
@@ -218,7 +216,7 @@ export default function AuthPage() {
       setStatus("error");
       setInfoMessage("");
       setErrorMessage(
-        error instanceof Error ? error.message : "Something went wrong."
+        error instanceof Error ? error.message : "Something went wrong.",
       );
     }
   };
@@ -281,7 +279,12 @@ export default function AuthPage() {
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--foreground)">
-                Email
+                Email{" "}
+                {!email && (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                )}
               </label>
               <Input
                 type="email"
@@ -298,7 +301,12 @@ export default function AuthPage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--foreground)">
-                {mode === "forgot" ? "New Password" : "Password"}
+                {mode === "forgot" ? "New Password" : "Password"}{" "}
+                {!password && (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                )}
               </label>
               <PasswordInput
                 placeholder="••••••••"
@@ -318,150 +326,162 @@ export default function AuthPage() {
             {(mode === "register" ||
               mode === "forgot" ||
               step === "verify") && (
-                <>
-                  {mode === "login" ? (
-                    <>
-                      <div className="flex items-center gap-4 text-sm font-medium text-(--foreground)">
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            checked={verifyType === "email"}
-                            onChange={() => {
-                              setVerifyType("email");
-                              setFieldErrors((prev) => ({
-                                ...prev,
-                                emailCode: "",
-                                googleCode: "",
-                              }));
-                            }}
-                          />
-                          Email code
+              <>
+                {mode === "login" ? (
+                  <>
+                    <div className="flex items-center gap-4 text-sm font-medium text-(--foreground)">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          checked={verifyType === "email"}
+                          onChange={() => {
+                            setVerifyType("email");
+                            setFieldErrors((prev) => ({
+                              ...prev,
+                              emailCode: "",
+                              googleCode: "",
+                            }));
+                          }}
+                        />
+                        Email code
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          checked={verifyType === "google"}
+                          onChange={() => {
+                            setVerifyType("google");
+                            setFieldErrors((prev) => ({
+                              ...prev,
+                              emailCode: "",
+                              googleCode: "",
+                            }));
+                          }}
+                        />
+                        Google code
+                      </label>
+                    </div>
+                    {verifyType === "email" ? (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-(--foreground)">
+                          Email code{" "}
+                          {!emailCode && (
+                            <span className="text-red-500">
+                              <sup>*required</sup>
+                            </span>
+                          )}
                         </label>
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            checked={verifyType === "google"}
-                            onChange={() => {
-                              setVerifyType("google");
-                              setFieldErrors((prev) => ({
-                                ...prev,
-                                emailCode: "",
-                                googleCode: "",
-                              }));
-                            }}
-                          />
-                          Google code
-                        </label>
-                      </div>
-                      {verifyType === "email" ? (
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-(--foreground)">
-                            Email code
-                          </label>
-                          <div className="flex items-center gap-3">
-                            <Input
-                              placeholder="Enter the code"
-                              value={emailCode}
-                              onChange={(event) => {
-                                setEmailCode(event.target.value);
-                                if (fieldErrors.emailCode) {
-                                  setFieldErrors((prev) => ({
-                                    ...prev,
-                                    emailCode: "",
-                                  }));
-                                }
-                              }}
-                              error={fieldErrors.emailCode}
-                            />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              className="min-w-[120px]"
-                              disabled={status === "loading" || cooldown > 0 || !email}
-                              onClick={handleSendCode}
-                            >
-                              {cooldown > 0 ? `${cooldown}s` : "Send code"}
-                            </Button>
-                          </div>
-                        </div>
-                      ) : null}
-                      {verifyType === "google" ? (
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-(--foreground)">
-                            Google code
-                          </label>
+                        <div className="flex items-center gap-3">
                           <Input
-                            placeholder="Enter Google code"
-                            value={googleCode}
+                            placeholder="Enter the code"
+                            value={emailCode}
                             onChange={(event) => {
-                              setGoogleCode(event.target.value);
-                              if (fieldErrors.googleCode) {
+                              setEmailCode(event.target.value);
+                              if (fieldErrors.emailCode) {
                                 setFieldErrors((prev) => ({
                                   ...prev,
-                                  googleCode: "",
+                                  emailCode: "",
                                 }));
                               }
                             }}
-                            error={fieldErrors.googleCode}
+                            error={fieldErrors.emailCode}
                           />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="min-w-[120px]"
+                            disabled={
+                              status === "loading" || cooldown > 0 || !email
+                            }
+                            onClick={handleSendCode}
+                          >
+                            {cooldown > 0 ? `${cooldown}s` : "Send code"}
+                          </Button>
                         </div>
-                      ) : null}
-                    </>
-                  ) : null}
-                  {mode === "register" || mode === "forgot" ? (
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-(--foreground)">
-                        {mode === "forgot" ? "Email code" : "Email code"}
-                      </label>
-                      <div className="flex items-center gap-3">
+                      </div>
+                    ) : null}
+                    {verifyType === "google" ? (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-(--foreground)">
+                          Google code{" "}
+                          {!googleCode && (
+                            <span className="text-red-500">
+                              <sup>*required</sup>
+                            </span>
+                          )}
+                        </label>
                         <Input
-                          placeholder="Enter the code"
-                          value={emailCode}
+                          placeholder="Enter Google code"
+                          value={googleCode}
                           onChange={(event) => {
-                            setEmailCode(event.target.value);
-                            if (fieldErrors.emailCode) {
+                            setGoogleCode(event.target.value);
+                            if (fieldErrors.googleCode) {
                               setFieldErrors((prev) => ({
                                 ...prev,
-                                emailCode: "",
+                                googleCode: "",
                               }));
                             }
                           }}
-                          error={fieldErrors.emailCode}
+                          error={fieldErrors.googleCode}
                         />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="min-w-[120px]"
-                          disabled={status === "loading" || cooldown > 0 || !email}
-                          onClick={handleSendCode}
-                        >
-                          {cooldown > 0 ? `${cooldown}s` : "Send code"}
-                        </Button>
                       </div>
+                    ) : null}
+                  </>
+                ) : null}
+                {mode === "register" || mode === "forgot" ? (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-(--foreground)">
+                      {mode === "forgot" ? "Email code" : "Email code"}
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <Input
+                        placeholder="Enter the code"
+                        value={emailCode}
+                        onChange={(event) => {
+                          setEmailCode(event.target.value);
+                          if (fieldErrors.emailCode) {
+                            setFieldErrors((prev) => ({
+                              ...prev,
+                              emailCode: "",
+                            }));
+                          }
+                        }}
+                        error={fieldErrors.emailCode}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="min-w-[120px]"
+                        disabled={
+                          status === "loading" || cooldown > 0 || !email
+                        }
+                        onClick={handleSendCode}
+                      >
+                        {cooldown > 0 ? `${cooldown}s` : "Send code"}
+                      </Button>
                     </div>
-                  ) : null}
-                </>
-              )}
+                  </div>
+                ) : null}
+              </>
+            )}
 
             <Button
               type="submit"
               className="w-full"
               disabled={status === "loading"}
             >
-              {status !== "loading" && (
-                mode === "login" ? (
-                  step === "credentials" ? (
-                    "Continue"
-                  ) : (
-                    "Login"
-                  )
-                ) : mode === "register" ? (
-                  "Create account"
-                ) : (
-                  "Reset password"
-                )
-              )}
+              {status !== "loading" &&
+                (mode === "login"
+                  ? step === "credentials"
+                    ? "Continue"
+                    : "Login"
+                  : mode === "register"
+                    ? "Create account"
+                    : "Reset password")}
             </Button>
+            {/* <span className="text-xs text-red-500">
+              * Input Field is required
+            </span> */}
           </form>
           {mode === "login" ? (
             <Button

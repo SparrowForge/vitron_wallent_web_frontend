@@ -1,12 +1,11 @@
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import { cardFreezeSchema } from "@/lib/validationSchemas";
 import { Button } from "@/shared/components/ui/Button";
-import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import { Input } from "@/shared/components/ui/Input";
+import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import ModalShell from "@/shared/components/ui/ModalShell";
 import PasswordInput from "@/shared/components/ui/PasswordInput";
-import Spinner from "@/shared/components/ui/Spinner";
-import { cardFreezeSchema } from "@/lib/validationSchemas";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { useEffect, useMemo, useState } from "react";
 
@@ -111,15 +110,16 @@ export default function CardFreezeModal({
     setInfoMessage("");
     try {
       const response = await apiRequest<CardModifyResponse>({
-        path: `${API_ENDPOINTS.sendVerifyCode}?type=${isFrozen ? "unfrozenCard" : "frozenCard"
-          }`,
+        path: `${API_ENDPOINTS.sendVerifyCode}?type=${
+          isFrozen ? "unfrozenCard" : "frozenCard"
+        }`,
         method: "GET",
       });
       setCooldown(60);
       setInfoMessage("Code sent to your email.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Failed to send code."
+        error instanceof Error ? error.message : "Failed to send code.",
       );
     } finally {
       setLoading(false);
@@ -165,7 +165,7 @@ export default function CardFreezeModal({
       onClose();
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Card update failed."
+        error instanceof Error ? error.message : "Card update failed.",
       );
     } finally {
       setLoading(false);
@@ -229,6 +229,11 @@ export default function CardFreezeModal({
         <div className="space-y-3">
           <label className="space-y-2 text-xs font-medium text-(--paragraph)">
             Payment password
+            {!payPassword && (
+              <span className="text-red-500">
+                <sup>*required</sup>
+              </span>
+            )}
             <PasswordInput
               className="h-12"
               inputClassName="h-12 w-full rounded-2xl border border-(--stroke) bg-(--background) px-4 text-sm text-(--foreground) placeholder:text-(--placeholder)"
@@ -266,6 +271,11 @@ export default function CardFreezeModal({
           {emailCheck && verifyType === "email" ? (
             <label className="space-y-2 text-xs font-medium text-(--paragraph)">
               Email code
+              {!verifyCode && (
+                <span className="text-red-500">
+                  <sup>*required</sup>
+                </span>
+              )}
               <div className="flex items-center gap-3">
                 <Input
                   placeholder="Enter code"
@@ -289,6 +299,11 @@ export default function CardFreezeModal({
           {emailCheck && verifyType === "google" ? (
             <label className="space-y-2 text-xs font-medium text-(--paragraph)">
               Google code
+              {!googleCode && (
+                <span className="text-red-500">
+                  <sup>*required</sup>
+                </span>
+              )}
               <Input
                 placeholder="Enter Google code"
                 value={googleCode}
@@ -303,10 +318,10 @@ export default function CardFreezeModal({
           type="submit"
           className="w-full"
           disabled={!canSubmit || loading}
-
         >
           {isFrozen ? "Unfreeze card" : "Freeze card"}
         </Button>
+        <span className="text-xs text-red-500">* Input Field is required</span>
       </form>
       {null}
     </ModalShell>

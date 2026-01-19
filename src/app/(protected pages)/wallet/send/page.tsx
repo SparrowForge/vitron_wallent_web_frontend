@@ -129,7 +129,7 @@ export default function WalletSendPage() {
           amounts.map((entry) => ({
             currency: entry.currency ?? "USD",
             amount: entry.amount ?? "0",
-          }))
+          })),
         );
         setFeeRate(Number(response.data.fee ?? 0));
         if (amounts[0]?.currency) {
@@ -141,7 +141,7 @@ export default function WalletSendPage() {
         setErrorMessage(
           error instanceof Error
             ? error.message
-            : "Unable to load transfer config."
+            : "Unable to load transfer config.",
         );
       } finally {
         setLoading(false);
@@ -176,7 +176,7 @@ export default function WalletSendPage() {
         setEmailError("");
       } catch (error) {
         setErrorMessage(
-          error instanceof Error ? error.message : "Unable to decode QR code."
+          error instanceof Error ? error.message : "Unable to decode QR code.",
         );
       } finally {
         setLoading(false);
@@ -217,7 +217,7 @@ export default function WalletSendPage() {
       setInfoMessage("Code sent to your email.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Failed to send code."
+        error instanceof Error ? error.message : "Failed to send code.",
       );
     } finally {
       setLoading(false);
@@ -309,7 +309,7 @@ export default function WalletSendPage() {
       resetForm();
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Transfer failed."
+        error instanceof Error ? error.message : "Transfer failed.",
       );
     } finally {
       setLoading(false);
@@ -334,6 +334,11 @@ export default function WalletSendPage() {
           <div className="space-y-2">
             <label className="text-sm font-medium text-(--paragraph)">
               Receive account
+              {!recipient && (
+                <span className="text-red-500">
+                  <sup>*required</sup>
+                </span>
+              )}
             </label>
             <Input
               className={emailError ? "border-red-500 bg-red-500/5" : ""}
@@ -355,7 +360,7 @@ export default function WalletSendPage() {
                 setEmailError(
                   validation.success
                     ? ""
-                    : validation.error.issues[0]?.message ?? "Invalid email."
+                    : (validation.error.issues[0]?.message ?? "Invalid email."),
                 );
               }}
               error={emailError}
@@ -365,6 +370,11 @@ export default function WalletSendPage() {
           <div className="space-y-2">
             <label className="text-sm font-medium text-(--paragraph)">
               Currency
+              {!currency && (
+                <span className="text-red-500">
+                  <sup>*required</sup>
+                </span>
+              )}
             </label>
             <Select
               value={currency}
@@ -384,6 +394,11 @@ export default function WalletSendPage() {
           <div className="space-y-2">
             <label className="text-sm font-medium text-(--paragraph)">
               Amount
+              {!amount && (
+                <span className="text-red-500">
+                  <sup>*required</sup>
+                </span>
+              )}
             </label>
             <Input
               type="number"
@@ -441,6 +456,11 @@ export default function WalletSendPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
                 Payment password
+                {!payPassword && (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                )}
               </label>
               <PasswordInput
                 placeholder="Enter payment password"
@@ -492,6 +512,11 @@ export default function WalletSendPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-(--paragraph)">
                   Email code
+                  {!verifyCode && (
+                    <span className="text-red-500">
+                      <sup>*required</sup>
+                    </span>
+                  )}
                 </label>
                 <div className="flex items-center gap-3">
                   <Input
@@ -520,6 +545,11 @@ export default function WalletSendPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-(--paragraph)">
                   Google code
+                  {!googleCode && (
+                    <span className="text-red-500">
+                      <sup>*required</sup>
+                    </span>
+                  )}
                 </label>
                 <Input
                   placeholder="Enter Google code"
@@ -541,12 +571,11 @@ export default function WalletSendPage() {
             onClick={handleTransfer}
             className="w-full"
             disabled={!canSubmit || loading}
-
           >
             Transfer
           </Button>
-        </CardContent >
-      </Card >
-    </div >
+        </CardContent>
+      </Card>
+    </div>
   );
 }

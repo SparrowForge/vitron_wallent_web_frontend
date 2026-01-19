@@ -1,11 +1,10 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { clearAuthTokens } from "@/lib/auth";
-import { emailSchema } from "@/lib/validationSchemas";
-import { modifyEmailSchema } from "@/lib/validationSchemas";
+import { cn } from "@/lib/utils";
+import { emailSchema, modifyEmailSchema } from "@/lib/validationSchemas";
 import { Button } from "@/shared/components/ui/Button";
 import { Card, CardContent } from "@/shared/components/ui/Card";
 import { Input } from "@/shared/components/ui/Input";
@@ -115,7 +114,7 @@ export default function ModifyEmailPage() {
     try {
       const response = await apiRequest<ApiResponse>({
         path: `${API_ENDPOINTS.sendCheckEmail}?email=${encodeURIComponent(
-          newEmail
+          newEmail,
         )}&type=changeEmail`,
         method: "POST",
         body: JSON.stringify({ email: newEmail, type: "changeEmail" }),
@@ -124,7 +123,7 @@ export default function ModifyEmailPage() {
       setInfoMessage("Code sent to your new email.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Failed to send code."
+        error instanceof Error ? error.message : "Failed to send code.",
       );
     } finally {
       setLoading(false);
@@ -187,7 +186,7 @@ export default function ModifyEmailPage() {
       router.replace("/auth");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to update email."
+        error instanceof Error ? error.message : "Unable to update email.",
       );
     } finally {
       setLoading(false);
@@ -220,6 +219,11 @@ export default function ModifyEmailPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
                 New email
+                {!newEmail && (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                )}
               </label>
               <Input
                 type="email"
@@ -237,7 +241,8 @@ export default function ModifyEmailPage() {
                   if (!validation.success) {
                     setFieldErrors((prev) => ({
                       ...prev,
-                      newEmail: validation.error.issues[0]?.message ?? "Invalid email",
+                      newEmail:
+                        validation.error.issues[0]?.message ?? "Invalid email",
                     }));
                   }
                 }}
@@ -248,6 +253,11 @@ export default function ModifyEmailPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
                 Login password
+                {!password && (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                )}
               </label>
               <PasswordInput
                 placeholder="Enter login password"
@@ -276,10 +286,12 @@ export default function ModifyEmailPage() {
                   />
                   Email code
                 </label>
-                <label className={cn(
-                  "flex items-center gap-2 cursor-pointer",
-                  !needsGoogle && "opacity-50 cursor-not-allowed"
-                )}>
+                <label
+                  className={cn(
+                    "flex items-center gap-2 cursor-pointer",
+                    !needsGoogle && "opacity-50 cursor-not-allowed",
+                  )}
+                >
                   <input
                     type="radio"
                     checked={verifyType === "google"}
@@ -296,6 +308,11 @@ export default function ModifyEmailPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-(--paragraph)">
                   Email code
+                  {!emailCode && (
+                    <span className="text-red-500">
+                      <sup>*required</sup>
+                    </span>
+                  )}
                 </label>
                 <div className="flex items-center gap-3">
                   <Input
@@ -326,6 +343,11 @@ export default function ModifyEmailPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-(--paragraph)">
                   Google code
+                  {!googleCode && (
+                    <span className="text-red-500">
+                      <sup>*required</sup>
+                    </span>
+                  )}
                 </label>
                 <Input
                   placeholder="Enter Google code"
@@ -349,6 +371,9 @@ export default function ModifyEmailPage() {
             >
               Update email
             </Button>
+            {/* <span className="text-xs text-red-500">
+              * Input Field is required
+            </span> */}
           </form>
         </CardContent>
       </Card>

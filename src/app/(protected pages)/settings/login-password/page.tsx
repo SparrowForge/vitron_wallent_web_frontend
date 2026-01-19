@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { clearAuthTokens } from "@/lib/auth";
@@ -52,7 +51,7 @@ export default function LoginPasswordPage() {
 
   const setValidationError = (
     message: string,
-    field?: keyof typeof fieldErrors
+    field?: keyof typeof fieldErrors,
   ) => {
     if (field) {
       setFieldErrors((prev) => ({ ...prev, [field]: message }));
@@ -117,7 +116,7 @@ export default function LoginPasswordPage() {
       setInfoMessage("Code sent to your email.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Failed to send code."
+        error instanceof Error ? error.message : "Failed to send code.",
       );
     } finally {
       setLoading(false);
@@ -138,7 +137,7 @@ export default function LoginPasswordPage() {
       const issue = validation.error.issues[0];
       setValidationError(
         issue?.message ?? getFirstError(validation.error),
-        issue?.path?.[0] as keyof typeof fieldErrors
+        issue?.path?.[0] as keyof typeof fieldErrors,
       );
       return;
     }
@@ -177,7 +176,7 @@ export default function LoginPasswordPage() {
       router.replace("/auth");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Unable to update password."
+        error instanceof Error ? error.message : "Unable to update password.",
       );
       setLoading(false);
     }
@@ -210,6 +209,11 @@ export default function LoginPasswordPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
                 New password
+                {!password && (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                )}
               </label>
               <PasswordInput
                 placeholder="Enter new password"
@@ -229,6 +233,11 @@ export default function LoginPasswordPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
                 Confirm password
+                {!confirmPassword && (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                )}
               </label>
               <PasswordInput
                 placeholder="Confirm new password"
@@ -236,7 +245,10 @@ export default function LoginPasswordPage() {
                 onChange={(event) => {
                   setConfirmPassword(event.target.value);
                   if (fieldErrors.confirmPassword) {
-                    setFieldErrors((prev) => ({ ...prev, confirmPassword: "" }));
+                    setFieldErrors((prev) => ({
+                      ...prev,
+                      confirmPassword: "",
+                    }));
                   }
                 }}
               />
@@ -250,6 +262,11 @@ export default function LoginPasswordPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
                 Email code
+                {!emailCode && (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                )}
               </label>
               <div className="flex items-center gap-3">
                 <Input
@@ -276,6 +293,11 @@ export default function LoginPasswordPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-(--paragraph)">
                   Google code
+                  {!googleCode && (
+                    <span className="text-red-500">
+                      <sup>*required</sup>
+                    </span>
+                  )}
                 </label>
                 <Input
                   placeholder="Enter Google code"
@@ -288,7 +310,9 @@ export default function LoginPasswordPage() {
                   }}
                 />
                 {fieldErrors.googleCode ? (
-                  <p className="text-xs text-red-500">{fieldErrors.googleCode}</p>
+                  <p className="text-xs text-red-500">
+                    {fieldErrors.googleCode}
+                  </p>
                 ) : null}
               </div>
             )}
@@ -300,9 +324,12 @@ export default function LoginPasswordPage() {
             >
               Update password
             </Button>
-          </form >
-        </CardContent >
-      </Card >
-    </div >
+            {/* <span className="text-xs text-red-500">
+              * Input Field is required
+            </span> */}
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

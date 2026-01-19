@@ -9,12 +9,17 @@ import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { authenticationSchema } from "@/lib/validationSchemas";
 import { Button } from "@/shared/components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/Card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/shared/components/ui/Card";
 import { Input } from "@/shared/components/ui/Input";
-import { Select } from "@/shared/components/ui/Select";
-import { useToastMessages } from "@/shared/hooks/useToastMessages";
-import Spinner from "@/shared/components/ui/Spinner";
 import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
+import { Select } from "@/shared/components/ui/Select";
+import Spinner from "@/shared/components/ui/Spinner";
+import { useToastMessages } from "@/shared/hooks/useToastMessages";
 
 type Country = {
   id?: string | number;
@@ -61,8 +66,6 @@ type MerchantInfoResponse = {
     kycRemark?: string | null;
   } | null;
 };
-
-
 
 const toDateTime = (value: string) => {
   if (!value) return "";
@@ -190,10 +193,14 @@ export default function AuthenticationForm() {
   const idFrontUrl = watch("idFrontUrl");
   const idBackUrl = watch("idBackUrl");
   const idHoldUrl = watch("idHoldUrl");
+  const watchedValues = watch();
+
+  const shouldShowAsterisk = (value?: string) =>
+    String(value ?? "").trim().length === 0;
 
   const idTypeOptions = useMemo(
     () => getIdTypeOptions(countryId ?? ""),
-    [countryId]
+    [countryId],
   );
 
   useEffect(() => {
@@ -289,13 +296,13 @@ export default function AuthenticationForm() {
 
       // collect errors but don't block successful data
       const failed = results.filter(
-        (r) => r.status === "rejected"
+        (r) => r.status === "rejected",
       ) as PromiseRejectedResult[];
       if (failed.length) {
         setErrorMessage(
           failed[0].reason instanceof Error
             ? failed[0].reason.message
-            : "Some KYC data failed to load."
+            : "Some KYC data failed to load.",
         );
       }
 
@@ -310,7 +317,7 @@ export default function AuthenticationForm() {
 
   const handleUpload = async (
     file: File,
-    target: "idFrontId" | "idBackId" | "idHoldId"
+    target: "idFrontId" | "idBackId" | "idHoldId",
   ) => {
     setErrorMessage("");
     setSuccessMessage("");
@@ -342,7 +349,7 @@ export default function AuthenticationForm() {
       setValue(urlKey, newUrl, { shouldDirty: true });
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Upload failed."
+        error instanceof Error ? error.message : "Upload failed.",
       );
     } finally {
       setUploading((prev) => ({ ...prev, [target]: false }));
@@ -380,7 +387,7 @@ export default function AuthenticationForm() {
       setSuccessMessage("KYC submitted successfully.");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "KYC submit failed."
+        error instanceof Error ? error.message : "KYC submit failed.",
       );
     } finally {
       setSubmitLoading(false);
@@ -397,7 +404,6 @@ export default function AuthenticationForm() {
       </div>
     );
   }
-
 
   return (
     <form className="space-y-6 relative" onSubmit={handleSubmit(onSubmit)}>
@@ -419,7 +425,12 @@ export default function AuthenticationForm() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                First name
+                First name{" "}
+                {shouldShowAsterisk(watchedValues.firstName) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Input
                 {...register("firstName")}
@@ -428,16 +439,12 @@ export default function AuthenticationForm() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                First name
-              </label>
-              <Input
-                {...register("firstName")}
-                error={errors.firstName?.message}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-(--paragraph)">
-                Last name
+                Last name{" "}
+                {shouldShowAsterisk(watchedValues.lastName) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Input
                 {...register("lastName")}
@@ -449,7 +456,12 @@ export default function AuthenticationForm() {
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Gender
+                Gender{" "}
+                {shouldShowAsterisk(watchedValues.gender) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Select {...register("gender")} error={errors.gender?.message}>
                 <option value="">Please choose</option>
@@ -460,7 +472,12 @@ export default function AuthenticationForm() {
 
             <div className="space-y-2 sm:col-span-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Occupation
+                Occupation{" "}
+                {shouldShowAsterisk(watchedValues.occupation) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Select
                 {...register("occupation")}
@@ -486,7 +503,12 @@ export default function AuthenticationForm() {
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Annual salary
+                Annual salary{" "}
+                {shouldShowAsterisk(watchedValues.annualSalary) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Input
                 {...register("annualSalary")}
@@ -496,7 +518,12 @@ export default function AuthenticationForm() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Account purpose
+                Account purpose{" "}
+                {shouldShowAsterisk(watchedValues.accountPurpose) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Input
                 {...register("accountPurpose")}
@@ -506,7 +533,12 @@ export default function AuthenticationForm() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Monthly volume
+                Monthly volume{" "}
+                {shouldShowAsterisk(watchedValues.expectedMonthlyVolume) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Input
                 {...register("expectedMonthlyVolume")}
@@ -525,7 +557,12 @@ export default function AuthenticationForm() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Country / Region
+                Country / Region{" "}
+                {shouldShowAsterisk(watchedValues.countryId) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Select
                 {...register("countryId")}
@@ -553,7 +590,12 @@ export default function AuthenticationForm() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                State / Province
+                State / Province{" "}
+                {shouldShowAsterisk(watchedValues.state) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Input {...register("state")} error={errors.state?.message} />
             </div>
@@ -562,14 +604,24 @@ export default function AuthenticationForm() {
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                City
+                City{" "}
+                {shouldShowAsterisk(watchedValues.city) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Input {...register("city")} error={errors.city?.message} />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Address
+                Address{" "}
+                {shouldShowAsterisk(watchedValues.address) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Input {...register("address")} error={errors.address?.message} />
             </div>
@@ -578,15 +630,28 @@ export default function AuthenticationForm() {
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Post code
+                Post code{" "}
+                {shouldShowAsterisk(watchedValues.postCode) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
-              <Input {...register("postCode")} error={errors.postCode?.message} />
+              <Input
+                {...register("postCode")}
+                error={errors.postCode?.message}
+              />
             </div>
 
             <div className="grid grid-cols-[120px_1fr] gap-3">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-(--paragraph)">
-                  Code
+                  Code{" "}
+                  {shouldShowAsterisk(watchedValues.areaCode) ? (
+                    <span className="text-red-500">
+                      <sup>*required</sup>
+                    </span>
+                  ) : null}
                 </label>
                 <Select
                   {...register("areaCode")}
@@ -603,7 +668,12 @@ export default function AuthenticationForm() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-(--paragraph)">
-                  Phone
+                  Phone{" "}
+                  {shouldShowAsterisk(watchedValues.phone) ? (
+                    <span className="text-red-500">
+                      <sup>*required</sup>
+                    </span>
+                  ) : null}
                 </label>
                 <Input {...register("phone")} error={errors.phone?.message} />
               </div>
@@ -620,7 +690,12 @@ export default function AuthenticationForm() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                ID type
+                ID type{" "}
+                {shouldShowAsterisk(watchedValues.idType) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Select {...register("idType")} error={errors.idType?.message}>
                 {idTypeOptions.map((opt) => (
@@ -633,9 +708,17 @@ export default function AuthenticationForm() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                ID number
+                ID number{" "}
+                {shouldShowAsterisk(watchedValues.idNumber) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
-              <Input {...register("idNumber")} error={errors.idNumber?.message} />
+              <Input
+                {...register("idNumber")}
+                error={errors.idNumber?.message}
+              />
             </div>
           </div>
 
@@ -655,7 +738,9 @@ export default function AuthenticationForm() {
                   <span className="grid h-9 w-9 place-items-center rounded-full border border-(--stroke) bg-(--basic-cta)">
                     +
                   </span>
-                  <span className="text-xs text-(--paragraph)">Upload ID front</span>
+                  <span className="text-xs text-(--paragraph)">
+                    Upload ID front
+                  </span>
                 </>
               )}
 
@@ -691,8 +776,9 @@ export default function AuthenticationForm() {
 
             <label
               htmlFor={backId}
-              className={`relative flex h-32 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-dashed border-(--stroke) bg-(--background)/50 transition hover:bg-(--background) hover:border-(--brand)/50 ${idType === "PASSPORT" ? "opacity-60 pointer-events-none" : ""
-                }`}
+              className={`relative flex h-32 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-dashed border-(--stroke) bg-(--background)/50 transition hover:bg-(--background) hover:border-(--brand)/50 ${
+                idType === "PASSPORT" ? "opacity-60 pointer-events-none" : ""
+              }`}
             >
               {idBackUrl && idType !== "PASSPORT" ? (
                 <img
@@ -705,7 +791,9 @@ export default function AuthenticationForm() {
                   <span className="grid h-9 w-9 place-items-center rounded-full border border-(--stroke) bg-(--basic-cta)">
                     +
                   </span>
-                  <span className="text-xs text-(--paragraph)">Upload ID back</span>
+                  <span className="text-xs text-(--paragraph)">
+                    Upload ID back
+                  </span>
                 </>
               )}
 
@@ -755,7 +843,9 @@ export default function AuthenticationForm() {
                   <span className="grid h-9 w-9 place-items-center rounded-full border border-(--stroke) bg-(--basic-cta)">
                     +
                   </span>
-                  <span className="text-xs text-(--paragraph)">Upload holding ID</span>
+                  <span className="text-xs text-(--paragraph)">
+                    Upload holding ID
+                  </span>
                 </>
               )}
 
@@ -793,7 +883,12 @@ export default function AuthenticationForm() {
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Date of birth
+                Date of birth{" "}
+                {shouldShowAsterisk(watchedValues.birthday) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Input
                 type="date"
@@ -810,7 +905,12 @@ export default function AuthenticationForm() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Issuing date
+                Issuing date{" "}
+                {shouldShowAsterisk(watchedValues.startTime) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Input
                 type="date"
@@ -827,7 +927,12 @@ export default function AuthenticationForm() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Expiry date
+                Expiry date{" "}
+                {shouldShowAsterisk(watchedValues.endTime) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Input
                 type="date"
@@ -853,6 +958,7 @@ export default function AuthenticationForm() {
       >
         {submitLoading ? "Submitting..." : "Submit KYC Application"}
       </Button>
+      <span className="text-xs text-red-500">* Input Field is required</span>
     </form>
   );
 }

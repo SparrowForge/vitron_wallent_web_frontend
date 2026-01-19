@@ -10,12 +10,17 @@ import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { cardHolderSchema } from "@/lib/validationSchemas";
 import { Button } from "@/shared/components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/Card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/shared/components/ui/Card";
 import { Input } from "@/shared/components/ui/Input";
-import { Select } from "@/shared/components/ui/Select";
-import { useToastMessages } from "@/shared/hooks/useToastMessages";
-import Spinner from "@/shared/components/ui/Spinner";
 import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
+import { Select } from "@/shared/components/ui/Select";
+import Spinner from "@/shared/components/ui/Spinner";
+import { useToastMessages } from "@/shared/hooks/useToastMessages";
 
 type Country = {
   id?: string | number;
@@ -58,8 +63,6 @@ type CardHolderFormProps = {
   cardBin: string;
   holderStatus?: string;
 };
-
-
 
 const toDateTime = (value: string) => {
   if (!value) return "";
@@ -179,10 +182,14 @@ export default function CardHolderForm({
   const idFrontUrl = watch("idFrontUrl");
   const idBackUrl = watch("idBackUrl");
   const idHoldUrl = watch("idHoldUrl");
+  const watchedValues = watch();
+
+  const shouldShowAsterisk = (value?: string) =>
+    String(value ?? "").trim().length === 0;
 
   const idTypeOptions = useMemo(
     () => getIdTypeOptions(countryId ?? ""),
-    [countryId]
+    [countryId],
   );
 
   useEffect(() => {
@@ -297,7 +304,7 @@ export default function CardHolderForm({
               ...prev,
               ...kyc,
               countryId: String(
-                detail.data?.country?.id ?? kyc.countryId ?? ""
+                detail.data?.country?.id ?? kyc.countryId ?? "",
               ),
               city: String(detail.data?.city ?? kyc.city ?? ""),
               occupation: String(kyc.occupationValue ?? kyc.occupation ?? ""),
@@ -311,7 +318,9 @@ export default function CardHolderForm({
       } catch (error) {
         if (!mounted) return;
         setErrorMessage(
-          error instanceof Error ? error.message : "Unable to load holder data."
+          error instanceof Error
+            ? error.message
+            : "Unable to load holder data.",
         );
       } finally {
         if (mounted) setPageLoading(false);
@@ -327,7 +336,7 @@ export default function CardHolderForm({
 
   const handleUpload = async (
     file: File,
-    target: "idFrontId" | "idBackId" | "idHoldId"
+    target: "idFrontId" | "idBackId" | "idHoldId",
   ) => {
     setErrorMessage("");
     setSuccessMessage("");
@@ -362,7 +371,7 @@ export default function CardHolderForm({
       setValue(urlKey, newUrl, { shouldDirty: true });
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Upload failed."
+        error instanceof Error ? error.message : "Upload failed.",
       );
     } finally {
       setUploading((prev) => ({ ...prev, [target]: false }));
@@ -403,7 +412,7 @@ export default function CardHolderForm({
       setSuccessMessage(
         isEdit
           ? "Holder info updated. Awaiting review."
-          : "Holder info submitted. Awaiting review."
+          : "Holder info submitted. Awaiting review.",
       );
 
       if (typeof window !== "undefined") {
@@ -415,7 +424,7 @@ export default function CardHolderForm({
       }, 1200);
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Holder submit failed."
+        error instanceof Error ? error.message : "Holder submit failed.",
       );
     } finally {
       setSubmitLoading(false);
@@ -448,22 +457,43 @@ export default function CardHolderForm({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                First name
+                First name{" "}
+                {shouldShowAsterisk(watchedValues.firstName) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
-              <Input {...register("firstName")} error={errors.firstName?.message} />
+              <Input
+                {...register("firstName")}
+                error={errors.firstName?.message}
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Last name
+                Last name{" "}
+                {shouldShowAsterisk(watchedValues.lastName) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
-              <Input {...register("lastName")} error={errors.lastName?.message} />
+              <Input
+                {...register("lastName")}
+                error={errors.lastName?.message}
+              />
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Gender
+                Gender{" "}
+                {shouldShowAsterisk(watchedValues.gender) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Select {...register("gender")} error={errors.gender?.message}>
                 <option value="">Please choose</option>
@@ -474,9 +504,17 @@ export default function CardHolderForm({
 
             <div className="space-y-2 sm:col-span-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Occupation
+                Occupation{" "}
+                {shouldShowAsterisk(watchedValues.occupation) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
-              <Select {...register("occupation")} error={errors.occupation?.message}>
+              <Select
+                {...register("occupation")}
+                error={errors.occupation?.message}
+              >
                 <option value="">Please choose</option>
                 {occupations.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -490,7 +528,12 @@ export default function CardHolderForm({
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Annual salary
+                Annual salary{" "}
+                {shouldShowAsterisk(watchedValues.annualSalary) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Input
                 {...register("annualSalary")}
@@ -500,7 +543,12 @@ export default function CardHolderForm({
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Account purpose
+                Account purpose{" "}
+                {shouldShowAsterisk(watchedValues.accountPurpose) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Input
                 {...register("accountPurpose")}
@@ -510,7 +558,12 @@ export default function CardHolderForm({
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Monthly volume
+                Monthly volume{" "}
+                {shouldShowAsterisk(watchedValues.expectedMonthlyVolume) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Input
                 {...register("expectedMonthlyVolume")}
@@ -529,7 +582,12 @@ export default function CardHolderForm({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Country / Region
+                Country / Region{" "}
+                {shouldShowAsterisk(watchedValues.countryId) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Select
                 {...register("countryId")}
@@ -542,7 +600,7 @@ export default function CardHolderForm({
                   });
                   const nextOptions = getIdTypeOptions(value);
                   const nextHasMatch = nextOptions.some(
-                    (option) => option.value === idType
+                    (option) => option.value === idType,
                   );
                   if (!nextHasMatch) {
                     setValue("idType", nextOptions[0]?.value ?? "PASSPORT", {
@@ -563,7 +621,12 @@ export default function CardHolderForm({
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                State / Province
+                State / Province{" "}
+                {shouldShowAsterisk(watchedValues.state) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Input {...register("state")} error={errors.state?.message} />
             </div>
@@ -571,13 +634,25 @@ export default function CardHolderForm({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-(--paragraph)">City</label>
+              <label className="text-sm font-medium text-(--paragraph)">
+                City{" "}
+                {shouldShowAsterisk(watchedValues.city) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
+              </label>
               <Input {...register("city")} error={errors.city?.message} />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Address
+                Address{" "}
+                {shouldShowAsterisk(watchedValues.address) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Input {...register("address")} error={errors.address?.message} />
             </div>
@@ -586,17 +661,33 @@ export default function CardHolderForm({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Post code
+                Post code{" "}
+                {shouldShowAsterisk(watchedValues.postCode) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
-              <Input {...register("postCode")} error={errors.postCode?.message} />
+              <Input
+                {...register("postCode")}
+                error={errors.postCode?.message}
+              />
             </div>
 
             <div className="grid grid-cols-[120px_1fr] gap-3">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-(--paragraph)">
-                  Code
+                  Code{" "}
+                  {shouldShowAsterisk(watchedValues.areaCode) ? (
+                    <span className="text-red-500">
+                      <sup>*required</sup>
+                    </span>
+                  ) : null}
                 </label>
-                <Select {...register("areaCode")} error={errors.areaCode?.message}>
+                <Select
+                  {...register("areaCode")}
+                  error={errors.areaCode?.message}
+                >
                   <option value="">Code</option>
                   {phoneCodes.map((c) => (
                     <option key={resolveId(c)} value={c.code ?? ""}>
@@ -608,7 +699,12 @@ export default function CardHolderForm({
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-(--paragraph)">
-                  Phone
+                  Phone{" "}
+                  {shouldShowAsterisk(watchedValues.phone) ? (
+                    <span className="text-red-500">
+                      <sup>*required</sup>
+                    </span>
+                  ) : null}
                 </label>
                 <Input {...register("phone")} error={errors.phone?.message} />
               </div>
@@ -625,7 +721,12 @@ export default function CardHolderForm({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                ID type
+                ID type{" "}
+                {shouldShowAsterisk(watchedValues.idType) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Select {...register("idType")} error={errors.idType?.message}>
                 {idTypeOptions.map((o) => (
@@ -638,9 +739,17 @@ export default function CardHolderForm({
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                ID number
+                ID number{" "}
+                {shouldShowAsterisk(watchedValues.idNumber) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
-              <Input {...register("idNumber")} error={errors.idNumber?.message} />
+              <Input
+                {...register("idNumber")}
+                error={errors.idNumber?.message}
+              />
             </div>
           </div>
 
@@ -695,8 +804,9 @@ export default function CardHolderForm({
 
             <label
               htmlFor={backId}
-              className={`relative flex h-32 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-dashed border-(--stroke) bg-(--background) text-xs text-(--paragraph) transition hover:border-(--brand) hover:bg-(--basic-cta) ${idType === "PASSPORT" ? "opacity-60 cursor-not-allowed" : ""
-                }`}
+              className={`relative flex h-32 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-dashed border-(--stroke) bg-(--background) text-xs text-(--paragraph) transition hover:border-(--brand) hover:bg-(--basic-cta) ${
+                idType === "PASSPORT" ? "opacity-60 cursor-not-allowed" : ""
+              }`}
             >
               {idBackUrl && idType !== "PASSPORT" ? (
                 <img
@@ -794,7 +904,12 @@ export default function CardHolderForm({
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Date of birth
+                Date of birth{" "}
+                {shouldShowAsterisk(watchedValues.birthday) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Input
                 type="date"
@@ -811,7 +926,12 @@ export default function CardHolderForm({
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Issuing date
+                Issuing date{" "}
+                {shouldShowAsterisk(watchedValues.startTime) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Input
                 type="date"
@@ -828,7 +948,12 @@ export default function CardHolderForm({
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--paragraph)">
-                Expiry date
+                Expiry date{" "}
+                {shouldShowAsterisk(watchedValues.endTime) ? (
+                  <span className="text-red-500">
+                    <sup>*required</sup>
+                  </span>
+                ) : null}
               </label>
               <Input
                 type="date"
@@ -853,6 +978,7 @@ export default function CardHolderForm({
       >
         {isEdit ? "Update holder" : "Submit holder"}
       </Button>
+      <span className="text-xs text-red-500">* Input Field is required</span>
     </form>
   );
 }
