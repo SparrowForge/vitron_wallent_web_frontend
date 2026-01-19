@@ -321,7 +321,7 @@ export default function CardFreezeModal({
         >
           {isFrozen ? "Unfreeze card" : "Freeze card"}
         </Button>
-        <span className="text-xs text-red-500">* Input Field is required</span>
+        {/* <span className="text-xs text-red-500">* Input Field is required</span> */}
       </form>
       {null}
     </ModalShell>

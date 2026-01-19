@@ -30,16 +30,12 @@ export const transactionPasswordSchema = z
     confirmPassword: z
       .string()
       .regex(/^\d{6}$/, "Confirm password must be 6 digits."),
-    emailCode: z.string().trim().optional().or(z.literal("")),
+    emailCode: z.string().trim().min(1, "Email code is required."),
     googleCode: z.string().trim().optional().or(z.literal("")),
   })
   .refine((data) => data.payPassword === data.confirmPassword, {
     path: ["confirmPassword"],
     message: "Passwords do not match.",
-  })
-  .refine((data) => data.emailCode || data.googleCode, {
-    path: ["emailCode"],
-    message: "Provide either an email code or a Google code.",
   });
 
 export const googleAuthSchema = z.object({
