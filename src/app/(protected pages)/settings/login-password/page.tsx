@@ -2,7 +2,6 @@
 
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
-import { clearAuthTokens } from "@/lib/auth";
 import { loginPasswordSchema } from "@/lib/validationSchemas";
 import { Button } from "@/shared/components/ui/Button";
 import { Card, CardContent } from "@/shared/components/ui/Card";
@@ -169,11 +168,8 @@ export default function LoginPasswordPage() {
         method: "POST",
         body: JSON.stringify(payload),
       });
-      setInfoMessage("Login password updated. Logging out...");
-
-      // Force logout
-      await clearAuthTokens();
-      router.replace("/auth");
+      setInfoMessage("Login password updated.");
+      router.replace("/settings");
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "Unable to update password.",

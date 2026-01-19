@@ -9,6 +9,7 @@ import { Input } from "@/shared/components/ui/Input";
 import LoadingOverlay from "@/shared/components/ui/LoadingOverlay";
 import PasswordInput from "@/shared/components/ui/PasswordInput";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 type MerchantInfoResponse = {
@@ -32,6 +33,7 @@ type UpdatePasswordResponse = {
 };
 
 export default function TransactionPasswordPage() {
+  const router = useRouter();
   const [payPassword, setPayPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [emailCode, setEmailCode] = useState("");
@@ -171,6 +173,7 @@ export default function TransactionPasswordPage() {
       setConfirmPassword("");
       setEmailCode("");
       setGoogleCode("");
+      router.replace("/settings");
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "Unable to update password.",
