@@ -39,20 +39,21 @@ export default function GoogleAuthPage() {
   const [email, setEmail] = useState("");
   const [secret, setSecret] = useState("");
   const [qrUrl, setQrUrl] = useState("");
-  const [mode, setMode] = useState<"bind" | "close">("bind");
+  const [mode, setMode] = useState<"bind" | "reset" | "open" | "close">("bind");
   const [emailCode, setEmailCode] = useState("");
   const [googleCode, setGoogleCode] = useState("");
   const [cooldown, setCooldown] = useState(0);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
-  const [showForm, setShowForm] = useState(false);
 
   useToastMessages({ errorMessage, infoMessage });
 
-  const needsQr = mode === "bind";
+  const needsQr = mode === "bind" || mode === "reset" || mode === "open";
   const sendType = useMemo(() => {
     if (mode === "bind") return "bindGoogle";
+    if (mode === "reset") return "resetGoogle";
+    if (mode === "open") return "bindGoogle";
     return "closeGoogle";
   }, [mode]);
 
@@ -68,8 +69,13 @@ export default function GoogleAuthPage() {
           const statusValue = Number(response.data.googleStatus ?? 2);
           setGoogleStatus(statusValue);
           setEmail(response.data.email ?? "");
-          // Reset view state when info loads
-          setShowForm(false);
+          if (statusValue === 2) {
+            setMode("bind");
+          } else if (statusValue === 0) {
+            setMode("open");
+          } else {
+            setMode("close");
+          }
         }
       } catch {
         return;
@@ -79,23 +85,8 @@ export default function GoogleAuthPage() {
     void loadInfo();
   }, []);
 
-  const handleActionClick = (action: "bind" | "disable") => {
-    setErrorMessage("");
-    setInfoMessage("");
-    setShowForm(true);
-
-    if (action === "bind") {
-      // If status is 0 (Disabled), we are "Opening" (Re-binding/Enabling)
-
-      setMode("bind");
-
-    } else {
-      setMode("close");
-    }
-  };
-
   useEffect(() => {
-    if (!needsQr || !showForm) {
+    if (!needsQr) {
       setSecret("");
       setQrUrl("");
       return;
@@ -124,7 +115,7 @@ export default function GoogleAuthPage() {
     };
 
     void loadQr();
-  }, [needsQr, showForm]);
+  }, [needsQr]);
 
   useEffect(() => {
     if (cooldown <= 0) {
@@ -183,27 +174,33 @@ export default function GoogleAuthPage() {
         emailCode,
         googleCode,
       };
-      if (mode === "close") {
-        payload.googleStatus = "0";
+      if (mode === "open") {
+        payload.googleStatus = "open";
+        if (secret) {
+          payload.googleSecretKey = secret;
+        }
+      } else if (mode === "close") {
+        payload.googleStatus = "close";
       } else if (mode === "bind") {
-        payload.googleStatus = "3";
+        payload.googleStatus = "bind";
+        payload.googleSecretKey = secret;
+      } else {
+        payload.googleStatus = "reset";
         payload.googleSecretKey = secret;
       }
-
       const response = await apiRequest<ApiResponse>({
         path: API_ENDPOINTS.googleVerifySave,
         method: "POST",
         body: JSON.stringify(payload),
       });
       setInfoMessage("Google Authenticator updated.");
-
-      // Update local status based on successful action
-      let nextStatus = 2;
-      if (mode === "close") nextStatus = 0; // Disabled
-      else nextStatus = 1; // Enabled (Bind or Open success)
-
+      const nextStatus = mode === "close" ? 0 : 1;
       setGoogleStatus(nextStatus);
-      setShowForm(false);
+      if (nextStatus === 0) {
+        setMode("open");
+      } else {
+        setMode("close");
+      }
       setEmailCode("");
       setGoogleCode("");
     } catch (error) {
@@ -241,129 +238,142 @@ export default function GoogleAuthPage() {
         <CardContent className="p-4 sm:p-6 lg:p-8 relative">
           <LoadingOverlay loading={loading} />
           <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-            <div className="w-full space-y-6">
-              {!showForm ? (
-                <div className="flex flex-wrap gap-3">
-                  {googleStatus === 1 ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSubmit();
+              }}
+              className="space-y-6"
+            >
+              <div className="flex flex-wrap gap-3">
+                {googleStatus === 1 ? (
+                  <>
                     <Button
                       size="sm"
-                      onClick={() => handleActionClick("disable")}
-                      variant="default"
+                      onClick={() => setMode("close")}
+                      variant={mode === "close" ? "default" : "outline"}
                     >
-                      Disable Now
+                      Disable
                     </Button>
-                  ) : (
                     <Button
                       size="sm"
-                      onClick={() => handleActionClick("bind")}
-                      variant="default"
+                      onClick={() => setMode("reset")}
+                      variant={mode === "reset" ? "default" : "outline"}
                     >
-                      Enable Now
+                      Reset
                     </Button>
-                  )}
+                  </>
+                ) : null}
+              </div>
+
+              <div className="text-sm text-(--paragraph)">
+                {mode === "bind" && (
+                  <p>
+                    Secure your account by linking Google Authenticator. Scan the
+                    QR code with your authenticator app to get started.
+                  </p>
+                )}
+                {mode === "open" && (
+                  <p>
+                    Re-activate Google Authentication to add an extra layer of
+                    security to your account.
+                  </p>
+                )}
+                {mode === "close" && (
+                  <p>
+                    Turn off Google Authentication. This will lower your account
+                    security and is not recommended.
+                  </p>
+                )}
+                {mode === "reset" && (
+                  <p>
+                    Lost your device or want to switch to a new one? Reset your
+                    Google Authentication here.
+                  </p>
+                )}
+              </div>
+
+              {needsQr ? (
+                <div className="mt-6 grid gap-4 sm:grid-cols-[180px_1fr]">
+                  <div className="flex items-center justify-center rounded-2xl border border-(--stroke) bg-(--background) p-4">
+                    {qrImage ? (
+                      <img src={qrImage} alt="Google Auth QR code" />
+                    ) : (
+                      <span className="text-xs text-(--paragraph)">
+                        QR not ready
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-2 text-sm text-(--paragraph)">
+                    <div className="text-sm font-semibold text-(--double-foreground)">
+                      Secret key
+                    </div>
+                    <div className="rounded-xl border border-(--stroke) bg-(--background) px-3 py-2 text-xs text-(--foreground)">
+                      {secret || "—"}
+                    </div>
+                    <p className="text-xs text-(--paragraph)">
+                      Scan the QR in Google Authenticator or copy the secret.
+                    </p>
+                  </div>
                 </div>
-              ) : (
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSubmit();
-                  }}
-                  className="space-y-6"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-medium">
-                      {mode === "close" ? "Disable Google Authentication" : "Enable Google Authentication"}
-                    </h3>
+              ) : null}
+              <div className="mt-6 space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-(--paragraph)">
+                    Email code
+                    {!emailCode && (
+                      <span className="text-red-500">
+                        <sup>*required</sup>
+                      </span>
+                    )}
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      placeholder="Enter code"
+                      value={emailCode}
+                      onChange={(event) => setEmailCode(event.target.value)}
+                    />
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      variant="outline"
                       type="button"
-                      onClick={() => setShowForm(false)}
+                      onClick={handleSendCode}
+                      className="min-w-[120px]"
+                      disabled={cooldown > 0 || loading}
                     >
-                      Cancel
+                      {cooldown > 0 ? `${cooldown}s` : "Send code"}
                     </Button>
                   </div>
+                </div>
 
-                  {needsQr ? (
-                    <div className="mt-6 grid gap-4 sm:grid-cols-[180px_1fr]">
-                      <div className="flex items-center justify-center rounded-2xl border border-(--stroke) bg-(--background) p-4">
-                        {qrImage ? (
-                          <img src={qrImage} alt="Google Auth QR code" />
-                        ) : (
-                          <span className="text-xs text-(--paragraph)">
-                            QR not ready
-                          </span>
-                        )}
-                      </div>
-                      <div className="space-y-2 text-sm text-(--paragraph)">
-                        <div className="text-sm font-semibold text-(--double-foreground)">
-                          Secret key
-                        </div>
-                        <div className="rounded-xl border border-(--stroke) bg-(--background) px-3 py-2 text-xs text-(--foreground)">
-                          {secret || "—"}
-                        </div>
-                        <p className="text-xs text-(--paragraph)">
-                          Scan the QR in Google Authenticator or copy the secret.
-                        </p>
-                      </div>
-                    </div>
-                  ) : null}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-(--paragraph)">
+                    Google code
+                    {!googleCode && (
+                      <span className="text-red-500">
+                        <sup>*required</sup>
+                      </span>
+                    )}
+                  </label>
+                  <Input
+                    placeholder="Enter Google code"
+                    value={googleCode}
+                    onChange={(event) => setGoogleCode(event.target.value)}
+                  />
+                </div>
 
-                  <div className="mt-6 space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-(--paragraph)">
-                        Email code
-                        {!emailCode && (
-                          <span className="text-red-500">
-                            <sup>*required</sup>
-                          </span>
-                        )}
-                      </label>
-                      <div className="flex items-center gap-3">
-                        <Input
-                          placeholder="Enter code"
-                          value={emailCode}
-                          onChange={(event) => setEmailCode(event.target.value)}
-                        />
-                        <Button
-                          variant="outline"
-                          type="button"
-                          onClick={handleSendCode}
-                          className="min-w-[120px]"
-                          disabled={cooldown > 0 || loading}
-                        >
-                          {cooldown > 0 ? `${cooldown}s` : "Send code"}
-                        </Button>
-                      </div>
-                    </div>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={!emailCode || !googleCode || loading}
+                >
+                  Submit
+                </Button>
+              </div>
 
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-(--paragraph)">
-                        Google code
-                        {!googleCode && (
-                          <span className="text-red-500">
-                            <sup>*required</sup>
-                          </span>
-                        )}
-                      </label>
-                      <Input
-                        placeholder="Enter Google code"
-                        value={googleCode}
-                        onChange={(event) => setGoogleCode(event.target.value)}
-                      />
-                    </div>
-
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={!emailCode || !googleCode || loading}
-                    >
-                      Submit
-                    </Button>
-                  </div>
-                </form>
-              )}
-            </div>
+              {/* <span className="text-xs text-red-500">
+                * Input Field is required
+              </span> */}
+            </form>
           </div>
         </CardContent>
       </Card>
