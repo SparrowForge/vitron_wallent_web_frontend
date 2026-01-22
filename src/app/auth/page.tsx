@@ -1,13 +1,13 @@
 "use client";
 
 import {
+  checkPasskeyAction,
   loginWithPasswordAndCodeAction,
   registerWithPasswordAction,
   resetPasswordAction,
   sendForgotCodeAction,
   sendLoginCodeAction,
   sendRegisterCodeAction,
-  checkPasskeyAction,
 } from "@/app/auth/actions";
 import LandingHeader from "@/features/navigation/components/LandingHeader";
 import {
@@ -27,8 +27,13 @@ import { useEffect, useState } from "react";
 export default function AuthPage() {
   const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
   const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  // ✅ NEW: Company Code (agentInviteCode)
+  const [agentInviteCode, setAgentInviteCode] = useState("");
+
   const [emailCode, setEmailCode] = useState("");
   const [googleCode, setGoogleCode] = useState("");
   const [verifyType, setVerifyType] = useState<"email" | "google">("email");
@@ -37,9 +42,11 @@ export default function AuthPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
   const [cooldown, setCooldown] = useState(0);
+
   const [fieldErrors, setFieldErrors] = useState<{
     email?: string;
     password?: string;
+    agentInviteCode?: string; // ✅ NEW
     emailCode?: string;
     googleCode?: string;
   }>({});
@@ -63,6 +70,7 @@ export default function AuthPage() {
     setStatus("loading");
     setErrorMessage("");
     setFieldErrors({});
+
     try {
       if (mode === "login") {
         if (step === "credentials") {
@@ -76,11 +84,13 @@ export default function AuthPage() {
             setStatus("idle");
             return;
           }
+
           await checkPasskeyAction(email);
           setStep("verify");
           setStatus("idle");
           return;
         }
+
         const baseCheck = loginCredentialsSchema.safeParse({ email, password });
         if (!baseCheck.success) {
           const issue = baseCheck.error.issues[0];
@@ -91,6 +101,7 @@ export default function AuthPage() {
           setStatus("idle");
           return;
         }
+
         if (verifyType === "email" && !emailCode) {
           setValidationErrors("Email code is required.", "emailCode");
           setStatus("idle");
@@ -101,17 +112,19 @@ export default function AuthPage() {
           setStatus("idle");
           return;
         }
+
         const loginResponse = await loginWithPasswordAndCodeAction({
           username: email,
           password,
           code: verifyType === "email" ? emailCode : undefined,
           googleCode: verifyType === "google" ? googleCode : undefined,
         });
-        // persistTokens(loginResponse.data); // Handled by server cookies now
+
         const returnTo =
           typeof window !== "undefined"
             ? sessionStorage.getItem("vtron_return_to")
             : null;
+
         if (returnTo && returnTo.startsWith("/")) {
           sessionStorage.removeItem("vtron_return_to");
           router.push(returnTo);
@@ -119,11 +132,20 @@ export default function AuthPage() {
           router.push("/wallet");
         }
       } else if (mode === "register") {
+        // ✅ NEW: mandatory check for Company Code
+        if (!agentInviteCode.trim()) {
+          setValidationErrors("Company Code is required.", "agentInviteCode");
+          setStatus("idle");
+          return;
+        }
+
         const result = registerSchema.safeParse({
           email,
           password,
           emailCode,
+          agentInviteCode, // ✅ NEW
         });
+
         if (!result.success) {
           const issue = result.error.issues[0];
           setValidationErrors(
@@ -133,16 +155,19 @@ export default function AuthPage() {
           setStatus("idle");
           return;
         }
+
         const registerResponse = await registerWithPasswordAction({
           username: email,
           password,
           code: emailCode,
+          agentInviteCode, // ✅ NEW
         });
-        // persistTokens(registerResponse.data); // Handled by server cookies now
+
         const returnTo =
           typeof window !== "undefined"
             ? sessionStorage.getItem("vtron_return_to")
             : null;
+
         if (returnTo && returnTo.startsWith("/")) {
           sessionStorage.removeItem("vtron_return_to");
           router.push(returnTo);
@@ -155,6 +180,7 @@ export default function AuthPage() {
           password,
           emailCode,
         });
+
         if (!result.success) {
           const issue = result.error.issues[0];
           setValidationErrors(
@@ -164,16 +190,19 @@ export default function AuthPage() {
           setStatus("idle");
           return;
         }
+
         await resetPasswordAction({
           username: email,
           password,
           code: emailCode,
         });
+
         setInfoMessage("Password reset successful. Please log in.");
         setMode("login");
         setStep("credentials");
         setEmailCode("");
         setPassword("");
+        setAgentInviteCode(""); // ✅ NEW
         setStatus("idle");
         return;
       }
@@ -190,11 +219,13 @@ export default function AuthPage() {
     setStatus("loading");
     setErrorMessage("");
     setInfoMessage("");
+
     try {
       const result =
         mode === "login"
           ? loginCredentialsSchema.safeParse({ email, password })
           : emailSchema.safeParse(email);
+
       if (!result.success) {
         const issue = result.error?.issues[0];
         setValidationErrors(
@@ -204,6 +235,7 @@ export default function AuthPage() {
         setStatus("idle");
         return;
       }
+
       if (mode === "login") {
         await sendLoginCodeAction(email, "login");
       } else if (mode === "register") {
@@ -211,6 +243,7 @@ export default function AuthPage() {
       } else {
         await sendForgotCodeAction(email);
       }
+
       setCooldown(60);
       setInfoMessage("Verification code sent to your email.");
       setStatus("idle");
@@ -229,6 +262,7 @@ export default function AuthPage() {
     setEmailCode("");
     setGoogleCode("");
     setVerifyType("email");
+    setAgentInviteCode(""); // ✅ NEW
     setErrorMessage("");
     setInfoMessage("");
     setFieldErrors({});
@@ -237,21 +271,23 @@ export default function AuthPage() {
   };
 
   useEffect(() => {
-    if (cooldown <= 0) {
-      return;
-    }
+    if (cooldown <= 0) return;
+
     const timer = setInterval(() => {
       setCooldown((prev) => Math.max(prev - 1, 0));
     }, 1000);
+
     return () => clearInterval(timer);
   }, [cooldown]);
 
   return (
     <div className="flex min-h-screen flex-col">
       <LandingHeader isAuthenticated={false} />
+
       <main className="flex flex-1 items-center justify-center px-6 py-12 relative">
         <section className="relative w-full max-w-md rounded-2xl border border-(--stroke) bg-(--basic-cta) p-8 shadow-sm overflow-hidden">
           <LoadingOverlay loading={status === "loading"} />
+
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold text-(--foreground)">
               {mode === "login"
@@ -260,6 +296,7 @@ export default function AuthPage() {
                   ? "Create your account"
                   : "Reset password"}
             </h1>
+
             <Button
               variant="link"
               type="button"
@@ -279,6 +316,7 @@ export default function AuthPage() {
           </p>
 
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+            {/* Email */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--foreground)">
                 Email{" "}
@@ -288,6 +326,7 @@ export default function AuthPage() {
                   </span>
                 )}
               </label>
+
               <Input
                 type="email"
                 placeholder="you@wallet.com"
@@ -301,6 +340,8 @@ export default function AuthPage() {
                 error={fieldErrors.email}
               />
             </div>
+
+            {/* Password */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-(--foreground)">
                 {mode === "forgot" ? "New Password" : "Password"}{" "}
@@ -310,6 +351,7 @@ export default function AuthPage() {
                   </span>
                 )}
               </label>
+
               <PasswordInput
                 placeholder="••••••••"
                 className="h-11"
@@ -325,147 +367,185 @@ export default function AuthPage() {
               />
             </div>
 
+            {/* ✅ NEW: Company Code (Register only) */}
+            {mode === "register" ? (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-(--foreground)">
+                  Company Code{" "}
+                  {!agentInviteCode && (
+                    <span className="text-red-500">
+                      <sup>*required</sup>
+                    </span>
+                  )}
+                </label>
+
+                <Input
+                  placeholder="Enter company code"
+                  value={agentInviteCode}
+                  onChange={(event) => {
+                    setAgentInviteCode(event.target.value);
+                    if (fieldErrors.agentInviteCode) {
+                      setFieldErrors((prev) => ({
+                        ...prev,
+                        agentInviteCode: "",
+                      }));
+                    }
+                  }}
+                  error={fieldErrors.agentInviteCode}
+                />
+              </div>
+            ) : null}
+
             {(mode === "register" ||
               mode === "forgot" ||
               step === "verify") && (
-                <>
-                  {mode === "login" ? (
-                    <>
-                      <div className="flex items-center gap-4 text-sm font-medium text-(--foreground)">
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            checked={verifyType === "email"}
-                            onChange={() => {
-                              setVerifyType("email");
-                              setFieldErrors((prev) => ({
-                                ...prev,
-                                emailCode: "",
-                                googleCode: "",
-                              }));
-                            }}
-                          />
-                          Email code
+              <>
+                {mode === "login" ? (
+                  <>
+                    <div className="flex items-center gap-4 text-sm font-medium text-(--foreground)">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          checked={verifyType === "email"}
+                          onChange={() => {
+                            setVerifyType("email");
+                            setFieldErrors((prev) => ({
+                              ...prev,
+                              emailCode: "",
+                              googleCode: "",
+                            }));
+                          }}
+                        />
+                        Email code
+                      </label>
+
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          checked={verifyType === "google"}
+                          onChange={() => {
+                            setVerifyType("google");
+                            setFieldErrors((prev) => ({
+                              ...prev,
+                              emailCode: "",
+                              googleCode: "",
+                            }));
+                          }}
+                        />
+                        Google code
+                      </label>
+                    </div>
+
+                    {verifyType === "email" ? (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-(--foreground)">
+                          Email code{" "}
+                          {!emailCode && (
+                            <span className="text-red-500">
+                              <sup>*required</sup>
+                            </span>
+                          )}
                         </label>
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            checked={verifyType === "google"}
-                            onChange={() => {
-                              setVerifyType("google");
-                              setFieldErrors((prev) => ({
-                                ...prev,
-                                emailCode: "",
-                                googleCode: "",
-                              }));
-                            }}
-                          />
-                          Google code
-                        </label>
-                      </div>
-                      {verifyType === "email" ? (
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-(--foreground)">
-                            Email code{" "}
-                            {!emailCode && (
-                              <span className="text-red-500">
-                                <sup>*required</sup>
-                              </span>
-                            )}
-                          </label>
-                          <div className="flex items-center gap-3">
-                            <Input
-                              placeholder="Enter the code"
-                              value={emailCode}
-                              onChange={(event) => {
-                                setEmailCode(event.target.value);
-                                if (fieldErrors.emailCode) {
-                                  setFieldErrors((prev) => ({
-                                    ...prev,
-                                    emailCode: "",
-                                  }));
-                                }
-                              }}
-                              error={fieldErrors.emailCode}
-                            />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              className="min-w-[120px]"
-                              disabled={
-                                status === "loading" || cooldown > 0 || !email
-                              }
-                              onClick={handleSendCode}
-                            >
-                              {cooldown > 0 ? `${cooldown}s` : "Send code"}
-                            </Button>
-                          </div>
-                        </div>
-                      ) : null}
-                      {verifyType === "google" ? (
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-(--foreground)">
-                            Google code{" "}
-                            {!googleCode && (
-                              <span className="text-red-500">
-                                <sup>*required</sup>
-                              </span>
-                            )}
-                          </label>
+
+                        <div className="flex items-center gap-3">
                           <Input
-                            placeholder="Enter Google code"
-                            value={googleCode}
+                            placeholder="Enter the code"
+                            value={emailCode}
                             onChange={(event) => {
-                              setGoogleCode(event.target.value);
-                              if (fieldErrors.googleCode) {
+                              setEmailCode(event.target.value);
+                              if (fieldErrors.emailCode) {
                                 setFieldErrors((prev) => ({
                                   ...prev,
-                                  googleCode: "",
+                                  emailCode: "",
                                 }));
                               }
                             }}
-                            error={fieldErrors.googleCode}
+                            error={fieldErrors.emailCode}
                           />
+
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="min-w-[120px]"
+                            disabled={
+                              status === "loading" || cooldown > 0 || !email
+                            }
+                            onClick={handleSendCode}
+                          >
+                            {cooldown > 0 ? `${cooldown}s` : "Send code"}
+                          </Button>
                         </div>
-                      ) : null}
-                    </>
-                  ) : null}
-                  {mode === "register" || mode === "forgot" ? (
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-(--foreground)">
-                        {mode === "forgot" ? "Email code" : "Email code"}
-                      </label>
-                      <div className="flex items-center gap-3">
+                      </div>
+                    ) : null}
+
+                    {verifyType === "google" ? (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-(--foreground)">
+                          Google code{" "}
+                          {!googleCode && (
+                            <span className="text-red-500">
+                              <sup>*required</sup>
+                            </span>
+                          )}
+                        </label>
+
                         <Input
-                          placeholder="Enter the code"
-                          value={emailCode}
+                          placeholder="Enter Google code"
+                          value={googleCode}
                           onChange={(event) => {
-                            setEmailCode(event.target.value);
-                            if (fieldErrors.emailCode) {
+                            setGoogleCode(event.target.value);
+                            if (fieldErrors.googleCode) {
                               setFieldErrors((prev) => ({
                                 ...prev,
-                                emailCode: "",
+                                googleCode: "",
                               }));
                             }
                           }}
-                          error={fieldErrors.emailCode}
+                          error={fieldErrors.googleCode}
                         />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="min-w-[120px]"
-                          disabled={
-                            status === "loading" || cooldown > 0 || !email
-                          }
-                          onClick={handleSendCode}
-                        >
-                          {cooldown > 0 ? `${cooldown}s` : "Send code"}
-                        </Button>
                       </div>
+                    ) : null}
+                  </>
+                ) : null}
+
+                {mode === "register" || mode === "forgot" ? (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-(--foreground)">
+                      Email code
+                    </label>
+
+                    <div className="flex items-center gap-3">
+                      <Input
+                        placeholder="Enter the code"
+                        value={emailCode}
+                        onChange={(event) => {
+                          setEmailCode(event.target.value);
+                          if (fieldErrors.emailCode) {
+                            setFieldErrors((prev) => ({
+                              ...prev,
+                              emailCode: "",
+                            }));
+                          }
+                        }}
+                        error={fieldErrors.emailCode}
+                      />
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="min-w-[120px]"
+                        disabled={
+                          status === "loading" || cooldown > 0 || !email
+                        }
+                        onClick={handleSendCode}
+                      >
+                        {cooldown > 0 ? `${cooldown}s` : "Send code"}
+                      </Button>
                     </div>
-                  ) : null}
-                </>
-              )}
+                  </div>
+                ) : null}
+              </>
+            )}
 
             <Button
               type="submit"
@@ -481,10 +561,8 @@ export default function AuthPage() {
                     ? "Create account"
                     : "Reset password")}
             </Button>
-            {/* <span className="text-xs text-red-500">
-              * Input Field is required
-            </span> */}
           </form>
+
           {mode === "login" ? (
             <Button
               variant="link"
@@ -495,6 +573,7 @@ export default function AuthPage() {
                 setEmailCode("");
                 setGoogleCode("");
                 setVerifyType("email");
+                setAgentInviteCode(""); // ✅ NEW
                 setFieldErrors({});
                 setStatus("idle");
               }}
@@ -521,6 +600,7 @@ export default function AuthPage() {
                 setEmailCode("");
                 setGoogleCode("");
                 setVerifyType("email");
+                setAgentInviteCode(""); // ✅ NEW
                 setFieldErrors({});
                 setStatus("idle");
               }}

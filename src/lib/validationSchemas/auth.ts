@@ -35,6 +35,7 @@ export const loginVerifySchema = loginCredentialsSchema
 export const registerSchema = loginCredentialsSchema.extend({
   password: strongPasswordSchema,
   emailCode: z.string().trim().min(1, "Email code is required."),
+  agentInviteCode: z.string().trim().min(1, "Company Code is required."),
 });
 
 export const forgotPasswordSchema = loginCredentialsSchema.extend({

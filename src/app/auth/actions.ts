@@ -7,6 +7,8 @@ type RegisterParams = {
   username: string;
   password: string;
   code: string;
+  inviteCode?: string;
+  agentInviteCode?: string;
 };
 
 type LoginVerifyParams = {
@@ -164,7 +166,7 @@ async function requestJson<T>(path: string, init: RequestInit) {
       });
     }
     const error = new Error(
-      `[api] ${message || `Request failed with ${response.status}`}`
+      `[api] ${message || `Request failed with ${response.status}`}`,
     ) as Error & {
       code?: number | string;
       data?: unknown;
@@ -185,7 +187,7 @@ async function requestJson<T>(path: string, init: RequestInit) {
     const codeValue = Number(payload.code);
     if (!Number.isNaN(codeValue) && codeValue !== 200) {
       const error = new Error(
-        `[api] ${payload.msg || `Request failed with code ${payload.code}`}`
+        `[api] ${payload.msg || `Request failed with code ${payload.code}`}`,
       ) as Error & { code?: number | string; data?: unknown };
       error.code = payload.code;
       error.data = payload.data;
@@ -210,17 +212,17 @@ function sanitizeHeaders(headers: Headers) {
 export async function sendLoginCodeAction(email: string, type = "login") {
   const response = await requestJson<LoginResponse>(
     `${API_ENDPOINTS.registerSendCode}?email=${encodeURIComponent(
-      email
+      email,
     )}&type=${encodeURIComponent(type)}`,
     {
       method: "GET",
-    }
+    },
   );
   return response;
 }
 
 export async function loginWithPasswordAndCodeAction(
-  params: LoginVerifyParams
+  params: LoginVerifyParams,
 ) {
   const response = await requestJson<LoginResponse>(API_ENDPOINTS.login, {
     method: "POST",
@@ -238,11 +240,11 @@ export async function loginWithPasswordAndCodeAction(
 export async function sendRegisterCodeAction(email: string) {
   const response = await requestJson<LoginResponse>(
     `${API_ENDPOINTS.registerSendCode}?email=${encodeURIComponent(
-      email
+      email,
     )}&type=register`,
     {
       method: "GET",
-    }
+    },
   );
   return response;
 }
@@ -250,11 +252,11 @@ export async function sendRegisterCodeAction(email: string) {
 export async function sendForgotCodeAction(email: string) {
   const response = await requestJson<LoginResponse>(
     `${API_ENDPOINTS.registerSendCode}?email=${encodeURIComponent(
-      email
+      email,
     )}&type=reset`,
     {
       method: "GET",
-    }
+    },
   );
   return response;
 }
@@ -279,7 +281,7 @@ export async function resetPasswordAction(params: ForgotParams) {
     {
       method: "POST",
       body: JSON.stringify(params),
-    }
+    },
   );
   return response;
 }
