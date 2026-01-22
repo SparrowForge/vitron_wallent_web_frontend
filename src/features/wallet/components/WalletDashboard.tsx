@@ -87,6 +87,12 @@ export default function WalletDashboard() {
   const [transactionLoading, setTransactionLoading] = useState(true);
   const [transactionError, setTransactionError] = useState("");
 
+  // Transaction Filters
+  const [txTypeFilter, setTxTypeFilter] = useState("");
+  const [txStatusFilter, setTxStatusFilter] = useState("");
+  const [txStartDate, setTxStartDate] = useState("");
+  const [txEndDate, setTxEndDate] = useState("");
+
   useToastMessages({ errorMessage, warningMessage: transactionError });
   const selectedWallet = useMemo(
     () =>
@@ -112,6 +118,11 @@ export default function WalletDashboard() {
       const list = response.data ?? [];
       setWallets(list);
       setSelectedId(list[0]?.id ?? null);
+      setTransactionPage(1);
+      setTxTypeFilter("");
+      setTxStatusFilter("");
+      setTxStartDate("");
+      setTxEndDate("");
     } catch (error) {
       setWallets([]);
       setErrorMessage(
@@ -152,6 +163,10 @@ export default function WalletDashboard() {
           body: JSON.stringify({
             pageIndex: transactionPage,
             pageSize: 10,
+            type: txTypeFilter || undefined,
+            status: txStatusFilter || undefined,
+            createTimeStart: txStartDate ? `${txStartDate} 00:00:00` : undefined,
+            createTimeEnd: txEndDate ? `${txEndDate} 23:59:59` : undefined,
           }),
         });
 
@@ -213,7 +228,7 @@ export default function WalletDashboard() {
     };
 
     void loadTransactions();
-  }, [transactionPage]);
+  }, [transactionPage, txTypeFilter, txStatusFilter, txStartDate, txEndDate]);
 
   const walletColumns: DataTableColumn<{
     id: string;
@@ -312,6 +327,76 @@ export default function WalletDashboard() {
           </CardContent>
         </Card>
       </section>
+
+      <div className="flex flex-wrap items-center gap-3 text-xs text-(--paragraph) sm:text-sm bg-(--basic-cta)/50 p-4 rounded-2xl border border-(--stroke)">
+        <span className="text-(--foreground) font-medium mr-2">Filters:</span>
+
+        {/* Transaction Type Filter */}
+        <label className="flex items-center gap-2">
+          <span>Type</span>
+          <select
+            value={txTypeFilter}
+            onChange={(e) => {
+              setTxTypeFilter(e.target.value);
+              setTransactionPage(1);
+            }}
+            className="cursor-pointer rounded-lg border border-(--white)/10 bg-(--background)/50 px-2 py-1 text-xs text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--brand)/50 sm:text-sm"
+          >
+            <option value="" className="bg-(--basic-cta)">All</option>
+            <option value="top_up" className="bg-(--basic-cta)">Top Up</option>
+            <option value="withdrawal" className="bg-(--basic-cta)">Withdraw</option>
+            <option value="create_card" className="bg-(--basic-cta)">Card Application</option>
+            <option value="deposit_card" className="bg-(--basic-cta)">Card Recharge</option>
+            <option value="program_fee_card" className="bg-(--basic-cta)">Card Fee</option>
+            <option value="withdraw_card" className="bg-(--basic-cta)">Card Withdraw</option>
+            <option value="transfer" className="bg-(--basic-cta)">Transfer</option>
+            <option value="receive" className="bg-(--basic-cta)">Receive</option>
+            <option value="correction" className="bg-(--basic-cta)">Correction</option>
+          </select>
+        </label>
+
+        {/* Transaction Status Filter */}
+        <label className="flex items-center gap-2">
+          <span>Status</span>
+          <select
+            value={txStatusFilter}
+            onChange={(e) => {
+              setTxStatusFilter(e.target.value);
+              setTransactionPage(1);
+            }}
+            className="cursor-pointer rounded-lg border border-(--white)/10 bg-(--background)/50 px-2 py-1 text-xs text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--brand)/50 sm:text-sm"
+          >
+            <option value="" className="bg-(--basic-cta)">All</option>
+            <option value="1" className="bg-(--basic-cta)">Confirming</option>
+            <option value="2" className="bg-(--basic-cta)">Completed</option>
+            <option value="3" className="bg-(--basic-cta)">Cancelled</option>
+          </select>
+        </label>
+
+        {/* Date Range */}
+        <div className="flex items-center gap-2">
+          <span>Date</span>
+          <input
+            type="date"
+            value={txStartDate}
+            onChange={(e) => {
+              setTxStartDate(e.target.value);
+              setTransactionPage(1);
+            }}
+            className="rounded-lg border border-(--white)/10 bg-(--background)/50 px-2 py-1 text-xs text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--brand)/50 sm:text-sm"
+          />
+          <span>to</span>
+          <input
+            type="date"
+            value={txEndDate}
+            onChange={(e) => {
+              setTxEndDate(e.target.value);
+              setTransactionPage(1);
+            }}
+            className="rounded-lg border border-(--white)/10 bg-(--background)/50 px-2 py-1 text-xs text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--brand)/50 sm:text-sm"
+          />
+        </div>
+      </div>
 
       <DataTable
         title="Transaction History"

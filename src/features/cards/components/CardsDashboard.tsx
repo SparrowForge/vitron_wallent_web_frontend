@@ -20,7 +20,8 @@ import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useRef, useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const baseActions = [
   { key: "view", label: "View", icon: viewSvg },
@@ -102,14 +103,36 @@ const formatOrderId = (value?: string) => {
 export default function CardsDashboard() {
   const [cards, setCards] = useState<ApiCard[]>([]);
   const [selectedId, setSelectedId] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("-1");
+  const [typeFilter, setTypeFilter] = useState("-1");
   const [viewOpen, setViewOpen] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
   const [freezeOpen, setFreezeOpen] = useState(false);
   const [applyOpen, setApplyOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const scrollMap = (direction: "left" | "right") => {
+    if (scrollContainerRef.current) {
+      const { current } = scrollContainerRef;
+      const scrollAmount = 300; // Adjust based on card width
+      if (direction === "left") {
+        current.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+      } else {
+        current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+      }
+    }
+  };
+
+  // Transaction Filters
+  const [txTypeFilter, setTxTypeFilter] = useState("");
+  const [txStatusFilter, setTxStatusFilter] = useState("");
+  const [txStartDate, setTxStartDate] = useState("");
+  const [txEndDate, setTxEndDate] = useState("");
+
   const [cardBalances, setCardBalances] = useState<
     Record<string, { balance: string; currency: string }>
   >({});
@@ -122,43 +145,24 @@ export default function CardsDashboard() {
 
   useToastMessages({ errorMessage });
 
-  const normalizeStatus = (status?: string) => {
-    const normalized = String(status ?? "").trim().toUpperCase();
-    if (
-      normalized === "04" ||
-      normalized === "FROZEN" ||
-      normalized === "FREEZE"
-    ) {
-      return "freeze";
-    }
-    if (
-      normalized === "03" ||
-      normalized === "UNACTIVATED" ||
-      normalized === "INACTIVE" ||
-      normalized === "UNACTIVATE"
-    ) {
-      return "unactivated";
-    }
-    if (normalized === "05" || normalized === "DELETED" || normalized === "DELETE") {
-      return "delete";
-    }
-    return "active";
-  };
-
-  const normalizeType = (card: ApiCard) => {
-    const rawType = String(card.type ?? card.cardType ?? "").toUpperCase();
-    if (Number(card.type) === 2 || rawType.includes("PHYSICAL")) {
-      return "physical";
-    }
-    return "virtual";
-  };
-
+  /*
+   * Filter logic aligned with mobile (iOS) implementation:
+   * - Status: "01" (Active), "04" (Frozen), "03" (Unactivated), "05" (Cancelled)
+   * - Type: "1" (Virtual), "2" (Physical)
+   */
   const filteredCards = useMemo(() => {
     return cards.filter((card) => {
-      if (statusFilter !== "all" && normalizeStatus(card.status) !== statusFilter) {
+      // Mobile logic: strict string comparison
+      const cardStatus = String(card.status ?? "");
+      // const cardType = String(card.type ?? card.cardType ?? ""); 
+      // Note: Mobile uses 'type' field primarily. We should check if 'type' behaves as expected.
+      // In JS we need to be careful with null/undefined.
+      const cardType = String(card.type ?? "");
+
+      if (statusFilter !== "-1" && cardStatus !== statusFilter) {
         return false;
       }
-      if (typeFilter !== "all" && normalizeType(card) !== typeFilter) {
+      if (typeFilter !== "-1" && cardType !== typeFilter) {
         return false;
       }
       return true;
@@ -172,6 +176,31 @@ export default function CardsDashboard() {
       null,
     [filteredCards, selectedId]
   );
+
+  const [carouselIndex, setCarouselIndex] = useState(0);
+
+  const getVisibleCount = () => {
+    if (typeof window === "undefined") return 1;
+    const w = window.innerWidth;
+    if (w >= 1024) return 3; // lg
+    if (w >= 640) return 2;  // sm
+    return 1;                // mobile
+  };
+
+  const [visibleCount, setVisibleCount] = useState(1);
+
+  useEffect(() => {
+    const update = () => setVisibleCount(getVisibleCount());
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  useEffect(() => {
+    // keep index valid when filters or screen size changes
+    const maxIndex = Math.max(0, filteredCards.length - visibleCount);
+    setCarouselIndex((i) => Math.min(i, maxIndex));
+  }, [filteredCards.length, visibleCount]);
 
   const refreshBalances = async (cardList: ApiCard[]) => {
     const balanceEntries = await Promise.all(
@@ -287,6 +316,10 @@ export default function CardsDashboard() {
       return;
     }
     setRecordPage(1);
+    setTxTypeFilter("");
+    setTxStatusFilter("");
+    setTxStartDate("");
+    setTxEndDate("");
   }, [selectedId]);
 
   useEffect(() => {
@@ -305,6 +338,10 @@ export default function CardsDashboard() {
             cardId: selectedId,
             pageIndex: recordPage,
             pageSize: 10,
+            type: txTypeFilter || undefined,
+            status: txStatusFilter || undefined,
+            createTimeStart: txStartDate ? `${txStartDate} 00:00:00` : undefined,
+            createTimeEnd: txEndDate ? `${txEndDate} 23:59:59` : undefined,
           }),
         });
         if (!mounted) {
@@ -342,7 +379,15 @@ export default function CardsDashboard() {
     return () => {
       mounted = false;
     };
-  }, [selectedId, recordPage]);
+  }, [selectedId, recordPage, txTypeFilter, txStatusFilter, txStartDate, txEndDate]);
+
+
+  useEffect(() => {
+    if (carouselIndex == 0 || carouselIndex) {
+      console.log("carouselIndex", carouselIndex, filteredCards[carouselIndex])
+      setSelectedId(filteredCards?.[carouselIndex]?.cardId as string)
+    }
+  }, [carouselIndex])
 
   if (loading) {
     return (
@@ -420,18 +465,15 @@ export default function CardsDashboard() {
     <div className="space-y-8">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div className="space-y-2">
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-(--paragraph)">
-            Cards
-          </p>
-          <h1 className="text-3xl font-semibold text-(--foreground)">
+          <p className="text-sm font-medium uppercase tracking-[0.2em] text-(--foreground)">
             Manage your linked cards.
-          </h1>
+          </p>
         </div>
         <Button onClick={() => setApplyOpen(true)}>Apply for Card</Button>
       </header>
 
       {cards.length > 0 && (
-        <section className="rounded-2xl border border-(--stroke) bg-(--basic-cta)/50 p-4 sm:p-6">
+        <section className="rounded-2xl border border-(--stroke) bg-(--basic-cta)/50 my-2 py-2">
           <div className="flex flex-wrap items-center gap-3 text-xs text-(--paragraph) sm:text-sm">
             <span className="text-(--foreground) font-medium">Filter cards</span>
             <label className="flex items-center gap-2">
@@ -441,19 +483,19 @@ export default function CardsDashboard() {
                 onChange={(event) => setStatusFilter(event.target.value)}
                 className="cursor-pointer rounded-lg border border-(--white)/10 bg-(--background)/50 px-2 py-1 text-xs text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--brand)/50 sm:text-sm"
               >
-                <option value="all" className="bg-(--basic-cta)">
+                <option value="-1" className="bg-(--basic-cta)">
                   All
                 </option>
-                <option value="active" className="bg-(--basic-cta)">
+                <option value="01" className="bg-(--basic-cta)">
                   Active
                 </option>
-                <option value="freeze" className="bg-(--basic-cta)">
+                <option value="04" className="bg-(--basic-cta)">
                   Freeze
                 </option>
-                <option value="unactivated" className="bg-(--basic-cta)">
+                <option value="03" className="bg-(--basic-cta)">
                   Unactivated
                 </option>
-                <option value="delete" className="bg-(--basic-cta)">
+                <option value="05" className="bg-(--basic-cta)">
                   Delete
                 </option>
               </select>
@@ -465,13 +507,13 @@ export default function CardsDashboard() {
                 onChange={(event) => setTypeFilter(event.target.value)}
                 className="cursor-pointer rounded-lg border border-(--white)/10 bg-(--background)/50 px-2 py-1 text-xs text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--brand)/50 sm:text-sm"
               >
-                <option value="all" className="bg-(--basic-cta)">
+                <option value="-1" className="bg-(--basic-cta)">
                   All
                 </option>
-                <option value="virtual" className="bg-(--basic-cta)">
+                <option value="1" className="bg-(--basic-cta)">
                   Virtual
                 </option>
-                <option value="physical" className="bg-(--basic-cta)">
+                <option value="2" className="bg-(--basic-cta)">
                   Physical
                 </option>
               </select>
@@ -493,147 +535,415 @@ export default function CardsDashboard() {
           </p>
         </section>
       ) : (
-        <section className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-          {filteredCards.map((card) => {
-            const cardId = getCardId(card);
-            const last4 = getLast4(card);
-            const balance = cardBalances[cardId];
-            const isPhysical = normalizeType(card) === "physical";
-            const isFrozen = card.status === "04";
-            const actions = isPhysical
-              ? physicalActions
-              : virtualActions(isFrozen);
+        // <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        //   {filteredCards.map((card) => {
+        //     const cardId = getCardId(card);
+        //     const last4 = getLast4(card);
+        //     const balance = cardBalances[cardId];
+        //     const isPhysical = String(card.type) === "2";
+        //     const isFrozen = card.status === "04";
+        //     const actions = isPhysical
+        //       ? physicalActions
+        //       : virtualActions(isFrozen);
 
-            const isSelected = selectedId === cardId;
+        //     const isSelected = selectedId === cardId;
 
-            return (
-              <Card
-                key={cardId}
-                variant={isSelected ? "glass" : "solid"}
-                onClick={() => setSelectedId(cardId)}
-                className={cn(
-                  "cursor-pointer transition-all duration-300 hover:scale-[1.02]",
-                  isSelected && "ring-1 ring-(--brand)/50"
-                )}
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    setSelectedId(cardId);
-                  }
-                }}
-              >
-                <div className="p-1">
-                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-(--foreground) to-gray-600 p-5 text-(--background) shadow-lg">
-                    {/* Visual Card Content */}
-                    <div className="flex justify-between items-start opacity-80">
-                      <div className="text-sm uppercase tracking-[0.3em]">
-                        {card.cardType ?? "Vtron"}
+        //     return (
+        //       <Card
+        //         key={cardId}
+        //         variant={isSelected ? "glass" : "solid"}
+        //         onClick={() => setSelectedId(cardId)}
+        //         className={cn(
+        //           "cursor-pointer transition-all duration-300 hover:scale-[1.02]",
+        //           isSelected && "ring-1 ring-(--brand)/50"
+        //         )}
+        //         tabIndex={0}
+        //         onKeyDown={(e) => {
+        //           if (e.key === "Enter" || e.key === " ") {
+        //             setSelectedId(cardId);
+        //           }
+        //         }}
+        //       >
+        //         <div className="p-1">
+        //           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-(--foreground) to-gray-600 p-2 text-(--background) shadow-lg">
+        //             {/* Visual Card Content */}
+        //             <div className="flex justify-between items-start opacity-80">
+        //               <div className="text-[10px] uppercase tracking-[0.2em]">
+        //                 {card.cardType ?? "Vtron"}
+        //               </div>
+        //               <div className="font-bold italic opacity-60 text-xs">VISA</div>
+        //             </div>
+
+        //             <div className="text-lg font-mono tracking-widest my-2">
+        //               ••••{last4}
+        //             </div>
+
+        //             <div className="flex justify-between items-end">
+        //               <div>
+        //                 <div className="text-[8px] uppercase opacity-60">Card Holder</div>
+        //                 <div className="text-xs font-medium">{card.alias ?? "Vtron User"}</div>
+        //               </div>
+        //               <div className="h-5 w-8 rounded bg-white/20" />
+        //             </div>
+
+        //             {/* Shine effect */}
+        //             <div className="absolute -inset-full animate-[shimmer_3s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12" />
+        //           </div>
+
+        //           <div className="mt-2 flex items-center justify-between px-1">
+        //             <div>
+        //               <span className="text-lg font-bold text-(--foreground)">
+        //                 {balance ? balance.balance : "--"}{" "}
+        //                 <span className="text-sm font-normal text-(--paragraph)">
+        //                   {balance ? balance.currency : ""}
+        //                 </span>
+        //               </span>
+        //             </div>
+        //             <div>
+        //               {(() => {
+        //                 switch (String(card.status)) {
+        //                   case "01":
+        //                     return (
+        //                       <span className="rounded-full bg-(--brand)/10 px-2 py-1 text-[10px] font-semibold text-(--brand)">
+        //                         Active
+        //                       </span>
+        //                     );
+        //                   case "03":
+        //                     return (
+        //                       <span className="rounded-full bg-yellow-500/10 px-2 py-1 text-[10px] font-semibold text-yellow-500">
+        //                         Unactivated
+        //                       </span>
+        //                     );
+        //                   case "04":
+        //                     return (
+        //                       <span className="rounded-full bg-red-500/10 px-2 py-1 text-[10px] font-semibold text-red-500">
+        //                         Frozen
+        //                       </span>
+        //                     );
+        //                   case "05":
+        //                     return (
+        //                       <span className="rounded-full bg-gray-500/10 px-2 py-1 text-[10px] font-semibold text-gray-500">
+        //                         Cancelled
+        //                       </span>
+        //                     );
+        //                   default:
+        //                     return (
+        //                       <span className="rounded-full bg-gray-500/10 px-2 py-1 text-[10px] font-semibold text-gray-500">
+        //                         {card.status || "Unknown"}
+        //                       </span>
+        //                     );
+        //                 }
+        //               })()}
+        //               {String(card.type) === "2" ? (
+        //                 <span className="ml-1 rounded-full bg-purple-500/10 px-2 py-1 text-[10px] font-semibold text-purple-500">
+        //                   Physical
+        //                 </span>
+        //               ) : (
+        //                 <span className="ml-1 rounded-full bg-blue-500/10 px-2 py-1 text-[10px] font-semibold text-blue-500">
+        //                   Virtual
+        //                 </span>
+        //               )}
+        //             </div>
+        //           </div>
+        //         </div>
+
+        //         <CardFooter className="mt-1 flex items-center justify-around gap-1 border-t border-(--stroke) p-1">
+        //           {actions.map((action) =>
+        //             action.key === "settings" ? (
+        //               <Link
+        //                 key={action.key}
+        //                 href={`/cards/settings?card=${cardId}`}
+        //                 className="flex flex-col items-center gap-1 rounded-lg p-1 text-[10px] font-medium text-(--paragraph) transition hover:bg-(--stroke)/10 hover:text-(--foreground)"
+        //               >
+        //                 <span className="grid h-10 w-10 place-items-center text-(--foreground)">
+        //                   {action.icon ? (
+        //                     <>{action.icon}</>
+        //                   ) : (
+        //                     action.label[0]
+        //                   )}
+        //                 </span>
+        //                 {action.label}
+        //               </Link>
+        //             ) : (
+        //               <button
+        //                 key={action.key}
+        //                 type="button"
+        //                 onClick={(e) => {
+        //                   e.stopPropagation();
+        //                   handleAction(action.key, cardId);
+        //                 }}
+        //                 className="flex flex-col items-center gap-1 rounded-lg p-1 text-[10px] font-medium text-(--paragraph) transition hover:bg-(--stroke)/10 hover:text-(--foreground)"
+        //               >
+        //                 <span className="grid h-10 w-10 place-items-center text-(--foreground)">
+        //                   {action.icon ? (
+        //                     <>{action.icon}</>
+        //                   ) : (
+        //                     action.label[0]
+        //                   )}
+        //                 </span>
+        //                 {action.label}
+        //               </button>
+        //             )
+        //           )}
+        //         </CardFooter>
+        //       </Card>
+        //     );
+        //   })}
+        // </section>
+        <section className="relative w-full max-w-[70vw] overflow-hidden m-auto py-4">
+          {/* Arrows */}
+          <button
+            type="button"
+            aria-label="Previous"
+            onClick={() => setCarouselIndex((i) => Math.max(0, i - 1))}
+            disabled={carouselIndex <= 0}
+            className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full border border-(--foreground) bg-(--basic-cta)/80 p-2 text-(--foreground) backdrop-blur hover:bg-(--basic-cta) disabled:opacity-40"
+          >
+            <ChevronLeft size={18} />
+          </button>
+
+          <button
+            type="button"
+            aria-label="Next"
+            onClick={() => {
+              const maxIndex = Math.max(0, filteredCards.length - visibleCount);
+              setCarouselIndex((i) => Math.min(maxIndex, i + 1));
+            }}
+            disabled={carouselIndex >= Math.max(0, filteredCards.length - visibleCount)}
+            className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full border border-(--foreground) bg-(--basic-cta)/80 p-2 text-(--foreground) backdrop-blur hover:bg-(--basic-cta) disabled:opacity-40"
+          >
+            <ChevronRight size={18} />
+          </button>
+
+          {/* Viewport */}
+          <div className="w-full max-w-full overflow-hidden p-2">
+            {/* Track */}
+            <div
+              className="flex gap-4 transition-transform duration-500 ease-out will-change-transform"
+              style={{
+                transform: `translateX(calc(-${carouselIndex} * (100% / ${visibleCount}) - ${carouselIndex} * 1rem))`,
+              }}
+            >
+              {filteredCards.map((card) => {
+                const cardId = getCardId(card);
+                const last4 = getLast4(card);
+                const balance = cardBalances[cardId];
+                const isPhysical = String(card.type) === "2";
+                const isFrozen = card.status === "04";
+                const actions = isPhysical ? physicalActions : virtualActions(isFrozen);
+
+                const isSelected = selectedId === cardId;
+
+                return (
+                  <div
+                    key={cardId}
+                    className="shrink-0"
+                    style={{ width: `calc(100% / ${visibleCount})` }}
+                  >
+                    <Card
+                      variant={isSelected ? "glass" : "solid"}
+                      onClick={() => setSelectedId(cardId)}
+                      className={cn(
+                        "w-full cursor-pointer transition-all duration-300 hover:scale-[1.01]",
+                        isSelected && "ring-1 ring-(--brand)/50"
+                      )}
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") setSelectedId(cardId);
+                      }}
+                    >
+                      {/* ✅ keep your existing Card content exactly as-is */}
+                      <div className="p-1">
+                        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-(--foreground) to-gray-600 p-2 text-(--background) shadow-lg">
+                          <div className="flex justify-between items-start opacity-80">
+                            <div className="text-[10px] uppercase tracking-[0.2em]">
+                              {card.cardType ?? "Vtron"}
+                            </div>
+                            <div className="font-bold italic opacity-60 text-xs">VISA</div>
+                          </div>
+
+                          <div className="text-lg font-mono tracking-widest my-2">
+                            ••••{last4}
+                          </div>
+
+                          <div className="flex justify-between items-end">
+                            <div>
+                              <div className="text-[8px] uppercase opacity-60">Card Holder</div>
+                              <div className="text-xs font-medium">{card.alias ?? "Vtron User"}</div>
+                            </div>
+                            <div className="h-5 w-8 rounded bg-white/20" />
+                          </div>
+
+                          <div className="absolute -inset-full animate-[shimmer_3s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12" />
+                        </div>
+
+                        <div className="mt-2 flex items-center justify-between px-1">
+                          <div>
+                            <span className="text-lg font-bold text-(--foreground)">
+                              {balance ? balance.balance : "--"}{" "}
+                              <span className="text-sm font-normal text-(--paragraph)">
+                                {balance ? balance.currency : ""}
+                              </span>
+                            </span>
+                          </div>
+                          {/* keep your status chips as-is */}
+                        </div>
                       </div>
-                      <div className="font-bold italic opacity-60">VISA</div>
-                    </div>
 
-                    <div className="text-xl font-mono tracking-widest">
-                      •••• •••• •••• {last4}
-                    </div>
-
-                    <div className="flex justify-between items-end">
-                      <div>
-                        <div className="text-[10px] uppercase opacity-60">Card Holder</div>
-                        <div className="text-sm font-medium">{card.alias ?? "Vtron User"}</div>
-                      </div>
-                      <div className="h-6 w-10 rounded bg-white/20" />
-                    </div>
-
-                    {/* Shine effect */}
-                    <div className="absolute -inset-full animate-[shimmer_3s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12" />
-                  </div>
-
-                  <div className="mt-2 flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-(--paragraph)">Balance: {" "}
-                        <span className="text-lg font-bold text-(--foreground)">
-                          {balance ? balance.balance : "--"}{" "}
-                          <span className="text-sm font-normal text-(--paragraph)">
-                            {balance ? balance.currency : ""}
-                          </span>
-                        </span>
-                      </p>
-                    </div>
-                    {isFrozen ? (
-                      <span className="rounded-full bg-red-500/10 px-2 py-1 text-xs font-semibold text-red-500">
-                        Frozen
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-(--brand)/10 px-2 py-1 text-xs font-semibold text-(--brand)">
-                        Active
-                      </span>
-                    )
-                    }
-                  </div>
-                </div>
-
-                <CardFooter className="mt-2 grid grid-cols-3 gap-2 border-t border-(--stroke) p-1">
-                  {actions.map((action) =>
-                    action.key === "settings" ? (
-                      <Link
-                        key={action.key}
-                        href={`/cards/settings?card=${cardId}`}
-                        className="flex flex-col items-center gap-1 rounded-lg p-1 text-[10px] font-medium text-(--paragraph) transition hover:bg-(--stroke)/10 hover:text-(--foreground)"
-                      >
-                        <span className="grid h-10 w-10 place-items-center text-(--foreground)">
-                          {action.icon ? (
-                            <>{action.icon}</>
+                      <CardFooter className="mt-1 flex items-center justify-around gap-1 border-t border-(--stroke) p-1">
+                        {actions.map((action) =>
+                          action.key === "settings" ? (
+                            <Link
+                              key={action.key}
+                              href={`/cards/settings?card=${cardId}`}
+                              className="flex flex-col items-center gap-1 rounded-lg p-1 text-[10px] font-medium text-(--paragraph) transition hover:bg-(--stroke)/10 hover:text-(--foreground)"
+                            >
+                              <span className="grid h-10 w-10 place-items-center text-(--foreground)">
+                                {action.icon ? <>{action.icon}</> : action.label[0]}
+                              </span>
+                              {action.label}
+                            </Link>
                           ) : (
-                            action.label[0]
-                          )}
-                        </span>
-                        {action.label}
-                      </Link>
-                    ) : (
-                      <button
-                        key={action.key}
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAction(action.key, cardId);
-                        }}
-                        className="flex flex-col items-center gap-1 rounded-lg p-1 text-[10px] font-medium text-(--paragraph) transition hover:bg-(--stroke)/10 hover:text-(--foreground)"
-                      >
-                        <span className="grid h-10 w-10 place-items-center text-(--foreground)">
-                          {action.icon ? (
-                            <>{action.icon}</>
-                          ) : (
-                            action.label[0]
-                          )}
-                        </span>
-                        {action.label}
-                      </button>
-                    )
-                  )}
-                </CardFooter>
-              </Card>
-            );
-          })}
+                            <button
+                              key={action.key}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAction(action.key, cardId);
+                              }}
+                              className="flex flex-col items-center gap-1 rounded-lg p-1 text-[10px] font-medium text-(--paragraph) transition hover:bg-(--stroke)/10 hover:text-(--foreground)"
+                            >
+                              <span className="grid h-10 w-10 place-items-center text-(--foreground)">
+                                {action.icon ? <>{action.icon}</> : action.label[0]}
+                              </span>
+                              {action.label}
+                            </button>
+                          )
+                        )}
+                      </CardFooter>
+                    </Card>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Dots */}
+          {filteredCards.length > 0 && (
+            <div className="mt-3 flex justify-center gap-2">
+              {Array.from({
+                length: Math.max(1, Math.ceil(filteredCards.length / visibleCount)),
+              }).map((_, page) => {
+                const targetIndex = page * visibleCount;
+                const active =
+                  carouselIndex >= targetIndex &&
+                  carouselIndex < targetIndex + visibleCount;
+
+                return (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => setCarouselIndex(targetIndex)}
+                    className={cn(
+                      "h-2 w-2 rounded-full border border-(--foreground)",
+                      active ? "bg-(--brand)" : "bg-(--basic-cta)"
+                    )}
+                    aria-label={`Go to page ${page + 1}`}
+                  />
+                );
+              })}
+            </div>
+          )}
         </section>
       )}
 
       {filteredCards.length > 0 && (
-        <DataTable
-          title={`Transaction history`}
-          columns={transactionsColumns}
-          data={formattedRecords}
-          emptyMessage={
-            recordLoading ? (
-              <div className="flex items-center justify-center gap-2">
-                <Spinner size={16} /> Loading transactions...
-              </div>
-            ) : recordError ? (
-              <span className="text-red-500">{recordError}</span>
-            ) : (
-              "No transactions yet."
-            )
-          }
-        />
+        <section className="space-y-4">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-(--paragraph) sm:text-sm bg-(--basic-cta)/50 p-4 rounded-2xl border border-(--stroke)">
+            <span className="text-(--foreground) font-medium mr-2">Filters:</span>
+
+            {/* Transaction Type Filter */}
+            <label className="flex items-center gap-2">
+              <span>Type</span>
+              <select
+                value={txTypeFilter}
+                onChange={(e) => {
+                  setTxTypeFilter(e.target.value);
+                  setRecordPage(1);
+                }}
+                className="cursor-pointer rounded-lg border border-(--white)/10 bg-(--background)/50 px-2 py-1 text-xs text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--brand)/50 sm:text-sm"
+              >
+                <option value="" className="bg-(--basic-cta)">All</option>
+                <option value="program_fee_card" className="bg-(--basic-cta)">Consumption</option>
+                <option value="refund_card" className="bg-(--basic-cta)">Refund</option>
+                <option value="deposit_card" className="bg-(--basic-cta)">Recharge</option>
+                <option value="withdraw_card" className="bg-(--basic-cta)">Withdraw</option>
+                <option value="reversal_card" className="bg-(--basic-cta)">Revoke</option>
+                <option value="fee_card" className="bg-(--basic-cta)">Card Fee</option>
+                <option value="atm_fee_card" className="bg-(--basic-cta)">ATM</option>
+              </select>
+            </label>
+
+            {/* Transaction Status Filter */}
+            <label className="flex items-center gap-2">
+              <span>Status</span>
+              <select
+                value={txStatusFilter}
+                onChange={(e) => {
+                  setTxStatusFilter(e.target.value);
+                  setRecordPage(1);
+                }}
+                className="cursor-pointer rounded-lg border border-(--white)/10 bg-(--background)/50 px-2 py-1 text-xs text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--brand)/50 sm:text-sm"
+              >
+                <option value="" className="bg-(--basic-cta)">All</option>
+                <option value="1" className="bg-(--basic-cta)">Confirming</option>
+                <option value="2" className="bg-(--basic-cta)">Completed</option>
+                <option value="3" className="bg-(--basic-cta)">Cancelled</option>
+              </select>
+            </label>
+
+            {/* Date Range */}
+            <div className="flex items-center gap-2">
+              <span>Date</span>
+              <input
+                type="date"
+                value={txStartDate}
+                onChange={(e) => {
+                  setTxStartDate(e.target.value);
+                  setRecordPage(1);
+                }}
+                className="rounded-lg border border-(--white)/10 bg-(--background)/50 px-2 py-1 text-xs text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--brand)/50 sm:text-sm"
+              />
+              <span>to</span>
+              <input
+                type="date"
+                value={txEndDate}
+                onChange={(e) => {
+                  setTxEndDate(e.target.value);
+                  setRecordPage(1);
+                }}
+                className="rounded-lg border border-(--white)/10 bg-(--background)/50 px-2 py-1 text-xs text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--brand)/50 sm:text-sm"
+              />
+            </div>
+          </div>
+
+          <DataTable
+            title={`Transaction history`}
+            columns={transactionsColumns}
+            data={formattedRecords}
+            emptyMessage={
+              recordLoading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <Spinner size={16} /> Loading transactions...
+                </div>
+              ) : recordError ? (
+                <span className="text-red-500">{recordError}</span>
+              ) : (
+                "No transactions yet."
+              )
+            }
+          />
+        </section>
       )}
 
       {/* Pagination Controls */}

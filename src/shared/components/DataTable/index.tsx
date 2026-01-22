@@ -20,7 +20,7 @@ export default function DataTable<T extends Record<string, ReactNode>>({
   emptyMessage = "No records yet.",
 }: DataTableProps<T>) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-(--stroke) bg-(--basic-cta)/50 shadow-sm backdrop-blur-xl transition-all hover:bg-(--basic-cta)/80">
+    <section className="max-w-[90vw] overflow-hidden rounded-2xl border border-(--stroke) bg-(--basic-cta)/50 shadow-sm backdrop-blur-xl transition-all hover:bg-(--basic-cta)/80">
       {title ? (
         <div className="border-b border-(--stroke) px-4 py-4 sm:px-6">
           <h2 className="text-base font-semibold text-(--foreground)">
