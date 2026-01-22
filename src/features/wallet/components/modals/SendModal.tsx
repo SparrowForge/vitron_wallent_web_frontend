@@ -70,6 +70,13 @@ export default function SendModal({
   useToastMessages({ errorMessage, infoMessage });
   const [fieldErrors, setFieldErrors] = useState<FieldErrorState>({});
 
+  const formatValue = (val: number) => {
+    const str = val.toFixed(6);
+    const trimmed = str.replace(/0+$/, "");
+    if (trimmed.endsWith(".")) return trimmed + "0";
+    return trimmed;
+  };
+
   const balanceForCurrency = useMemo(() => {
     const item = balances.find((entry) => entry.currency === currency);
     const value = Number(item?.amount ?? 0);
@@ -370,7 +377,7 @@ export default function SendModal({
             ))}
           </Select>
           <div className="text-xs text-(--paragraph)">
-            Available: {balanceForCurrency.toFixed(2)} {currency}
+            Available: {formatValue(balanceForCurrency)} {currency}
           </div>
         </label>
 
@@ -419,13 +426,13 @@ export default function SendModal({
           <div className="flex items-center justify-between">
             <span>Fee</span>
             <span className="text-(--double-foreground)">
-              {feeValue.toFixed(2)} {currency}
+              {formatValue(feeValue)} {currency}
             </span>
           </div>
           <div className="mt-2 flex items-center justify-between">
             <span>Total</span>
             <span className="text-(--double-foreground)">
-              {totalValue.toFixed(2)} {currency}
+              {formatValue(totalValue)} {currency}
             </span>
           </div>
         </div>

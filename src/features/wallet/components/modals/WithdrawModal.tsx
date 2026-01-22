@@ -104,6 +104,13 @@ export default function WithdrawModal({
 
   useToastMessages({ errorMessage, infoMessage });
 
+  const formatValue = (val: number) => {
+    const str = val.toFixed(6);
+    const trimmed = str.replace(/0+$/, "");
+    if (trimmed.endsWith(".")) return trimmed + "0";
+    return trimmed;
+  };
+
   const verifyType = watch("verifyType");
   const amountInput = watch("amount");
   const networkValue = watch("network");
@@ -124,6 +131,7 @@ export default function WithdrawModal({
 
   const feeValue = safeAmount * (safeRatio / 100);
   const estimateValue = safeAmount - feeValue;
+
 
   const canSubmit = useMemo(() => {
     if (!networkValue || !addressValue || !payPasswordValue) return false;
@@ -218,7 +226,7 @@ export default function WithdrawModal({
     if (safeAmount < safeMinWithdraw) {
       setError("amount", {
         type: "validate",
-        message: `Minimum ${safeMinWithdraw.toFixed(2)} USD`,
+        message: `Minimum ${formatValue(safeMinWithdraw)} USD`,
       });
       return;
     }
@@ -378,8 +386,9 @@ export default function WithdrawModal({
               Max
             </Button>
           </div>
-          <div className="text-xs text-(--paragraph)">
-            Available: {safeAvailable.toFixed(2)} USD
+          <div className="flex items-center justify-between text-xs text-(--paragraph)">
+            <span>Available: {formatValue(safeAvailable)} USD</span>
+            <span>Min: {formatValue(safeMinWithdraw)} USD</span>
           </div>
         </label>
 
@@ -387,13 +396,13 @@ export default function WithdrawModal({
           <div className="flex items-center justify-between">
             <span>Fee</span>
             <span className="text-(--double-foreground)">
-              {feeValue.toFixed(2)} USD
+              {formatValue(feeValue)} USD
             </span>
           </div>
           <div className="mt-2 flex items-center justify-between">
             <span>Received amount</span>
             <span className="text-(--double-foreground)">
-              {estimateValue.toFixed(2)} USDT
+              {formatValue(estimateValue)} USDT
             </span>
           </div>
         </div>

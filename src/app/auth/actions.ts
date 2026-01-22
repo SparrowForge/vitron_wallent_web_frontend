@@ -283,3 +283,11 @@ export async function resetPasswordAction(params: ForgotParams) {
   );
   return response;
 }
+
+export async function checkPasskeyAction(username: string) {
+  const response = await requestJson(API_ENDPOINTS.checkPasskey, {
+    method: "POST",
+    body: JSON.stringify({ username }),
+  });
+  return response;
+}

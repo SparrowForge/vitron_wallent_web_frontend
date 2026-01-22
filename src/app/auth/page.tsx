@@ -7,6 +7,7 @@ import {
   sendForgotCodeAction,
   sendLoginCodeAction,
   sendRegisterCodeAction,
+  checkPasskeyAction,
 } from "@/app/auth/actions";
 import LandingHeader from "@/features/navigation/components/LandingHeader";
 import {
@@ -75,6 +76,7 @@ export default function AuthPage() {
             setStatus("idle");
             return;
           }
+          await checkPasskeyAction(email);
           setStep("verify");
           setStatus("idle");
           return;
@@ -326,144 +328,144 @@ export default function AuthPage() {
             {(mode === "register" ||
               mode === "forgot" ||
               step === "verify") && (
-              <>
-                {mode === "login" ? (
-                  <>
-                    <div className="flex items-center gap-4 text-sm font-medium text-(--foreground)">
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          checked={verifyType === "email"}
-                          onChange={() => {
-                            setVerifyType("email");
-                            setFieldErrors((prev) => ({
-                              ...prev,
-                              emailCode: "",
-                              googleCode: "",
-                            }));
-                          }}
-                        />
-                        Email code
-                      </label>
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          checked={verifyType === "google"}
-                          onChange={() => {
-                            setVerifyType("google");
-                            setFieldErrors((prev) => ({
-                              ...prev,
-                              emailCode: "",
-                              googleCode: "",
-                            }));
-                          }}
-                        />
-                        Google code
-                      </label>
-                    </div>
-                    {verifyType === "email" ? (
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-(--foreground)">
-                          Email code{" "}
-                          {!emailCode && (
-                            <span className="text-red-500">
-                              <sup>*required</sup>
-                            </span>
-                          )}
+                <>
+                  {mode === "login" ? (
+                    <>
+                      <div className="flex items-center gap-4 text-sm font-medium text-(--foreground)">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            checked={verifyType === "email"}
+                            onChange={() => {
+                              setVerifyType("email");
+                              setFieldErrors((prev) => ({
+                                ...prev,
+                                emailCode: "",
+                                googleCode: "",
+                              }));
+                            }}
+                          />
+                          Email code
                         </label>
-                        <div className="flex items-center gap-3">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            checked={verifyType === "google"}
+                            onChange={() => {
+                              setVerifyType("google");
+                              setFieldErrors((prev) => ({
+                                ...prev,
+                                emailCode: "",
+                                googleCode: "",
+                              }));
+                            }}
+                          />
+                          Google code
+                        </label>
+                      </div>
+                      {verifyType === "email" ? (
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-(--foreground)">
+                            Email code{" "}
+                            {!emailCode && (
+                              <span className="text-red-500">
+                                <sup>*required</sup>
+                              </span>
+                            )}
+                          </label>
+                          <div className="flex items-center gap-3">
+                            <Input
+                              placeholder="Enter the code"
+                              value={emailCode}
+                              onChange={(event) => {
+                                setEmailCode(event.target.value);
+                                if (fieldErrors.emailCode) {
+                                  setFieldErrors((prev) => ({
+                                    ...prev,
+                                    emailCode: "",
+                                  }));
+                                }
+                              }}
+                              error={fieldErrors.emailCode}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="min-w-[120px]"
+                              disabled={
+                                status === "loading" || cooldown > 0 || !email
+                              }
+                              onClick={handleSendCode}
+                            >
+                              {cooldown > 0 ? `${cooldown}s` : "Send code"}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : null}
+                      {verifyType === "google" ? (
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-(--foreground)">
+                            Google code{" "}
+                            {!googleCode && (
+                              <span className="text-red-500">
+                                <sup>*required</sup>
+                              </span>
+                            )}
+                          </label>
                           <Input
-                            placeholder="Enter the code"
-                            value={emailCode}
+                            placeholder="Enter Google code"
+                            value={googleCode}
                             onChange={(event) => {
-                              setEmailCode(event.target.value);
-                              if (fieldErrors.emailCode) {
+                              setGoogleCode(event.target.value);
+                              if (fieldErrors.googleCode) {
                                 setFieldErrors((prev) => ({
                                   ...prev,
-                                  emailCode: "",
+                                  googleCode: "",
                                 }));
                               }
                             }}
-                            error={fieldErrors.emailCode}
+                            error={fieldErrors.googleCode}
                           />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="min-w-[120px]"
-                            disabled={
-                              status === "loading" || cooldown > 0 || !email
-                            }
-                            onClick={handleSendCode}
-                          >
-                            {cooldown > 0 ? `${cooldown}s` : "Send code"}
-                          </Button>
                         </div>
-                      </div>
-                    ) : null}
-                    {verifyType === "google" ? (
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-(--foreground)">
-                          Google code{" "}
-                          {!googleCode && (
-                            <span className="text-red-500">
-                              <sup>*required</sup>
-                            </span>
-                          )}
-                        </label>
+                      ) : null}
+                    </>
+                  ) : null}
+                  {mode === "register" || mode === "forgot" ? (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-(--foreground)">
+                        {mode === "forgot" ? "Email code" : "Email code"}
+                      </label>
+                      <div className="flex items-center gap-3">
                         <Input
-                          placeholder="Enter Google code"
-                          value={googleCode}
+                          placeholder="Enter the code"
+                          value={emailCode}
                           onChange={(event) => {
-                            setGoogleCode(event.target.value);
-                            if (fieldErrors.googleCode) {
+                            setEmailCode(event.target.value);
+                            if (fieldErrors.emailCode) {
                               setFieldErrors((prev) => ({
                                 ...prev,
-                                googleCode: "",
+                                emailCode: "",
                               }));
                             }
                           }}
-                          error={fieldErrors.googleCode}
+                          error={fieldErrors.emailCode}
                         />
-                      </div>
-                    ) : null}
-                  </>
-                ) : null}
-                {mode === "register" || mode === "forgot" ? (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-(--foreground)">
-                      {mode === "forgot" ? "Email code" : "Email code"}
-                    </label>
-                    <div className="flex items-center gap-3">
-                      <Input
-                        placeholder="Enter the code"
-                        value={emailCode}
-                        onChange={(event) => {
-                          setEmailCode(event.target.value);
-                          if (fieldErrors.emailCode) {
-                            setFieldErrors((prev) => ({
-                              ...prev,
-                              emailCode: "",
-                            }));
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="min-w-[120px]"
+                          disabled={
+                            status === "loading" || cooldown > 0 || !email
                           }
-                        }}
-                        error={fieldErrors.emailCode}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="min-w-[120px]"
-                        disabled={
-                          status === "loading" || cooldown > 0 || !email
-                        }
-                        onClick={handleSendCode}
-                      >
-                        {cooldown > 0 ? `${cooldown}s` : "Send code"}
-                      </Button>
+                          onClick={handleSendCode}
+                        >
+                          {cooldown > 0 ? `${cooldown}s` : "Send code"}
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                ) : null}
-              </>
-            )}
+                  ) : null}
+                </>
+              )}
 
             <Button
               type="submit"

@@ -40,6 +40,7 @@ type BinModel = {
   cardHolderType?: string;
   cardHolderStatus?: string;
   currency?: string;
+  remark?: string;
 };
 
 type ApplyBinsResponse = {
@@ -139,6 +140,13 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
 
   useToastMessages({ errorMessage, infoMessage });
 
+  const formatValue = (val: number) => {
+    const str = val.toFixed(6);
+    const trimmed = str.replace(/0+$/, "");
+    if (trimmed.endsWith(".")) return trimmed + "0";
+    return trimmed;
+  };
+
   const selectedBin = useMemo(
     () => bins.find((bin) => getBinId(bin) === selectedBinId) ?? null,
     [bins, selectedBinId],
@@ -220,7 +228,7 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
         const binsData = Array.isArray(binsResponse.data)
           ? binsResponse.data
           : (binsResponse.data?.bin ?? []);
-
+        console.log("bbb", binsData);
         setBins(binsData);
         const firstBinId = binsData.length > 0 ? getBinId(binsData[0]) : "";
         setSelectedBinId((current) => current || firstBinId);
@@ -416,20 +424,53 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_1fr]">
         <section className="space-y-4">
-          <Card className="p-0 overflow-hidden bg-(--background)">
-            <CardHeader className="p-4 pb-2">
+          <CardHeader className="p-4 pb-2">
+            <div className="flex items-center justify-start gap-3">
               <CardTitle className="text-sm font-semibold text-(--foreground)">
-                Available card bins
+                Available Types
               </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-2">
-              <div className="grid gap-3 sm:grid-cols-2">
-                {bins.length === 0 ? (
-                  <div className="text-sm text-(--paragraph)">
-                    No card bins available yet.
-                  </div>
-                ) : (
-                  bins.map((bin) => {
+              <div className="flex rounded-lg bg-(--stroke)/30 p-1">
+                <button
+                  onClick={() => setCardType("VIRTUAL_CARD")}
+                  className={cn(
+                    "rounded-md px-3 py-1 text-xs font-medium transition-all",
+                    cardType === "VIRTUAL_CARD"
+                      ? "bg-(--brand) text-black shadow-sm"
+                      : "text-(--paragraph) hover:text-(--foreground)"
+                  )}
+                >
+                  Virtual
+                </button>
+                <button
+                  onClick={() => setCardType("PHYSICAL_CARD")}
+                  className={cn(
+                    "rounded-md px-3 py-1 text-xs font-medium transition-all",
+                    cardType === "PHYSICAL_CARD"
+                      ? "bg-(--brand) text-black shadow-sm"
+                      : "text-(--paragraph) hover:text-(--foreground)"
+                  )}
+                >
+                  Physical
+                </button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-4 pt-2">
+            <div className="grid gap-3 sm:grid-cols-2">
+              {bins.filter(bin => {
+                const isPhysical = Number(bin.supportPhysicalCard ?? 0) === 1;
+                return cardType === 'PHYSICAL_CARD' ? isPhysical : !isPhysical;
+              }).length === 0 ? (
+                <div className="text-sm text-(--paragraph)">
+                  No {cardType === 'PHYSICAL_CARD' ? 'physical ' : 'virtual '}card bins available.
+                </div>
+              ) : (
+                bins
+                  .filter(bin => {
+                    const isPhysical = Number(bin.supportPhysicalCard ?? 0) === 1;
+                    return cardType === 'PHYSICAL_CARD' ? isPhysical : !isPhysical;
+                  })
+                  .map((bin) => {
                     const id = getBinId(bin);
                     const active = id === selectedBinId;
                     return (
@@ -437,88 +478,37 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
                         key={id}
                         type="button"
                         onClick={() => setSelectedBinId(id)}
-                        className={`rounded-2xl border px-4 py-3 text-left transition-all duration-200 ${
-                          active
-                            ? "border-(--brand) bg-(--basic-cta) shadow-[0_0_20px_-5px_rgba(var(--brand-rgb),0.3)]"
-                            : "border-(--stroke) bg-(--basic-cta) hover:border-(--brand)/50 hover:bg-(--basic-cta)/80"
-                        }`}
+                        className={`rounded-2xl border px-4 py-3 text-left transition-all duration-200 ${active
+                          ? "border-(--brand) bg-(--basic-cta) shadow-[0_0_20px_-5px_rgba(var(--brand-rgb),0.3)]"
+                          : "border-(--stroke) bg-(--basic-cta) hover:border-(--brand)/50 hover:bg-(--basic-cta)/80"
+                          }`}
                       >
-                        <div className="text-sm font-semibold text-(--foreground)">
-                          {bin.cardType ?? "Card"}
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm font-semibold text-(--foreground)">
+                            {bin.cardType ?? "Card"}
+                          </div>
+                          <div className="text-xs font-semibold text-(--brand)">
+                            BIN {getBinValue(bin)}
+                          </div>
                         </div>
                         <div className="mt-1 text-xs text-(--paragraph)">
                           {bin.currency ?? "USD"}
                         </div>
-                        <div className="mt-3 text-xs text-(--paragraph)">
-                          {Number(bin.applyCardMinAmount ?? 0)}-
-                          {Number(bin.applyCardMaxAmount ?? 0)} USD
+                        <div className="mt-1 text-xs text-(--paragraph) whitespace-pre-line">
+                          {bin.remark ?? ""}
+                        </div>
+                        <div className="mt-3 flex items-center justify-between text-xs">
+                          <span className="text-(--paragraph)">Apply Fee:</span>
+                          <span className="text-(--foreground) font-medium">{formatValue(getCardFee(bin, cardType))} USD</span>
                         </div>
                       </button>
                     );
                   })
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="p-0 overflow-hidden bg-(--background)">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between text-sm font-semibold text-(--foreground)">
-                <span>Card type</span>
-                <span className="text-xs text-(--paragraph)">
-                  {supportsPhysical ? "Virtual / Physical" : "Virtual only"}
-                </span>
-              </div>
-              <div className="mt-3 flex gap-2">
-                <Button
-                  variant={cardType === "VIRTUAL_CARD" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setCardType("VIRTUAL_CARD")}
-                  className="flex-1"
-                >
-                  Virtual
-                </Button>
-                <Button
-                  variant={cardType === "PHYSICAL_CARD" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setCardType("PHYSICAL_CARD")}
-                  disabled={!supportsPhysical}
-                  className="flex-1"
-                >
-                  Physical
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              )}
+            </div>
+          </CardContent>
         </section>
-
         <section className="space-y-4">
-          <Card className="p-0 overflow-hidden bg-(--background)">
-            <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-sm font-semibold text-(--foreground)">
-                Application details
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-2">
-              <div className="flex items-center justify-between text-xs text-(--paragraph)">
-                <span>Apply fee</span>
-                <span className="text-(--foreground)">
-                  {fee.toFixed(2)} USD
-                </span>
-              </div>
-              <div className="mt-2 text-xs text-(--paragraph)">
-                Top up range {Number(minAmount).toFixed(2)} -{" "}
-                {Number(maxAmount).toFixed(2)} USD
-              </div>
-              <Input
-                value={alias}
-                onChange={(event) => setAlias(event.target.value)}
-                placeholder="Card alias (optional)"
-                className="mt-4"
-              />
-            </CardContent>
-          </Card>
-
           <Card className="p-0 overflow-hidden bg-(--background)">
             <CardHeader className="p-4 pb-2">
               <CardTitle className="text-sm font-semibold text-(--foreground)">
@@ -684,6 +674,8 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
           </Card>
         </section>
       </div>
-    </ModalShell>
+
+
+    </ModalShell >
   );
 }

@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   Wallet,
   X,
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -23,6 +24,7 @@ const primaryNav = [
   { href: "/authentication", label: "Authentication", icon: ShieldCheck },
   { href: "/notice", label: "Notice", icon: Megaphone },
   { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/my-account", label: "My Account", icon: User },
   // { href: "/contact", label: "Contact", icon: Mail },
 ];
 

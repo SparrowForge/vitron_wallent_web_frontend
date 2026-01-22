@@ -1,10 +1,12 @@
 export const errorMessageMap: Record<string, string> = {
-  "unknown.error": "Some data failed to load.",
+  "unknown.error": "Failed to load data.",
   "token.error": "Session expired. Please sign in again.",
   "member.token.error": "Session expired. Please sign in again.",
-  "member.not": "Account not found.",
+  "member.not": "Username not registered.",
   "password.set.error": "Password does not meet requirements.",
-  "crowd.out": "Session expired. Please sign in again.",
+  "crowd.out": "Invalid Login. Please sign in again.",
+  "google.check.error": "Google authentication failed.",
+  "code.invalid": "Invalid Login credentials.",
 };
 
 export const ignoreMessages: string[] = ["unknown.error"];
