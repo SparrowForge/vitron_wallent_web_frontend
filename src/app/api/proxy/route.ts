@@ -46,7 +46,7 @@ export async function POST(request: Request) {
   if (!payload?.url) {
     return NextResponse.json(
       { msg: "Missing url in payload.", code: 400 },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -83,6 +83,6 @@ export async function POST(request: Request) {
   const text = await response.text();
   return NextResponse.json(
     { msg: "Non-JSON response", data: text, status: response.status },
-    { status: response.status }
+    { status: response.status },
   );
 }

@@ -1,4 +1,4 @@
-import { API_BASE_URL, API_ENDPOINTS } from "@/lib/apiEndpoints";
+import { API_BASE_URL } from "@/lib/apiEndpoints";
 
 type ApiOptions = RequestInit & {
   path: string;
@@ -32,6 +32,7 @@ export async function apiRequest<T>({ path, ...init }: ApiOptions): Promise<T> {
   // but this function seems designed for Client -> Proxy interaction primarily.
 
   const targetUrl = isLocalApi ? path : `${API_BASE_URL}${path}`;
+  console.log("apiRequestssss", targetUrl);
   let response: Response;
 
   const performRequest = async () => {
@@ -53,7 +54,8 @@ export async function apiRequest<T>({ path, ...init }: ApiOptions): Promise<T> {
           proxyData = init.body;
         }
       }
-      return fetch("/api/proxy", {
+      console.log("proxyData", init.body);
+      return fetch(`${process.env.NEXT_PUBLIC_CLIENT_BASE_URL}/api/proxy`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -97,7 +99,8 @@ export async function apiRequest<T>({ path, ...init }: ApiOptions): Promise<T> {
       !Number.isNaN(codeValue) &&
       (codeValue === 401 || codeValue === 20008 || codeValue === 20009);
 
-    if (isAuthError && !path.includes("/refresh")) { // Avoid infinite loops if refresh fails
+    if (isAuthError && !path.includes("/refresh")) {
+      // Avoid infinite loops if refresh fails
       console.log("[api.ts] Auth error detected", codeValue);
       if (isRefreshing) {
         console.log("[api.ts] Already refreshing, queuing request");
@@ -136,7 +139,7 @@ export async function apiRequest<T>({ path, ...init }: ApiOptions): Promise<T> {
 
     if (!Number.isNaN(codeValue) && codeValue !== 200) {
       const error = new Error(
-        `[api] ${payload.msg || `Request failed with code ${payload.code}`}`
+        `[api] ${payload.msg || `Request failed with code ${payload.code}`}`,
       ) as Error & { code?: number | string; data?: unknown };
       error.code = payload.code;
       error.data = payload.data;
@@ -162,7 +165,7 @@ export async function refreshToken() {
 
   try {
     const response = await fetch("/api/auth/refresh", {
-      method: "POST"
+      method: "POST",
     });
     const data = await response.json();
     if (data.code === 200) {

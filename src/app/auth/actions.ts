@@ -1,7 +1,8 @@
 "use server";
 
-import { API_BASE_URL, API_ENDPOINTS } from "@/lib/apiEndpoints";
-import { cookies, headers } from "next/headers";
+import { apiRequest } from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/apiEndpoints";
+import { cookies } from "next/headers";
 
 type RegisterParams = {
   username: string;
@@ -73,7 +74,12 @@ export async function logoutAction() {
   cookieStore.delete("vtron_token_type");
 
   try {
-    await requestJson(API_ENDPOINTS.logout, {
+    // await requestJson(API_ENDPOINTS.logout, {
+    //   method: "POST",
+    //   body: JSON.stringify({}),
+    // });
+    await apiRequest<any>({
+      path: API_ENDPOINTS.logout,
       method: "POST",
       body: JSON.stringify({}),
     });
@@ -84,152 +90,163 @@ export async function logoutAction() {
   return { code: 200, msg: "Logged out" };
 }
 
-async function requestJson<T>(path: string, init: RequestInit) {
-  const url = `${API_BASE_URL}${path}`;
-  const headerList = await headers();
-  const host = headerList.get("x-forwarded-host") ?? headerList.get("host");
-  const proto = headerList.get("x-forwarded-proto") ?? "http";
-  const baseUrl = host ? `${proto}://${host}` : "http://localhost:3000";
-  let response: Response;
-  try {
-    const proxyBody: {
-      url: string;
-      method: string;
-      headers: Record<string, string>;
-      data?: unknown;
-    } = {
-      url,
-      method: init.method ?? "GET",
-      headers: { "Content-Type": "application/json" },
-    };
-    // Normalize init.headers (HeadersInit) into a plain Record<string, string>
-    if (init.headers) {
-      const target = proxyBody.headers;
-      const h = init.headers as HeadersInit;
-      if (h instanceof Headers) {
-        h.forEach((value, key) => {
-          target[key] = value;
-        });
-      } else if (Array.isArray(h)) {
-        h.forEach(([key, value]) => {
-          target[key] = String(value);
-        });
-      } else {
-        const obj = h as Record<string, string>;
-        Object.keys(obj).forEach((key) => {
-          target[key] = obj[key];
-        });
-      }
-    }
-    if (init.body) {
-      try {
-        proxyBody.data = JSON.parse(init.body as string);
-      } catch {
-        proxyBody.data = init.body;
-      }
-    }
-    response = await fetch(`${baseUrl}/api/proxy`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(proxyBody),
-    });
-  } catch (error) {
-    if (process.env.NODE_ENV !== "production") {
-      console.error("API Request Error:", {
-        url,
-        method: init.method,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-    return {
-      msg: "Request failed. Please try again.",
-      code: 0,
-    } as unknown as T;
-  }
+// async function requestJson<T>(path: string, init: RequestInit) {
+//   const url = `${API_BASE_URL}${path}`;
+//   const headerList = await headers();
+//   const host = headerList.get("x-forwarded-host") ?? headerList.get("host");
+//   const proto = headerList.get("x-forwarded-proto") ?? "http";
+//   const baseUrl = host ? `${proto}://${host}` : "http://localhost:3000";
+//   let response: Response;
+//   try {
+//     const proxyBody: {
+//       url: string;
+//       method: string;
+//       headers: Record<string, string>;
+//       data?: unknown;
+//     } = {
+//       url,
+//       method: init.method ?? "GET",
+//       headers: { "Content-Type": "application/json" },
+//     };
+//     // Normalize init.headers (HeadersInit) into a plain Record<string, string>
+//     if (init.headers) {
+//       const target = proxyBody.headers;
+//       const h = init.headers as HeadersInit;
+//       if (h instanceof Headers) {
+//         h.forEach((value, key) => {
+//           target[key] = value;
+//         });
+//       } else if (Array.isArray(h)) {
+//         h.forEach(([key, value]) => {
+//           target[key] = String(value);
+//         });
+//       } else {
+//         const obj = h as Record<string, string>;
+//         Object.keys(obj).forEach((key) => {
+//           target[key] = obj[key];
+//         });
+//       }
+//     }
+//     if (init.body) {
+//       try {
+//         proxyBody.data = JSON.parse(init.body as string);
+//       } catch {
+//         proxyBody.data = init.body;
+//       }
+//     }
+//     response = await fetch(`${baseUrl}/api/proxy`, {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify(proxyBody),
+//     });
+//   } catch (error) {
+//     if (process.env.NODE_ENV !== "production") {
+//       console.error("API Request Error:", {
+//         url,
+//         method: init.method,
+//         error: error instanceof Error ? error.message : String(error),
+//       });
+//     }
+//     return {
+//       msg: "Request failed. Please try again.",
+//       code: 0,
+//     } as unknown as T;
+//   }
 
-  if (!response.ok) {
-    const contentType = response.headers.get("Content-Type") ?? "";
-    const text = await response.text();
-    const isHtml =
-      contentType.includes("text/html") || text.trim().startsWith("<!DOCTYPE");
-    const message = isHtml
-      ? "Request failed. Please try again."
-      : text || `Request failed with ${response.status}`;
-    if (process.env.NODE_ENV !== "production") {
-      console.error("API Request Error:", {
-        url,
-        method: init.method,
-        status: response.status,
-        statusText: response.statusText,
-        headers: sanitizeHeaders(response.headers),
-        body: isHtml ? "<html response>" : text.slice(0, 2000),
-      });
-    }
-    const error = new Error(
-      `[api] ${message || `Request failed with ${response.status}`}`,
-    ) as Error & {
-      code?: number | string;
-      data?: unknown;
-    };
-    error.code = response.status;
-    throw error;
-  }
+//   if (!response.ok) {
+//     const contentType = response.headers.get("Content-Type") ?? "";
+//     const text = await response.text();
+//     const isHtml =
+//       contentType.includes("text/html") || text.trim().startsWith("<!DOCTYPE");
+//     const message = isHtml
+//       ? "Request failed. Please try again."
+//       : text || `Request failed with ${response.status}`;
+//     if (process.env.NODE_ENV !== "production") {
+//       console.error("API Request Error:", {
+//         url,
+//         method: init.method,
+//         status: response.status,
+//         statusText: response.statusText,
+//         headers: sanitizeHeaders(response.headers),
+//         body: isHtml ? "<html response>" : text.slice(0, 2000),
+//       });
+//     }
+//     const error = new Error(
+//       `[api] ${message || `Request failed with ${response.status}`}`,
+//     ) as Error & {
+//       code?: number | string;
+//       data?: unknown;
+//     };
+//     error.code = response.status;
+//     throw error;
+//   }
 
-  const payload = (await response.json()) as {
-    code?: number | string;
-    msg?: string;
-    data?: unknown;
-  };
-  if (process.env.NODE_ENV !== "production") {
-    console.log("API Response:", payload);
-  }
-  if (payload && typeof payload === "object" && "code" in payload) {
-    const codeValue = Number(payload.code);
-    if (!Number.isNaN(codeValue) && codeValue !== 200) {
-      const error = new Error(
-        `[api] ${payload.msg || `Request failed with code ${payload.code}`}`,
-      ) as Error & { code?: number | string; data?: unknown };
-      error.code = payload.code;
-      error.data = payload.data;
-      throw error;
-    }
-  }
-  return payload as T;
-}
+//   const payload = (await response.json()) as {
+//     code?: number | string;
+//     msg?: string;
+//     data?: unknown;
+//   };
+//   if (process.env.NODE_ENV !== "production") {
+//     console.log("API Response:", payload);
+//   }
+//   if (payload && typeof payload === "object" && "code" in payload) {
+//     const codeValue = Number(payload.code);
+//     if (!Number.isNaN(codeValue) && codeValue !== 200) {
+//       const error = new Error(
+//         `[api] ${payload.msg || `Request failed with code ${payload.code}`}`,
+//       ) as Error & { code?: number | string; data?: unknown };
+//       error.code = payload.code;
+//       error.data = payload.data;
+//       throw error;
+//     }
+//   }
+//   return payload as T;
+// }
 
-function sanitizeHeaders(headers: Headers) {
-  const entries: Record<string, string> = {};
-  headers.forEach((value, key) => {
-    if (key.toLowerCase() === "set-cookie") {
-      entries[key] = "<redacted>";
-      return;
-    }
-    entries[key] = value;
-  });
-  return entries;
-}
+// function sanitizeHeaders(headers: Headers) {
+//   const entries: Record<string, string> = {};
+//   headers.forEach((value, key) => {
+//     if (key.toLowerCase() === "set-cookie") {
+//       entries[key] = "<redacted>";
+//       return;
+//     }
+//     entries[key] = value;
+//   });
+//   return entries;
+// }
 
 export async function sendLoginCodeAction(email: string, type = "login") {
-  const response = await requestJson<LoginResponse>(
-    `${API_ENDPOINTS.registerSendCode}?email=${encodeURIComponent(
+  // const response = await requestJson<LoginResponse>(
+  //   `${API_ENDPOINTS.registerSendCode}?email=${encodeURIComponent(
+  //     email,
+  //   )}&type=${encodeURIComponent(type)}`,
+  //   {
+  //     method: "GET",
+  //   },
+  // );
+  const response = await apiRequest<LoginResponse>({
+    path: `${API_ENDPOINTS.registerSendCode}?email=${encodeURIComponent(
       email,
     )}&type=${encodeURIComponent(type)}`,
-    {
-      method: "GET",
-    },
-  );
+    method: "GET",
+  });
   return response;
 }
 
 export async function loginWithPasswordAndCodeAction(
   params: LoginVerifyParams,
 ) {
-  const response = await requestJson<LoginResponse>(API_ENDPOINTS.login, {
+  // const response = await requestJson<LoginResponse>(API_ENDPOINTS.login, {
+  //   method: "POST",
+  //   body: JSON.stringify({
+  //     ...params,
+  //     authType: "password",
+  //   }),
+  // });
+  const response = await apiRequest<LoginResponse>({
+    path: API_ENDPOINTS.login,
     method: "POST",
-    body: JSON.stringify({
-      ...params,
-      authType: "password",
-    }),
+    body: JSON.stringify({ ...params, authType: "password" }),
   });
   if (response.data) {
     await setAuthCookies(response.data);
@@ -238,36 +255,53 @@ export async function loginWithPasswordAndCodeAction(
 }
 
 export async function sendRegisterCodeAction(email: string) {
-  const response = await requestJson<LoginResponse>(
-    `${API_ENDPOINTS.registerSendCode}?email=${encodeURIComponent(
+  // const response = await requestJson<LoginResponse>(
+  //   `${API_ENDPOINTS.registerSendCode}?email=${encodeURIComponent(
+  //     email,
+  //   )}&type=register`,
+  //   {
+  //     method: "GET",
+  //   },
+  // );
+  const response = await apiRequest<LoginResponse>({
+    path: `${API_ENDPOINTS.registerSendCode}?email=${encodeURIComponent(
       email,
     )}&type=register`,
-    {
-      method: "GET",
-    },
-  );
+    method: "GET",
+  });
   return response;
 }
 
 export async function sendForgotCodeAction(email: string) {
-  const response = await requestJson<LoginResponse>(
-    `${API_ENDPOINTS.registerSendCode}?email=${encodeURIComponent(
+  // const response = await requestJson<LoginResponse>(
+  //   `${API_ENDPOINTS.registerSendCode}?email=${encodeURIComponent(
+  //     email,
+  //   )}&type=reset`,
+  //   {
+  //     method: "GET",
+  //   },
+  // );
+  const response = await apiRequest<LoginResponse>({
+    path: `${API_ENDPOINTS.registerSendCode}?email=${encodeURIComponent(
       email,
     )}&type=reset`,
-    {
-      method: "GET",
-    },
-  );
+    method: "GET",
+  });
   return response;
 }
 
 export async function registerWithPasswordAction(params: RegisterParams) {
-  const response = await requestJson<LoginResponse>(API_ENDPOINTS.register, {
+  // const response = await requestJson<LoginResponse>(API_ENDPOINTS.register, {
+  //   method: "POST",
+  //   body: JSON.stringify({
+  //     ...params,
+  //     registerType: "app",
+  //   }),
+  // });
+  const response = await apiRequest<LoginResponse>({
+    path: API_ENDPOINTS.register,
     method: "POST",
-    body: JSON.stringify({
-      ...params,
-      registerType: "app",
-    }),
+    body: JSON.stringify({ ...params, registerType: "app" }),
   });
   if (response.data) {
     await setAuthCookies(response.data);
@@ -276,20 +310,31 @@ export async function registerWithPasswordAction(params: RegisterParams) {
 }
 
 export async function resetPasswordAction(params: ForgotParams) {
-  const response = await requestJson<LoginResponse>(
-    API_ENDPOINTS.forgetPassword,
-    {
-      method: "POST",
-      body: JSON.stringify(params),
-    },
-  );
+  // const response = await requestJson<LoginResponse>(
+  //   API_ENDPOINTS.forgetPassword,
+  //   {
+  //     method: "POST",
+  //     body: JSON.stringify(params),
+  //   },
+  // );
+  const response = await apiRequest<LoginResponse>({
+    path: API_ENDPOINTS.forgetPassword,
+    method: "POST",
+    body: JSON.stringify(params),
+  });
   return response;
 }
 
 export async function checkPasskeyAction(username: string) {
-  const response = await requestJson(API_ENDPOINTS.checkPasskey, {
+  console.log("checkPasskeyAction", username, API_ENDPOINTS.checkPasskey);
+  // const response = await requestJson(API_ENDPOINTS.checkPasskey, {
+  //   method: "POST",
+  //   body: JSON.stringify({ username }),
+  // })
+  const response = await apiRequest<LoginResponse>({
+    path: API_ENDPOINTS.checkPasskey,
     method: "POST",
-    body: JSON.stringify({ username }),
+    body: JSON.stringify({ username }), // TODO: Remove this
   });
   return response;
 }

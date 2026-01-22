@@ -102,6 +102,8 @@ const formatOrderId = (value?: string) => {
 export default function CardsDashboard() {
   const [cards, setCards] = useState<ApiCard[]>([]);
   const [selectedId, setSelectedId] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
   const [viewOpen, setViewOpen] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
   const [freezeOpen, setFreezeOpen] = useState(false);
@@ -120,10 +122,55 @@ export default function CardsDashboard() {
 
   useToastMessages({ errorMessage });
 
+  const normalizeStatus = (status?: string) => {
+    const normalized = String(status ?? "").trim().toUpperCase();
+    if (
+      normalized === "04" ||
+      normalized === "FROZEN" ||
+      normalized === "FREEZE"
+    ) {
+      return "freeze";
+    }
+    if (
+      normalized === "03" ||
+      normalized === "UNACTIVATED" ||
+      normalized === "INACTIVE" ||
+      normalized === "UNACTIVATE"
+    ) {
+      return "unactivated";
+    }
+    if (normalized === "05" || normalized === "DELETED" || normalized === "DELETE") {
+      return "delete";
+    }
+    return "active";
+  };
+
+  const normalizeType = (card: ApiCard) => {
+    const rawType = String(card.type ?? card.cardType ?? "").toUpperCase();
+    if (Number(card.type) === 2 || rawType.includes("PHYSICAL")) {
+      return "physical";
+    }
+    return "virtual";
+  };
+
+  const filteredCards = useMemo(() => {
+    return cards.filter((card) => {
+      if (statusFilter !== "all" && normalizeStatus(card.status) !== statusFilter) {
+        return false;
+      }
+      if (typeFilter !== "all" && normalizeType(card) !== typeFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [cards, statusFilter, typeFilter]);
+
   const selectedCard = useMemo(
     () =>
-      cards.find((card) => getCardId(card) === selectedId) ?? cards[0] ?? null,
-    [cards, selectedId]
+      filteredCards.find((card) => getCardId(card) === selectedId) ??
+      filteredCards[0] ??
+      null,
+    [filteredCards, selectedId]
   );
 
   const refreshBalances = async (cardList: ApiCard[]) => {
@@ -216,6 +263,21 @@ export default function CardsDashboard() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (filteredCards.length === 0) {
+      if (selectedId) {
+        setSelectedId("");
+      }
+      return;
+    }
+    const selectedExists = filteredCards.some(
+      (card) => getCardId(card) === selectedId
+    );
+    if (!selectedExists) {
+      setSelectedId(getCardId(filteredCards[0]));
+    }
+  }, [filteredCards, selectedId]);
 
   useEffect(() => {
     if (!selectedId) {
@@ -368,19 +430,75 @@ export default function CardsDashboard() {
         <Button onClick={() => setApplyOpen(true)}>Apply for Card</Button>
       </header>
 
+      {cards.length > 0 && (
+        <section className="rounded-2xl border border-(--stroke) bg-(--basic-cta)/50 p-4 sm:p-6">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-(--paragraph) sm:text-sm">
+            <span className="text-(--foreground) font-medium">Filter cards</span>
+            <label className="flex items-center gap-2">
+              <span>Status</span>
+              <select
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+                className="cursor-pointer rounded-lg border border-(--white)/10 bg-(--background)/50 px-2 py-1 text-xs text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--brand)/50 sm:text-sm"
+              >
+                <option value="all" className="bg-(--basic-cta)">
+                  All
+                </option>
+                <option value="active" className="bg-(--basic-cta)">
+                  Active
+                </option>
+                <option value="freeze" className="bg-(--basic-cta)">
+                  Freeze
+                </option>
+                <option value="unactivated" className="bg-(--basic-cta)">
+                  Unactivated
+                </option>
+                <option value="delete" className="bg-(--basic-cta)">
+                  Delete
+                </option>
+              </select>
+            </label>
+            <label className="flex items-center gap-2">
+              <span>Type</span>
+              <select
+                value={typeFilter}
+                onChange={(event) => setTypeFilter(event.target.value)}
+                className="cursor-pointer rounded-lg border border-(--white)/10 bg-(--background)/50 px-2 py-1 text-xs text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--brand)/50 sm:text-sm"
+              >
+                <option value="all" className="bg-(--basic-cta)">
+                  All
+                </option>
+                <option value="virtual" className="bg-(--basic-cta)">
+                  Virtual
+                </option>
+                <option value="physical" className="bg-(--basic-cta)">
+                  Physical
+                </option>
+              </select>
+            </label>
+          </div>
+        </section>
+      )}
+
       {cards.length === 0 ? (
         <section className="rounded-2xl border border-(--stroke) bg-(--basic-cta)/50 p-10 text-center backdrop-blur-sm">
           <p className="text-sm text-(--paragraph)">
             No cards yet. Apply for a card to get started.
           </p>
         </section>
+      ) : filteredCards.length === 0 ? (
+        <section className="rounded-2xl border border-(--stroke) bg-(--basic-cta)/50 p-10 text-center backdrop-blur-sm">
+          <p className="text-sm text-(--paragraph)">
+            No cards match the selected filters.
+          </p>
+        </section>
       ) : (
         <section className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-          {cards.map((card) => {
+          {filteredCards.map((card) => {
             const cardId = getCardId(card);
             const last4 = getLast4(card);
             const balance = cardBalances[cardId];
-            const isPhysical = Number(card.type) === 2;
+            const isPhysical = normalizeType(card) === "physical";
             const isFrozen = card.status === "04";
             const actions = isPhysical
               ? physicalActions
@@ -499,7 +617,7 @@ export default function CardsDashboard() {
         </section>
       )}
 
-      {cards.length > 0 && (
+      {filteredCards.length > 0 && (
         <DataTable
           title={`Transaction history`}
           columns={transactionsColumns}
@@ -519,7 +637,7 @@ export default function CardsDashboard() {
       )}
 
       {/* Pagination Controls */}
-      {cards.length > 0 && recordPages > 1 && (
+      {filteredCards.length > 0 && recordPages > 1 && (
         <div className="flex items-center justify-between text-xs text-(--paragraph)">
           <Button
             variant="outline"

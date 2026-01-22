@@ -436,7 +436,7 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
                     "rounded-md px-3 py-1 text-xs font-medium transition-all",
                     cardType === "VIRTUAL_CARD"
                       ? "bg-(--brand) text-black shadow-sm"
-                      : "text-(--paragraph) hover:text-(--foreground)"
+                      : "text-(--paragraph) hover:text-(--foreground)",
                   )}
                 >
                   Virtual
@@ -447,7 +447,7 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
                     "rounded-md px-3 py-1 text-xs font-medium transition-all",
                     cardType === "PHYSICAL_CARD"
                       ? "bg-(--brand) text-black shadow-sm"
-                      : "text-(--paragraph) hover:text-(--foreground)"
+                      : "text-(--paragraph) hover:text-(--foreground)",
                   )}
                 >
                   Physical
@@ -457,18 +457,22 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
           </CardHeader>
           <CardContent className="p-4 pt-2">
             <div className="grid gap-3 sm:grid-cols-2">
-              {bins.filter(bin => {
+              {bins.filter((bin) => {
                 const isPhysical = Number(bin.supportPhysicalCard ?? 0) === 1;
-                return cardType === 'PHYSICAL_CARD' ? isPhysical : !isPhysical;
+                return cardType === "PHYSICAL_CARD" ? isPhysical : !isPhysical;
               }).length === 0 ? (
                 <div className="text-sm text-(--paragraph)">
-                  No {cardType === 'PHYSICAL_CARD' ? 'physical ' : 'virtual '}card bins available.
+                  No {cardType === "PHYSICAL_CARD" ? "physical " : "virtual "}
+                  card bins available.
                 </div>
               ) : (
                 bins
-                  .filter(bin => {
-                    const isPhysical = Number(bin.supportPhysicalCard ?? 0) === 1;
-                    return cardType === 'PHYSICAL_CARD' ? isPhysical : !isPhysical;
+                  .filter((bin) => {
+                    const isPhysical =
+                      Number(bin.supportPhysicalCard ?? 0) === 1;
+                    return cardType === "PHYSICAL_CARD"
+                      ? isPhysical
+                      : !isPhysical;
                   })
                   .map((bin) => {
                     const id = getBinId(bin);
@@ -478,10 +482,11 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
                         key={id}
                         type="button"
                         onClick={() => setSelectedBinId(id)}
-                        className={`rounded-2xl border px-4 py-3 text-left transition-all duration-200 ${active
-                          ? "border-(--brand) bg-(--basic-cta) shadow-[0_0_20px_-5px_rgba(var(--brand-rgb),0.3)]"
-                          : "border-(--stroke) bg-(--basic-cta) hover:border-(--brand)/50 hover:bg-(--basic-cta)/80"
-                          }`}
+                        className={`rounded-2xl border px-4 py-3 text-left transition-all duration-200 ${
+                          active
+                            ? "border-(--brand) bg-(--basic-cta) shadow-[0_0_20px_-5px_rgba(var(--brand-rgb),0.3)]"
+                            : "border-(--stroke) bg-(--basic-cta) hover:border-(--brand)/50 hover:bg-(--basic-cta)/80"
+                        }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="text-sm font-semibold text-(--foreground)">
@@ -499,7 +504,9 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
                         </div>
                         <div className="mt-3 flex items-center justify-between text-xs">
                           <span className="text-(--paragraph)">Apply Fee:</span>
-                          <span className="text-(--foreground) font-medium">{formatValue(getCardFee(bin, cardType))} USD</span>
+                          <span className="text-(--foreground) font-medium">
+                            {formatValue(getCardFee(bin, cardType))} USD
+                          </span>
                         </div>
                       </button>
                     );
@@ -606,12 +613,19 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
                 }}
                 className="space-y-3"
               >
+                <Input
+                  value={alias}
+                  onChange={(event) => setAlias(event.target.value)}
+                  placeholder="Card Label (optional)"
+                  className="mt-3"
+                />
                 <PasswordInput
                   value={payPassword}
                   onChange={(event) => setPayPassword(event.target.value)}
                   placeholder="Transaction password"
                   disabled={!kycOk || !payPasswordOk}
                 />
+
                 {emailCheck ? (
                   <>
                     <div className="mt-3 flex items-center justify-between">
@@ -674,8 +688,6 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
           </Card>
         </section>
       </div>
-
-
-    </ModalShell >
+    </ModalShell>
   );
 }
