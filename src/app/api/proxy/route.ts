@@ -77,7 +77,45 @@ export async function POST(request: Request) {
   const contentType = response.headers.get("content-type") ?? "";
   if (contentType.includes("application/json")) {
     const json = await response.json();
-    return NextResponse.json(json, { status: response.status });
+    const nextResponse = NextResponse.json(json, { status: response.status });
+
+    // 1. Handle Login/Register Success => Set Cookies
+    if (json.data && json.data.access_token && json.data.refresh_token) {
+      const { access_token, refresh_token, token_type } = json.data;
+      const type = (token_type ?? "Bearer").trim();
+      const isSecure = process.env.NODE_ENV === "production";
+
+      nextResponse.cookies.set("vtron_access_token", access_token, {
+        httpOnly: true,
+        secure: isSecure,
+        sameSite: "lax",
+        path: "/",
+      });
+
+      nextResponse.cookies.set("vtron_refresh_token", refresh_token, {
+        httpOnly: true,
+        secure: isSecure,
+        sameSite: "lax",
+        path: "/",
+      });
+
+      nextResponse.cookies.set("vtron_token_type", type, {
+        httpOnly: true,
+        secure: isSecure,
+        sameSite: "lax",
+        path: "/",
+      });
+    }
+
+    // 2. Handle Logout => Clear Cookies
+    // specific check for logout endpoint or just clearing if payload.url ends with logout path
+    if (payload.url.endsWith("/merchant/logout")) {
+      nextResponse.cookies.delete("vtron_access_token");
+      nextResponse.cookies.delete("vtron_refresh_token");
+      nextResponse.cookies.delete("vtron_token_type");
+    }
+
+    return nextResponse;
   }
 
   const text = await response.text();

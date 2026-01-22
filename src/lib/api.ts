@@ -99,7 +99,7 @@ export async function apiRequest<T>({ path, ...init }: ApiOptions): Promise<T> {
       !Number.isNaN(codeValue) &&
       (codeValue === 401 || codeValue === 20008 || codeValue === 20009);
 
-    if (isAuthError && !path.includes("/refresh")) {
+    if (isAuthError && !path.includes("/refresh") && path.includes("/info")) {
       // Avoid infinite loops if refresh fails
       console.log("[api.ts] Auth error detected", codeValue);
       if (isRefreshing) {

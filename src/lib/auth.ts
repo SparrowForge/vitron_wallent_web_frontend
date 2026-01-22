@@ -9,7 +9,8 @@ export function persistTokens(tokens?: TokenPayload) {
   // This function is kept for compatibility but no longer stores in localStorage
 }
 
-import { logoutAction } from "@/app/auth/actions";
+import { apiRequest } from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 
 export async function clearAuthTokens() {
   if (typeof window !== "undefined") {
@@ -17,5 +18,14 @@ export async function clearAuthTokens() {
     localStorage.removeItem("vtron_refresh_token");
     localStorage.removeItem("vtron_token_type");
   }
-  await logoutAction();
+
+  try {
+    await apiRequest({
+      path: API_ENDPOINTS.logout,
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+  } catch (error) {
+    console.error("Logout failed", error);
+  }
 }
