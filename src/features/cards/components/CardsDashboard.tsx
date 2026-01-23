@@ -3,6 +3,7 @@
 import CardApplyModal from "@/features/cards/components/CardApplyModal";
 import CardDepositModal from "@/features/cards/components/CardDepositModal";
 import CardFreezeModal from "@/features/cards/components/CardFreezeModal";
+import CardTransactionDetailsModal from "@/features/cards/components/CardTransactionDetailsModal";
 import CardViewModal from "@/features/cards/components/CardViewModal";
 import {
   depositSvg,
@@ -21,7 +22,7 @@ import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useRef, useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye } from "lucide-react";
 
 const baseActions = [
   { key: "view", label: "View", icon: viewSvg },
@@ -109,6 +110,7 @@ export default function CardsDashboard() {
   const [depositOpen, setDepositOpen] = useState(false);
   const [freezeOpen, setFreezeOpen] = useState(false);
   const [applyOpen, setApplyOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -427,6 +429,7 @@ export default function CardsDashboard() {
     { key: "amount", label: "Amount", className: "text-(--double-foreground)" },
     { key: "createTime", label: "Date" },
     { key: "typeString", label: "Type" },
+    { key: "details", label: "" },
   ];
 
   const formattedRecords = records.map((record) => ({
@@ -459,6 +462,11 @@ export default function CardsDashboard() {
     ),
     amount: `${record.amount ?? "--"} ${record.currency ?? ""}`,
     createTime: record.createTime ?? "--",
+    details: (
+      <button className="text-(--paragraph) hover:text-(--brand) transition-colors">
+        <Eye size={16} />
+      </button>
+    ),
   }));
 
   return (
@@ -931,6 +939,7 @@ export default function CardsDashboard() {
             title={`Transaction history`}
             columns={transactionsColumns}
             data={formattedRecords}
+            onRowClick={(row) => setSelectedTransaction(row)}
             emptyMessage={
               recordLoading ? (
                 <div className="flex items-center justify-center gap-2">
@@ -1004,6 +1013,10 @@ export default function CardsDashboard() {
         onSuccess={refreshCards}
       />
       <CardApplyModal open={applyOpen} onClose={() => setApplyOpen(false)} />
+      <CardTransactionDetailsModal
+        transaction={selectedTransaction}
+        onClose={() => setSelectedTransaction(null)}
+      />
     </div>
   );
 }

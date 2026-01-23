@@ -3,6 +3,7 @@
 import DepositModal from "@/features/wallet/components/modals/DepositModal";
 import ReceiveModal from "@/features/wallet/components/modals/ReceiveModal";
 import SendModal from "@/features/wallet/components/modals/SendModal";
+import TransactionDetailsModal from "@/features/wallet/components/modals/TransactionDetailsModal";
 import WithdrawModal from "@/features/wallet/components/modals/WithdrawModal";
 import { apiRequest } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/apiEndpoints";
@@ -19,6 +20,7 @@ import Spinner from "@/shared/components/ui/Spinner";
 import { useToastMessages } from "@/shared/hooks/useToastMessages";
 import { toast } from "react-toastify";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Eye } from "lucide-react";
 
 type Wallet = {
   id: number;
@@ -71,6 +73,7 @@ export default function WalletDashboard() {
   const [sendOpen, setSendOpen] = useState(false);
   const [receiveOpen, setReceiveOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [transactions, setTransactions] = useState<
@@ -80,6 +83,13 @@ export default function WalletDashboard() {
       amount: string;
       date: string;
       status: React.ReactNode;
+      details: React.ReactNode;
+      // raw data for modal
+      orderFull?: string;
+      type?: string;
+      typeString?: string;
+      currency?: string;
+      statusLabel?: string;
     }[]
   >([]);
   const [transactionPage, setTransactionPage] = useState(1);
@@ -211,6 +221,16 @@ export default function WalletDashboard() {
               {record.typeString ?? record.type ?? "--"}
             </span>
           ),
+          type: record.type,
+          typeString: record.typeString ?? undefined,
+          currency: record.currency,
+          statusLabel: record.typeString ?? record.type ?? "--",
+          details: (
+            <button className="text-(--paragraph) hover:text-(--brand) transition-colors">
+              <Eye size={16} />
+            </button>
+          ),
+          tradeId: record.tradeId ?? record.tradeId ?? "--"
         }));
         setTransactions(mapped);
         setTransactionPages(response.data.pages ?? 1);
@@ -230,18 +250,13 @@ export default function WalletDashboard() {
     void loadTransactions();
   }, [transactionPage, txTypeFilter, txStatusFilter, txStartDate, txEndDate]);
 
-  const walletColumns: DataTableColumn<{
-    id: string;
-    order: React.ReactNode;
-    amount: string;
-    date: string;
-    status: React.ReactNode;
-  }>[] = [
-      { key: "order", label: "Order No", className: "text-(--double-foreground)" },
-      { key: "amount", label: "Amount", className: "font-medium text-(--double-foreground)" },
-      { key: "date", label: "Date" },
-      { key: "status", label: "Type" },
-    ];
+  const walletColumns: DataTableColumn<typeof transactions[0]>[] = [
+    { key: "order", label: "Order No", className: "text-(--double-foreground)" },
+    { key: "amount", label: "Amount", className: "font-medium text-(--double-foreground)" },
+    { key: "date", label: "Date" },
+    { key: "status", label: "Type" },
+    { key: "details", label: "" },
+  ];
 
   if (!selectedWallet) {
     return (
@@ -402,6 +417,7 @@ export default function WalletDashboard() {
         title="Transaction History"
         columns={walletColumns}
         data={transactions}
+        onRowClick={(row) => setSelectedTransaction(row)}
         emptyMessage={
           transactionLoading ? (
             <div className="flex items-center justify-center gap-2">
@@ -459,6 +475,10 @@ export default function WalletDashboard() {
         walletName={selectedWallet.name ?? `${selectedWallet.currency} Wallet`}
         onSuccess={loadWallets}
         onClose={() => setWithdrawOpen(false)}
+      />
+      <TransactionDetailsModal
+        transaction={selectedTransaction}
+        onClose={() => setSelectedTransaction(null)}
       />
     </div >
   );

@@ -11,13 +11,15 @@ type DataTableProps<T> = {
   columns: DataTableColumn<T>[];
   data: T[];
   emptyMessage?: ReactNode;
+  onRowClick?: (row: T) => void;
 };
 
-export default function DataTable<T extends Record<string, ReactNode>>({
+export default function DataTable<T extends Record<string, any>>({
   title,
   columns,
   data,
   emptyMessage = "No records yet.",
+  onRowClick,
 }: DataTableProps<T>) {
   return (
     <section className="max-w-[90vw] overflow-hidden rounded-2xl border border-(--stroke) bg-(--basic-cta)/50 shadow-sm backdrop-blur-xl transition-all hover:bg-(--basic-cta)/80">
@@ -57,7 +59,9 @@ export default function DataTable<T extends Record<string, ReactNode>>({
               data.map((row, index) => (
                 <tr
                   key={`row-${index}`}
-                  className="group transition-colors hover:bg-(--stroke)/10"
+                  onClick={() => onRowClick?.(row)}
+                  className={`transition-colors hover:bg-(--stroke)/10 ${onRowClick ? "cursor-pointer active:bg-(--stroke)/20" : ""
+                    }`}
                 >
                   {columns.map((column) => (
                     <td
