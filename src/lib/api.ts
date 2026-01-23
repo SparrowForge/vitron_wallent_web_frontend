@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "@/lib/apiEndpoints";
+import { clearAuthTokens } from "@/lib/auth";
 
 type ApiOptions = RequestInit & {
   path: string;
@@ -125,9 +126,10 @@ export async function apiRequest<T>({ path, ...init }: ApiOptions): Promise<T> {
           return apiRequest<T>({ path, ...init });
         } else {
           processQueue(new Error("Refresh failed"));
-          // Force logout / redirect?
+          // Clear tokens and redirect to home
           if (typeof window !== "undefined") {
-            // window.location.href = "/auth"; // Optional: Force redirect
+            await clearAuthTokens();
+            window.location.href = "/";
           }
         }
       } catch (err) {

@@ -116,6 +116,8 @@ export default function CardsDashboard() {
 
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
 
   const scrollMap = (direction: "left" | "right") => {
     if (scrollContainerRef.current) {
@@ -125,6 +127,30 @@ export default function CardsDashboard() {
         current.scrollBy({ left: -scrollAmount, behavior: "smooth" });
       } else {
         current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+      }
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    const swipeThreshold = 50;
+    const diff = touchStartX.current - touchEndX.current;
+
+    if (Math.abs(diff) > swipeThreshold) {
+      if (diff > 0) {
+        // Swiped left, go to next
+        const maxIndex = Math.max(0, filteredCards.length - visibleCount);
+        setCarouselIndex((i) => Math.min(maxIndex, i + 1));
+      } else {
+        // Swiped right, go to previous
+        setCarouselIndex((i) => Math.max(0, i - 1));
       }
     }
   };
@@ -699,32 +725,14 @@ export default function CardsDashboard() {
         //   })}
         // </section>
         <section className="relative w-full max-w-[70vw] overflow-hidden m-auto py-4">
-          {/* Arrows */}
-          <button
-            type="button"
-            aria-label="Previous"
-            onClick={() => setCarouselIndex((i) => Math.max(0, i - 1))}
-            disabled={carouselIndex <= 0}
-            className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full border border-(--foreground) bg-(--basic-cta)/80 p-2 text-(--foreground) backdrop-blur hover:bg-(--basic-cta) disabled:opacity-40"
-          >
-            <ChevronLeft size={18} />
-          </button>
-
-          <button
-            type="button"
-            aria-label="Next"
-            onClick={() => {
-              const maxIndex = Math.max(0, filteredCards.length - visibleCount);
-              setCarouselIndex((i) => Math.min(maxIndex, i + 1));
-            }}
-            disabled={carouselIndex >= Math.max(0, filteredCards.length - visibleCount)}
-            className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full border border-(--foreground) bg-(--basic-cta)/80 p-2 text-(--foreground) backdrop-blur hover:bg-(--basic-cta) disabled:opacity-40"
-          >
-            <ChevronRight size={18} />
-          </button>
 
           {/* Viewport */}
-          <div className="w-full max-w-full overflow-hidden p-2">
+          <div
+            className="w-full max-w-full overflow-hidden p-2"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             {/* Track */}
             <div
               className="flex gap-4 transition-transform duration-500 ease-out will-change-transform"
@@ -836,153 +844,186 @@ export default function CardsDashboard() {
             </div>
           </div>
 
-          {/* Dots */}
+          {/* Dots and Navigation */}
           {filteredCards.length > 0 && (
-            <div className="mt-3 flex justify-center gap-2">
-              {Array.from({
-                length: Math.max(1, Math.ceil(filteredCards.length / visibleCount)),
-              }).map((_, page) => {
-                const targetIndex = page * visibleCount;
-                const active =
-                  carouselIndex >= targetIndex &&
-                  carouselIndex < targetIndex + visibleCount;
+            <div className="mt-3 flex items-center justify-center gap-4">
+              {/* Previous Button */}
+              <button
+                type="button"
+                aria-label="Previous"
+                onClick={() => setCarouselIndex((i) => Math.max(0, i - 1))}
+                disabled={carouselIndex <= 0}
+                className="rounded-full border border-(--foreground) bg-(--basic-cta) p-2 text-(--foreground) hover:bg-(--stroke) disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft size={18} />
+              </button>
 
-                return (
-                  <button
-                    key={page}
-                    type="button"
-                    onClick={() => setCarouselIndex(targetIndex)}
-                    className={cn(
-                      "h-2 w-2 rounded-full border border-(--foreground)",
-                      active ? "bg-(--brand)" : "bg-(--basic-cta)"
-                    )}
-                    aria-label={`Go to page ${page + 1}`}
-                  />
-                );
-              })}
+              {/* Dots */}
+              <div className="flex gap-2">
+                {Array.from({
+                  length: Math.max(1, Math.ceil(filteredCards.length / visibleCount)),
+                }).map((_, page) => {
+                  const targetIndex = page * visibleCount;
+                  const active =
+                    carouselIndex >= targetIndex &&
+                    carouselIndex < targetIndex + visibleCount;
+
+                  return (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => setCarouselIndex(targetIndex)}
+                      className={cn(
+                        "h-2 w-2 rounded-full border border-(--foreground)",
+                        active ? "bg-(--brand)" : "bg-(--basic-cta)"
+                      )}
+                      aria-label={`Go to page ${page + 1}`}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* Next Button */}
+              <button
+                type="button"
+                aria-label="Next"
+                onClick={() => {
+                  const maxIndex = Math.max(0, filteredCards.length - visibleCount);
+                  setCarouselIndex((i) => Math.min(maxIndex, i + 1));
+                }}
+                disabled={carouselIndex >= Math.max(0, filteredCards.length - visibleCount)}
+                className="rounded-full border border-(--foreground) bg-(--basic-cta) p-2 text-(--foreground) hover:bg-(--stroke) disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ChevronRight size={18} />
+              </button>
             </div>
           )}
         </section>
-      )}
+      )
+      }
 
-      {filteredCards.length > 0 && (
-        <section className="space-y-4">
-          <div className="flex flex-wrap items-center gap-3 text-xs text-(--paragraph) sm:text-sm bg-(--basic-cta)/50 p-4 rounded-2xl border border-(--stroke)">
-            <span className="text-(--foreground) font-medium mr-2">Filters:</span>
+      {
+        filteredCards.length > 0 && (
+          <section className="space-y-4">
+            <div className="flex flex-wrap items-center gap-3 text-xs text-(--paragraph) sm:text-sm bg-(--basic-cta)/50 p-4 rounded-2xl border border-(--stroke)">
+              <span className="text-(--foreground) font-medium mr-2">Filters:</span>
 
-            {/* Transaction Type Filter */}
-            <label className="flex items-center gap-2">
-              <span>Type</span>
-              <select
-                value={txTypeFilter}
-                onChange={(e) => {
-                  setTxTypeFilter(e.target.value);
-                  setRecordPage(1);
-                }}
-                className="cursor-pointer rounded-lg border border-(--white)/10 bg-(--background)/50 px-2 py-1 text-xs text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--brand)/50 sm:text-sm"
-              >
-                <option value="" className="bg-(--basic-cta)">All</option>
-                <option value="program_fee_card" className="bg-(--basic-cta)">Consumption</option>
-                <option value="refund_card" className="bg-(--basic-cta)">Refund</option>
-                <option value="deposit_card" className="bg-(--basic-cta)">Recharge</option>
-                <option value="withdraw_card" className="bg-(--basic-cta)">Withdraw</option>
-                <option value="reversal_card" className="bg-(--basic-cta)">Revoke</option>
-                <option value="fee_card" className="bg-(--basic-cta)">Card Fee</option>
-                <option value="atm_fee_card" className="bg-(--basic-cta)">ATM</option>
-              </select>
-            </label>
+              {/* Transaction Type Filter */}
+              <label className="flex items-center gap-2">
+                <span>Type</span>
+                <select
+                  value={txTypeFilter}
+                  onChange={(e) => {
+                    setTxTypeFilter(e.target.value);
+                    setRecordPage(1);
+                  }}
+                  className="cursor-pointer rounded-lg border border-(--white)/10 bg-(--background)/50 px-2 py-1 text-xs text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--brand)/50 sm:text-sm"
+                >
+                  <option value="" className="bg-(--basic-cta)">All</option>
+                  <option value="program_fee_card" className="bg-(--basic-cta)">Consumption</option>
+                  <option value="refund_card" className="bg-(--basic-cta)">Refund</option>
+                  <option value="deposit_card" className="bg-(--basic-cta)">Recharge</option>
+                  <option value="withdraw_card" className="bg-(--basic-cta)">Withdraw</option>
+                  <option value="reversal_card" className="bg-(--basic-cta)">Revoke</option>
+                  <option value="fee_card" className="bg-(--basic-cta)">Card Fee</option>
+                  <option value="atm_fee_card" className="bg-(--basic-cta)">ATM</option>
+                </select>
+              </label>
 
-            {/* Transaction Status Filter */}
-            <label className="flex items-center gap-2">
-              <span>Status</span>
-              <select
-                value={txStatusFilter}
-                onChange={(e) => {
-                  setTxStatusFilter(e.target.value);
-                  setRecordPage(1);
-                }}
-                className="cursor-pointer rounded-lg border border-(--white)/10 bg-(--background)/50 px-2 py-1 text-xs text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--brand)/50 sm:text-sm"
-              >
-                <option value="" className="bg-(--basic-cta)">All</option>
-                <option value="1" className="bg-(--basic-cta)">Confirming</option>
-                <option value="2" className="bg-(--basic-cta)">Completed</option>
-                <option value="3" className="bg-(--basic-cta)">Cancelled</option>
-              </select>
-            </label>
+              {/* Transaction Status Filter */}
+              <label className="flex items-center gap-2">
+                <span>Status</span>
+                <select
+                  value={txStatusFilter}
+                  onChange={(e) => {
+                    setTxStatusFilter(e.target.value);
+                    setRecordPage(1);
+                  }}
+                  className="cursor-pointer rounded-lg border border-(--white)/10 bg-(--background)/50 px-2 py-1 text-xs text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--brand)/50 sm:text-sm"
+                >
+                  <option value="" className="bg-(--basic-cta)">All</option>
+                  <option value="1" className="bg-(--basic-cta)">Confirming</option>
+                  <option value="2" className="bg-(--basic-cta)">Completed</option>
+                  <option value="3" className="bg-(--basic-cta)">Cancelled</option>
+                </select>
+              </label>
 
-            {/* Date Range */}
-            <div className="flex items-center gap-2">
-              <span>Date</span>
-              <input
-                type="date"
-                value={txStartDate}
-                onChange={(e) => {
-                  setTxStartDate(e.target.value);
-                  setRecordPage(1);
-                }}
-                className="rounded-lg border border-(--white)/10 bg-(--background)/50 px-2 py-1 text-xs text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--brand)/50 sm:text-sm"
-              />
-              <span>to</span>
-              <input
-                type="date"
-                value={txEndDate}
-                onChange={(e) => {
-                  setTxEndDate(e.target.value);
-                  setRecordPage(1);
-                }}
-                className="rounded-lg border border-(--white)/10 bg-(--background)/50 px-2 py-1 text-xs text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--brand)/50 sm:text-sm"
-              />
+              {/* Date Range */}
+              <div className="flex items-center gap-2">
+                <span>Date</span>
+                <input
+                  type="date"
+                  value={txStartDate}
+                  onChange={(e) => {
+                    setTxStartDate(e.target.value);
+                    setRecordPage(1);
+                  }}
+                  className="rounded-lg border border-(--white)/10 bg-(--background)/50 px-2 py-1 text-xs text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--brand)/50 sm:text-sm"
+                />
+                <span>to</span>
+                <input
+                  type="date"
+                  value={txEndDate}
+                  onChange={(e) => {
+                    setTxEndDate(e.target.value);
+                    setRecordPage(1);
+                  }}
+                  className="rounded-lg border border-(--white)/10 bg-(--background)/50 px-2 py-1 text-xs text-(--foreground) focus:outline-none focus:ring-1 focus:ring-(--brand)/50 sm:text-sm"
+                />
+              </div>
             </div>
-          </div>
 
-          <DataTable
-            title={`Transaction history`}
-            columns={transactionsColumns}
-            data={formattedRecords}
-            onRowClick={(row) => setSelectedTransaction(row)}
-            emptyMessage={
-              recordLoading ? (
-                <div className="flex items-center justify-center gap-2">
-                  <Spinner size={16} /> Loading transactions...
-                </div>
-              ) : recordError ? (
-                <span className="text-red-500">{recordError}</span>
-              ) : (
-                "No transactions yet."
-              )
-            }
-          />
-        </section>
-      )}
+            <DataTable
+              title={`Transaction history`}
+              columns={transactionsColumns}
+              data={formattedRecords}
+              onRowClick={(row) => setSelectedTransaction(row)}
+              emptyMessage={
+                recordLoading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Spinner size={16} /> Loading transactions...
+                  </div>
+                ) : recordError ? (
+                  <span className="text-red-500">{recordError}</span>
+                ) : (
+                  "No transactions yet."
+                )
+              }
+            />
+          </section>
+        )
+      }
 
       {/* Pagination Controls */}
-      {filteredCards.length > 0 && recordPages > 1 && (
-        <div className="flex items-center justify-between text-xs text-(--paragraph)">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setRecordPage((prev) => Math.max(prev - 1, 1))}
-            disabled={recordPage <= 1 || recordLoading}
-          >
-            Previous
-          </Button>
-          <span>
-            Page {recordPage} of {recordPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              setRecordPage((prev) =>
-                Math.min(prev + 1, Math.max(recordPages, 1))
-              )
-            }
-            disabled={recordPage >= recordPages || recordLoading}
-          >
-            Next
-          </Button>
-        </div>
-      )}
+      {
+        filteredCards.length > 0 && recordPages > 1 && (
+          <div className="flex items-center justify-between text-xs text-(--paragraph)">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setRecordPage((prev) => Math.max(prev - 1, 1))}
+              disabled={recordPage <= 1 || recordLoading}
+            >
+              Previous
+            </Button>
+            <span>
+              Page {recordPage} of {recordPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setRecordPage((prev) =>
+                  Math.min(prev + 1, Math.max(recordPages, 1))
+                )
+              }
+              disabled={recordPage >= recordPages || recordLoading}
+            >
+              Next
+            </Button>
+          </div>
+        )
+      }
 
       <CardViewModal
         open={viewOpen}
@@ -1017,6 +1058,6 @@ export default function CardsDashboard() {
         transaction={selectedTransaction}
         onClose={() => setSelectedTransaction(null)}
       />
-    </div>
+    </div >
   );
 }
