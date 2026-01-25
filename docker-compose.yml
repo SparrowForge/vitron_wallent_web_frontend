@@ -3,18 +3,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: CryptoPag-wallet-app
+    container_name: cryptopag-wallet-app
     restart: unless-stopped
     environment:
       - NODE_ENV=production
     env_file:
       - .env.production
     networks:
-      - CryptoPag-network
+      - cryptopag-network
     expose:
       - "3000"
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -22,7 +22,7 @@ services:
 
   nginx:
     image: nginx:alpine
-    container_name: CryptoPag-wallet-nginx
+    container_name: cryptopag-wallet-nginx
     restart: unless-stopped
     ports:
       - "80:80"
@@ -35,7 +35,7 @@ services:
     depends_on:
       - nextjs
     networks:
-      - CryptoPag-network
+      - cryptopag-network
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
       interval: 30s
@@ -43,5 +43,5 @@ services:
       retries: 3
 
 networks:
-  CryptoPag-network:
+  cryptopag-network:
     driver: bridge
