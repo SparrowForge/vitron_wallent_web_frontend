@@ -603,7 +603,7 @@ export default function CardsDashboard() {
         //             {/* Visual Card Content */}
         //             <div className="flex justify-between items-start opacity-80">
         //               <div className="text-[10px] uppercase tracking-[0.2em]">
-        //                 {card.cardType ?? "Vtron"}
+        //                 {card.cardType ?? "CryptoPag"}
         //               </div>
         //               <div className="font-bold italic opacity-60 text-xs">VISA</div>
         //             </div>
@@ -615,7 +615,7 @@ export default function CardsDashboard() {
         //             <div className="flex justify-between items-end">
         //               <div>
         //                 <div className="text-[8px] uppercase opacity-60">Card Holder</div>
-        //                 <div className="text-xs font-medium">{card.alias ?? "Vtron User"}</div>
+        //                 <div className="text-xs font-medium">{card.alias ?? "CryptoPag User"}</div>
         //               </div>
         //               <div className="h-5 w-8 rounded bg-white/20" />
         //             </div>
@@ -773,7 +773,7 @@ export default function CardsDashboard() {
                         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-(--foreground) to-gray-600 p-2 text-(--background) shadow-lg">
                           <div className="flex justify-between items-start opacity-80">
                             <div className="text-[10px] uppercase tracking-[0.2em]">
-                              {card.cardType ?? "Vtron"}
+                              {card.cardType ?? "CryptoPag"}
                             </div>
                             <div className="font-bold italic opacity-60 text-xs">VISA</div>
                           </div>
@@ -785,7 +785,7 @@ export default function CardsDashboard() {
                           <div className="flex justify-between items-end">
                             <div>
                               <div className="text-[8px] uppercase opacity-60">Card Holder</div>
-                              <div className="text-xs font-medium">{card.alias ?? "Vtron User"}</div>
+                              <div className="text-xs font-medium">{card.alias ?? "CryptoPag User"}</div>
                             </div>
                             <div className="h-5 w-8 rounded bg-white/20" />
                           </div>
@@ -1028,7 +1028,7 @@ export default function CardsDashboard() {
       <CardViewModal
         open={viewOpen}
         cardId={selectedCard?.cardId ? String(selectedCard.cardId) : ""}
-        cardLabel={selectedCard?.alias ?? "Vtron Card"}
+        cardLabel={selectedCard?.alias ?? "CryptoPag Card"}
         maskedNumber={
           selectedCard?.cardNo ?? `•••• ${getLast4(selectedCard ?? {})}`
         }
@@ -1037,7 +1037,7 @@ export default function CardsDashboard() {
       <CardDepositModal
         open={depositOpen}
         cardId={selectedCard?.cardId ? String(selectedCard.cardId) : ""}
-        cardLabel={selectedCard?.alias ?? "Vtron Card"}
+        cardLabel={selectedCard?.alias ?? "CryptoPag Card"}
         maskedNumber={
           selectedCard?.cardNo ?? `•••• ${getLast4(selectedCard ?? {})}`
         }
@@ -1047,7 +1047,7 @@ export default function CardsDashboard() {
       <CardFreezeModal
         open={freezeOpen}
         cardId={selectedCard?.cardId ? String(selectedCard.cardId) : ""}
-        cardLabel={selectedCard?.alias ?? "Vtron Card"}
+        cardLabel={selectedCard?.alias ?? "CryptoPag Card"}
         status={selectedCard?.status ?? ""}
         frozenFeat={selectedCard?.frozenFeat}
         onClose={() => setFreezeOpen(false)}

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# VTRON Wallet - AWS EC2 Deployment Script
+# CryptoPag Wallet - AWS EC2 Deployment Script
 # This script automates the deployment process on AWS EC2
 
 set -e  # Exit on error
 
-echo "🚀 Starting VTRON Wallet Deployment..."
+echo "🚀 Starting CryptoPag Wallet Deployment..."
 
 # Colors for output
 RED='\033[0;31m'

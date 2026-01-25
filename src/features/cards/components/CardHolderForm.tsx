@@ -416,7 +416,7 @@ export default function CardHolderForm({
       );
 
       if (typeof window !== "undefined") {
-        localStorage.setItem("vtron_refresh_card_bins", "1");
+        localStorage.setItem("CryptoPag_refresh_card_bins", "1");
       }
 
       setTimeout(() => {
@@ -804,9 +804,8 @@ export default function CardHolderForm({
 
             <label
               htmlFor={backId}
-              className={`relative flex h-32 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-dashed border-(--stroke) bg-(--background) text-xs text-(--paragraph) transition hover:border-(--brand) hover:bg-(--basic-cta) ${
-                idType === "PASSPORT" ? "opacity-60 cursor-not-allowed" : ""
-              }`}
+              className={`relative flex h-32 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-dashed border-(--stroke) bg-(--background) text-xs text-(--paragraph) transition hover:border-(--brand) hover:bg-(--basic-cta) ${idType === "PASSPORT" ? "opacity-60 cursor-not-allowed" : ""
+                }`}
             >
               {idBackUrl && idType !== "PASSPORT" ? (
                 <img

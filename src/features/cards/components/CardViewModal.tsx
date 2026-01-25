@@ -213,7 +213,7 @@ export default function CardViewModal({
 
       <div className="mt-6 rounded-3xl border border-(--stroke) bg-(--background) p-6">
         <div className="text-sm uppercase tracking-[0.3em] text-(--paragraph)">
-          Vtron
+          CryptoPag
         </div>
         <div className="mt-8 grid grid-cols-4 gap-2 text-lg font-semibold text-(--foreground)">
           {cardParts.map((part, index) => (

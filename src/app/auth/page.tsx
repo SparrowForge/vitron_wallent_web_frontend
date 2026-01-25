@@ -124,11 +124,11 @@ export default function AuthPage() {
 
         const returnTo =
           typeof window !== "undefined"
-            ? sessionStorage.getItem("vtron_return_to")
+            ? sessionStorage.getItem("CryptoPag_return_to")
             : null;
 
         if (returnTo && returnTo.startsWith("/")) {
-          sessionStorage.removeItem("vtron_return_to");
+          sessionStorage.removeItem("CryptoPag_return_to");
           router.push(returnTo);
         } else {
           router.push("/wallet");
@@ -172,11 +172,11 @@ export default function AuthPage() {
 
         const returnTo =
           typeof window !== "undefined"
-            ? sessionStorage.getItem("vtron_return_to")
+            ? sessionStorage.getItem("CryptoPag_return_to")
             : null;
 
         if (returnTo && returnTo.startsWith("/")) {
-          sessionStorage.removeItem("vtron_return_to");
+          sessionStorage.removeItem("CryptoPag_return_to");
           router.push(returnTo);
         } else {
           router.push("/wallet");
@@ -611,7 +611,7 @@ export default function AuthPage() {
 
           <div className="mt-6 text-center text-sm text-(--paragraph)">
             <span>
-              {mode === "login" ? "New to Vtron?" : "Already have an account?"}
+              {mode === "login" ? "New to CryptoPag?" : "Already have an account?"}
             </span>{" "}
             <Button
               variant="link"

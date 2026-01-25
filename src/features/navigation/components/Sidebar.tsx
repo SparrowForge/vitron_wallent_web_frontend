@@ -12,6 +12,7 @@ import {
   User,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 
 const primaryNav = [
@@ -63,17 +64,19 @@ export default function Sidebar({
         className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col glass border-r border-(--white)/5 transition-transform duration-300 lg:static lg:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"
           } ${isCollapsed ? "lg:w-20" : "lg:w-72"}`}
       >
-        <div className="flex h-16 items-center justify-between gap-3 px-6 lg:justify-start">
+        <div className="flex h-20 items-center m-auto justify-between gap-3 px-6 lg:justify-start">
           <div className="flex items-center gap-3 mt-6">
-            <div className="grid h-9 w-9 place-items-center rounded-full bg-(--brand-10) text-(--brand)">
-              <span className="text-lg font-semibold">V</span>
-            </div>
-            <div
-              className={`text-base font-semibold tracking-tight ${isCollapsed ? "lg:hidden" : ""
-                }`}
-            >
-              Vtron <span className="text-(--paragraph)">Card</span>
-            </div>
+            <Link href={"/"} className="relative h-[80px] w-[136px] flex-shrink-0">
+              <Image
+                src="/CryptoPag.png"
+                alt="CryptoPag Logo"
+                width={4096}
+                height={2388}
+                className="w-full object-contain"
+                priority
+              />
+            </Link>
+
           </div>
           <button
             type="button"

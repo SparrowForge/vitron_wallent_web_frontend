@@ -98,9 +98,7 @@ export default function ReceiveModal({
     if (!qrValue) {
       return "";
     }
-    return `${process.env.NEXT_PUBLIC_CLIENT_BASE_URL ??
-      "https://vitron-wallent-web-frontend.vercel.app"
-      }/wallet/send?hash=${qrValue}`;
+    return `${process.env.NEXT_PUBLIC_CLIENT_BASE_URL}/wallet/send?hash=${qrValue}`;
   }, [qrValue]);
 
   const qrImageSources = useMemo(() => {
@@ -131,7 +129,7 @@ export default function ReceiveModal({
       const objectUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = objectUrl;
-      link.download = "vtron-receive-qr.png";
+      link.download = "CryptoPag-receive-qr.png";
       document.body.appendChild(link);
       link.click();
       link.remove();

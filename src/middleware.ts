@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get("vtron_refresh_token")?.value;
+  const token = request.cookies.get("CryptoPag_refresh_token")?.value;
   const { pathname } = request.nextUrl;
 
   const isAuthPage = pathname.startsWith("/auth");

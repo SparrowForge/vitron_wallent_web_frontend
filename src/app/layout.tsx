@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Vtron Wallet",
-  description: "Vtron Wallet",
+  title: "CryptoPag Wallet",
+  description: "CryptoPag Wallet",
 };
 
 export default function RootLayout({

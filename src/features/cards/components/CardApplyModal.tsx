@@ -257,9 +257,9 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
 
     const needsRefresh =
       typeof window !== "undefined" &&
-      localStorage.getItem("vtron_refresh_card_bins") === "1";
+      localStorage.getItem("CryptoPag_refresh_card_bins") === "1";
     if (needsRefresh) {
-      localStorage.removeItem("vtron_refresh_card_bins");
+      localStorage.removeItem("CryptoPag_refresh_card_bins");
     }
     loadApplyData();
     return () => {
@@ -482,11 +482,10 @@ export default function CardApplyModal({ open, onClose }: CardApplyModalProps) {
                         key={id}
                         type="button"
                         onClick={() => setSelectedBinId(id)}
-                        className={`rounded-2xl border px-4 py-3 text-left transition-all duration-200 ${
-                          active
+                        className={`rounded-2xl border px-4 py-3 text-left transition-all duration-200 ${active
                             ? "border-(--brand) bg-(--basic-cta) shadow-[0_0_20px_-5px_rgba(var(--brand-rgb),0.3)]"
                             : "border-(--stroke) bg-(--basic-cta) hover:border-(--brand)/50 hover:bg-(--basic-cta)/80"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="text-sm font-semibold text-(--foreground)">

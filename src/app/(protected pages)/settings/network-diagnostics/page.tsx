@@ -125,7 +125,7 @@ export default function NetworkDiagnosticsPage() {
           Network Diagnostics
         </h1>
         <p className="text-sm text-(--paragraph)">
-          Check connectivity to Vtron services.
+          Check connectivity to CryptoPag services.
         </p>
       </header>
 

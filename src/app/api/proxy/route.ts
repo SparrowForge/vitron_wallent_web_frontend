@@ -60,8 +60,8 @@ export async function POST(request: Request) {
   if (!headers["Authorization"]) {
     const cookieHeader = request.headers.get("cookie") || "";
     const cookies = parseCookies(cookieHeader);
-    const token = cookies["vtron_access_token"];
-    const tokenType = cookies["vtron_token_type"] || "Bearer";
+    const token = cookies["CryptoPag_access_token"];
+    const tokenType = cookies["CryptoPag_token_type"] || "Bearer";
 
     if (token) {
       headers["Authorization"] = `${tokenType}${token}`;
@@ -85,21 +85,21 @@ export async function POST(request: Request) {
       const type = (token_type ?? "Bearer").trim();
       const isSecure = process.env.NODE_ENV === "production";
 
-      nextResponse.cookies.set("vtron_access_token", access_token, {
+      nextResponse.cookies.set("CryptoPag_access_token", access_token, {
         httpOnly: true,
         secure: isSecure,
         sameSite: "lax",
         path: "/",
       });
 
-      nextResponse.cookies.set("vtron_refresh_token", refresh_token, {
+      nextResponse.cookies.set("CryptoPag_refresh_token", refresh_token, {
         httpOnly: true,
         secure: isSecure,
         sameSite: "lax",
         path: "/",
       });
 
-      nextResponse.cookies.set("vtron_token_type", type, {
+      nextResponse.cookies.set("CryptoPag_token_type", type, {
         httpOnly: true,
         secure: isSecure,
         sameSite: "lax",
@@ -110,9 +110,9 @@ export async function POST(request: Request) {
     // 2. Handle Logout => Clear Cookies
     // specific check for logout endpoint or just clearing if payload.url ends with logout path
     if (payload.url.endsWith("/merchant/logout")) {
-      nextResponse.cookies.delete("vtron_access_token");
-      nextResponse.cookies.delete("vtron_refresh_token");
-      nextResponse.cookies.delete("vtron_token_type");
+      nextResponse.cookies.delete("CryptoPag_access_token");
+      nextResponse.cookies.delete("CryptoPag_refresh_token");
+      nextResponse.cookies.delete("CryptoPag_token_type");
     }
 
     return nextResponse;

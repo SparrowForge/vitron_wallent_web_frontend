@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
     const cookieStore = await cookies();
-    const refreshToken = cookieStore.get("vtron_refresh_token")?.value;
+    const refreshToken = cookieStore.get("CryptoPag_refresh_token")?.value;
 
     if (!refreshToken) {
         return NextResponse.json({ msg: "No refresh token", code: 401 }, { status: 401 });
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
             const { access_token, refresh_token, token_type } = data.data;
 
             if (access_token) {
-                cookieStore.set("vtron_access_token", access_token, {
+                cookieStore.set("CryptoPag_access_token", access_token, {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === "production",
                     sameSite: "lax",
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
             }
 
             if (refresh_token) {
-                cookieStore.set("vtron_refresh_token", refresh_token, {
+                cookieStore.set("CryptoPag_refresh_token", refresh_token, {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === "production",
                     sameSite: "lax",
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
             }
 
             if (token_type) {
-                cookieStore.set("vtron_token_type", token_type.trim(), {
+                cookieStore.set("CryptoPag_token_type", token_type.trim(), {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === "production",
                     sameSite: "lax",

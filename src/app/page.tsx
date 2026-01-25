@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default async function LandingPage() {
   const cookieStore = await cookies();
-  const isAuthenticated = cookieStore.has("vtron_refresh_token");
+  const isAuthenticated = cookieStore.has("CryptoPag_refresh_token");
 
   return (
     <div className="flex min-h-screen flex-col">

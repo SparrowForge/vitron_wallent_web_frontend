@@ -1,4 +1,4 @@
-# VTRON Wallet - Quick Start
+# CryptoPag Wallet - Quick Start
 
 ## Local Development
 
@@ -15,8 +15,8 @@ Visit http://localhost:3000
 
 ```bash
 # 1. Clone repository
-git clone <your-repo-url> vtron-wallet
-cd vtron-wallet
+git clone <your-repo-url> CryptoPag-wallet
+cd CryptoPag-wallet
 
 # 2. Configure environment
 cp .env.production.example .env.production
@@ -40,7 +40,7 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete deployment guide.
 ## Project Structure
 
 ```
-vtron-crypto-wallet/
+CryptoPag-crypto-wallet/
 ├── src/                    # Application source code
 ├── public/                 # Static assets
 ├── nginx/                  # Nginx configuration

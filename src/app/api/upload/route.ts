@@ -7,8 +7,8 @@ export async function POST(request: Request) {
 
   if (!authHeader) {
     const cookieStore = await cookies();
-    const token = cookieStore.get("vtron_access_token")?.value;
-    const type = cookieStore.get("vtron_token_type")?.value ?? "Bearer";
+    const token = cookieStore.get("CryptoPag_access_token")?.value;
+    const type = cookieStore.get("CryptoPag_token_type")?.value ?? "Bearer";
     if (token) {
       authHeader = `${type}${token}`.trim();
     }

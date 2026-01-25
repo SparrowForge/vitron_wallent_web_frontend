@@ -14,9 +14,9 @@ import { API_ENDPOINTS } from "@/lib/apiEndpoints";
 
 export async function clearAuthTokens() {
   if (typeof window !== "undefined") {
-    localStorage.removeItem("vtron_access_token");
-    localStorage.removeItem("vtron_refresh_token");
-    localStorage.removeItem("vtron_token_type");
+    localStorage.removeItem("CryptoPag_access_token");
+    localStorage.removeItem("CryptoPag_refresh_token");
+    localStorage.removeItem("CryptoPag_token_type");
   }
 
   try {
