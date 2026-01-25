@@ -1,0 +1,4 @@
+# Nginx Logs Directory
+# Logs will be stored here
+
+*.log
