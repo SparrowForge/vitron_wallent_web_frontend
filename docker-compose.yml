@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: cryptopag-app:latest
     container_name: cryptopag-wallet-app
     restart: unless-stopped
     environment:

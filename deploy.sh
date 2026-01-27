@@ -58,31 +58,13 @@ mkdir -p nginx/logs
 
 # Check for SSL certificates
 if [ ! -f nginx/ssl/fullchain.pem ] || [ ! -f nginx/ssl/privkey.pem ]; then
-    echo -e "${YELLOW}⚠️  SSL certificates not found${NC}"
-    echo "You have two options:"
-    echo "1. Use Let's Encrypt (recommended for production)"
-    echo "2. Generate self-signed certificates (for testing only)"
+    echo -e "${YELLOW}⚠️  SSL certificates not found in nginx/ssl/${NC}"
+    echo "You need to set up Let's Encrypt certificates."
     echo ""
-    read -p "Choose option (1 or 2): " ssl_option
-    
-    if [ "$ssl_option" = "1" ]; then
-        echo -e "${YELLOW}Please set up Let's Encrypt certificates manually:${NC}"
-        echo "1. Install certbot: sudo apt-get install certbot"
-        echo "2. Get certificate: sudo certbot certonly --standalone -d cryptopagregistro.com.br"
-        echo "3. Copy certificates to nginx/ssl/"
-        echo "   sudo cp /etc/letsencrypt/live/cryptopagregistro.com.br/fullchain.pem nginx/ssl/"
-        echo "   sudo cp /etc/letsencrypt/live/cryptopagregistro.com.br/privkey.pem nginx/ssl/"
-        echo ""
-        echo "Press Enter after setting up SSL certificates, or Ctrl+C to cancel..."
-        read
-    else
-        echo "Generating self-signed certificates..."
-        openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-            -keyout nginx/ssl/privkey.pem \
-            -out nginx/ssl/fullchain.pem \
-            -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"
-        echo -e "${GREEN}✅ Self-signed certificates generated${NC}"
-    fi
+    echo "PLEASE RUN: ./setup-ssl.sh"
+    echo ""
+    echo "Press Enter to continue (if you plan to run setup-ssl.sh later)..."
+    read
 fi
 
 # Update nginx config with domain
