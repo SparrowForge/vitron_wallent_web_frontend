@@ -59,7 +59,7 @@ Create `.env.production` with:
 
 ```env
 NEXT_PUBLIC_API_BASE_URL=https://platform.vcard-usa.com/merchant-server
-NEXT_PUBLIC_CLIENT_BASE_URL=https://your-domain.com
+NEXT_PUBLIC_CLIENT_BASE_URL=https://cryptopagregistro.com.br
 NODE_ENV=production
 ```
 

@@ -68,10 +68,10 @@ if [ ! -f nginx/ssl/fullchain.pem ] || [ ! -f nginx/ssl/privkey.pem ]; then
     if [ "$ssl_option" = "1" ]; then
         echo -e "${YELLOW}Please set up Let's Encrypt certificates manually:${NC}"
         echo "1. Install certbot: sudo apt-get install certbot"
-        echo "2. Get certificate: sudo certbot certonly --standalone -d your-domain.com"
+        echo "2. Get certificate: sudo certbot certonly --standalone -d cryptopagregistro.com.br"
         echo "3. Copy certificates to nginx/ssl/"
-        echo "   sudo cp /etc/letsencrypt/live/your-domain.com/fullchain.pem nginx/ssl/"
-        echo "   sudo cp /etc/letsencrypt/live/your-domain.com/privkey.pem nginx/ssl/"
+        echo "   sudo cp /etc/letsencrypt/live/cryptopagregistro.com.br/fullchain.pem nginx/ssl/"
+        echo "   sudo cp /etc/letsencrypt/live/cryptopagregistro.com.br/privkey.pem nginx/ssl/"
         echo ""
         echo "Press Enter after setting up SSL certificates, or Ctrl+C to cancel..."
         read
@@ -88,7 +88,7 @@ fi
 # Update nginx config with domain
 read -p "Enter your domain name (e.g., wallet.example.com): " domain_name
 if [ ! -z "$domain_name" ]; then
-    sed -i.bak "s/your-domain.com/$domain_name/g" nginx/conf.d/default.conf
+    sed -i.bak "s/cryptopagregistro.com.br/$domain_name/g" nginx/conf.d/default.conf
     echo -e "${GREEN}✅ Domain updated in nginx config${NC}"
 fi
 

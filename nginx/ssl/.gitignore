@@ -2,7 +2,7 @@
 # Place your SSL certificates here
 
 ## For Let's Encrypt:
-# Copy your certificates from /etc/letsencrypt/live/your-domain.com/
+# Copy your certificates from /etc/letsencrypt/live/cryptopagregistro.com.br/
 # - fullchain.pem
 # - privkey.pem
 
